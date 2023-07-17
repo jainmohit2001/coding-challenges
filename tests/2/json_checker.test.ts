@@ -14,7 +14,7 @@ describe('Tests provided by JSON ORG', () => {
       const input = fs.readFileSync(`${dir}${file}`, 'utf8').toString();
       let exitCode = 0;
       try {
-        const output = JSON.parse(input);
+        JSON.parse(input);
       } catch (err) {
         exitCode = 1;
       }
