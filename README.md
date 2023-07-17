@@ -31,5 +31,13 @@ The following command will run all the tests present under the `tests` folder an
 All the relevant required test input files are present in tests folder itself.
 
 ```bash
-npm run test
+npm test
+```
+
+To run tests for specific challenge, use the following command:
+
+```bash
+# npm test tests/<challenge-number>
+npm test tests/2
+npm test tests/3
 ```
