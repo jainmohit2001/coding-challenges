@@ -12,6 +12,7 @@ if (process.argv.length < 3) {
   printUsage();
   process.exit(1);
 }
+
 const command = process.argv[2];
 if (command === '--compress') {
   if (process.argv.length !== 5) {
@@ -19,6 +20,7 @@ if (command === '--compress') {
     printUsage();
     process.exit(1);
   }
+
   performCompression();
 } else if (command === '--decompress') {
   if (process.argv.length !== 5) {
@@ -26,6 +28,7 @@ if (command === '--compress') {
     printUsage();
     process.exit(1);
   }
+
   performDecompression();
 } else {
   console.error('Invalid option provided.');
@@ -33,6 +36,9 @@ if (command === '--compress') {
   process.exit(1);
 }
 
+/**
+ * Prints the information about to use this command line tool.
+ */
 function printUsage() {
   const text = `
 
