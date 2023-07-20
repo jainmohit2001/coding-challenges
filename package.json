@@ -15,14 +15,21 @@
   "license": "ISC",
   "dependencies": {
     "@datastructures-js/priority-queue": "^6.3.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.1.6"
+    "axios": "^1.4.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
+    "ts-node": "^10.9.1"
   },
   "devDependencies": {
     "@babel/core": "^7.22.9",
     "@babel/preset-env": "^7.22.9",
     "@babel/preset-typescript": "^7.22.5",
+    "@types/express": "^4.17.17",
     "@types/jest": "^29.5.3",
+    "@types/node": "^20.4.2",
+    "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "babel-jest": "^29.6.1",
@@ -31,6 +38,8 @@
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^29.6.1",
     "prettier": "^3.0.0",
-    "ts-jest": "^29.1.1"
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.1.6"
   }
 }
