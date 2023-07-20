@@ -10,9 +10,9 @@ export interface IBackendServer {
 }
 
 export class BackendServer implements IBackendServer {
-  port: number;
-  responseString: string;
-  server: Server<typeof IncomingMessage, typeof ServerResponse>;
+  port;
+  responseString;
+  server;
 
   constructor(port: number) {
     this.port = port;
@@ -22,6 +22,10 @@ export class BackendServer implements IBackendServer {
 
     app.use(express.text());
     app.use(express.json());
+
+    app.get('/ping', (req, res) => {
+      res.sendStatus(200);
+    });
 
     app.get('/', (req, res) => {
       res.status(200).send(this.responseString);
@@ -39,6 +43,8 @@ export class BackendServer implements IBackendServer {
   }
 
   public close() {
-    return this.server.close();
+    const server = this.server.close();
+    console.log(`Closed Backend Server with port ${this.port}`);
+    return server;
   }
 }
