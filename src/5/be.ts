@@ -5,8 +5,23 @@ const responseString = 'Hello from backend Server';
 
 export interface IBackendServer {
   port: number;
+
   server: Server<typeof IncomingMessage, typeof ServerResponse>;
+
+  /**
+   * Returns the HTTP Server corresponding to the Express app.
+   *
+   * @public
+   * @returns {Server<typeof IncomingMessage, typeof ServerResponse>}
+   */
   getServer(): Server<typeof IncomingMessage, typeof ServerResponse>;
+
+  /**
+   * Closes the express server and returns with the server object.
+   *
+   * @public
+   * @returns {Server<typeof IncomingMessage, typeof ServerResponse>}
+   */
   close(): Server<typeof IncomingMessage, typeof ServerResponse>;
 }
 
@@ -15,10 +30,12 @@ export class BackendServer implements IBackendServer {
   server;
 
   constructor(port: number) {
+    // Initialize parameters
     this.port = port;
 
     const app = express();
 
+    // Attach parsers
     app.use(express.text());
     app.use(express.json());
 
@@ -41,7 +58,7 @@ export class BackendServer implements IBackendServer {
     return this.server;
   }
 
-  public close() {
+  public close(): Server<typeof IncomingMessage, typeof ServerResponse> {
     const server = this.server.close();
     console.log(`Closed Backend Server with port ${this.port}`);
     return server;

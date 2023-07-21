@@ -14,6 +14,7 @@ describe('Single Server - GET /', () => {
   let lbServer: ILBServer;
   let beServer: IBackendServer;
 
+  // Initialize LB and BE Server
   beforeAll(async () => {
     beServer = new BackendServer(BE_PORT);
     lbServer = new LBServer(80, SchedulingAlgorithm.ROUND_ROBIN, 10);
@@ -24,6 +25,7 @@ describe('Single Server - GET /', () => {
     request(lbServer.getServer()).get('/').expect(200, RESPONSE_STRING, done);
   });
 
+  // Gracefully close LB and BE Server
   afterAll(() => {
     lbServer.close();
     beServer.close();
@@ -118,6 +120,7 @@ describe('Multiple Servers Round Robin - Parallel GET /', () => {
   it(
     'Responds with Hello and correct port number',
     async () => {
+      // Create parallel HTTP requests
       const tasks = [];
       for (let i = 0; i < numberOfRequests; i++) {
         tasks.push(
