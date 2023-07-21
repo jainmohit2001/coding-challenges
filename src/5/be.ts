@@ -1,9 +1,10 @@
 import express from 'express';
 import { IncomingMessage, Server, ServerResponse } from 'http';
 
+const responseString = 'Hello from backend Server';
+
 export interface IBackendServer {
   port: number;
-  responseString: string;
   server: Server<typeof IncomingMessage, typeof ServerResponse>;
   getServer(): Server<typeof IncomingMessage, typeof ServerResponse>;
   close(): Server<typeof IncomingMessage, typeof ServerResponse>;
@@ -11,12 +12,10 @@ export interface IBackendServer {
 
 export class BackendServer implements IBackendServer {
   port;
-  responseString;
   server;
 
   constructor(port: number) {
     this.port = port;
-    this.responseString = 'Hello from backend Server with port ' + this.port;
 
     const app = express();
 
@@ -28,7 +27,7 @@ export class BackendServer implements IBackendServer {
     });
 
     app.get('/', (req, res) => {
-      res.status(200).send(this.responseString);
+      res.status(200).send(responseString);
     });
 
     const server = app.listen(port, () => {
