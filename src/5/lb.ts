@@ -100,17 +100,22 @@ export class LBServer implements ILBServer {
         }
       }
     });
-    try {
-      this.server = app.listen(this.port, () => {
+
+    this.server = app
+      .listen(this.port, () => {
         console.log('LB Server listening on port ' + this.port);
+      })
+      .on('error', (err) => {
+        if (
+          err.message.toString().indexOf('EADDRINUSE') ||
+          err.message.toString().indexOf('EACCES')
+        ) {
+          this.port = 4000;
+          this.server = app.listen(this.port, () => {
+            console.log('LB Server listening on port ' + this.port);
+          });
+        }
       });
-    } catch (err) {
-      console.error(err);
-      this.port = 4000;
-      this.server = app.listen(this.port, () => {
-        console.log('LB Server listening on port ' + this.port);
-      });
-    }
 
     this.startHealthCheck();
   }
