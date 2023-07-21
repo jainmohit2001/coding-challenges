@@ -53,19 +53,20 @@ export class LBServer implements ILBServer {
     app.use(express.text());
     app.use(express.json());
 
-    app.get('/', (req, res) => {
+    app.get('/', async (req, res) => {
       const backendServer = this.getBackendServer();
       if (this.healthyServers.length === 0) {
-        res.status(500).send('No Backend Servers available right now');
+        res.sendStatus(500);
       } else {
         this.i = (this.i + 1) % this.healthyServers.length;
-
-        axios
-          .get(backendServer, { signal: this.controller.signal })
-          .then((backendRes) => {
-            console.log(backendRes.data);
-            res.status(200).send(backendRes.data);
-          });
+        try {
+          const response = await axios.get(backendServer.url);
+          backendServer.incrementCount();
+          res.status(200).send(response.data);
+        } catch (err) {
+          console.error(err);
+          res.sendStatus(500);
+        }
       }
     });
 
@@ -84,13 +85,14 @@ export class LBServer implements ILBServer {
     this.controller.abort();
     const server = this.server.close();
     console.log('Closed LB Server');
+    this.printBackendStats();
     return server;
   }
 
-  private getBackendServer(): string {
+  private getBackendServer(): IBackendServerDetails {
     switch (this.algo) {
       case SchedulingAlgorithm.ROUND_ROBIN:
-        return this.healthyServers[this.i % this.healthyServers.length].url;
+        return this.healthyServers[this.i % this.healthyServers.length];
     }
   }
 
@@ -107,17 +109,23 @@ export class LBServer implements ILBServer {
     }
     await Promise.all(tasks).then((values) => {
       for (let i = 0; i < values.length; i++) {
+        const oldStatus = this.backendServers[i].getStatus();
         if (values[i] === 200) {
-          this.backendServers[i].setStatus(BEServerHealth.HEALTHY);
+          if (oldStatus !== BEServerHealth.HEALTHY) {
+            this.backendServers[i].setStatus(BEServerHealth.HEALTHY);
+          }
           if (
             this.healthyServers
               .map((server) => server.url)
               .indexOf(this.backendServers[i].url) < 0
           ) {
+            this.backendServers[i].resetCount();
             this.healthyServers.push(this.backendServers[i]);
           }
         } else {
-          this.backendServers[i].setStatus(BEServerHealth.UNHEALTHY);
+          if (oldStatus !== BEServerHealth.UNHEALTHY) {
+            this.backendServers[i].setStatus(BEServerHealth.UNHEALTHY);
+          }
           const index = this.healthyServers
             .map((server) => server.url)
             .indexOf(this.backendServers[i].url);
@@ -134,5 +142,17 @@ export class LBServer implements ILBServer {
 
   public stopHealthCheck(): void {
     clearInterval(this.healthCheckTimer);
+  }
+
+  private printBackendStats(): void {
+    const status: [string, number, string][] = [];
+    this.backendServers.forEach((server) => {
+      status.push([
+        server.url,
+        server.count,
+        BEServerHealth[server.getStatus()]
+      ]);
+    });
+    console.log(status);
   }
 }
