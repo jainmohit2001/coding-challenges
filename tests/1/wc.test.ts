@@ -16,6 +16,11 @@ describe('Testing with filenames', () => {
     const l = output[0];
     const w = output[1];
     const c = output[2];
+    const m = execSync(`wc -m ${filePath}`)
+      .toString()
+      .trim()
+      .replace(/ +(?= )/g, '')
+      .split(' ')[0];
 
     test(`-l option ${filePath}`, () => {
       const argv = [' ', ' ', '-l', filePath];
@@ -30,6 +35,11 @@ describe('Testing with filenames', () => {
     test(`-c option ${filePath}`, () => {
       const argv = [' ', ' ', '-c', filePath];
       expect(myWC(argv, undefined)).resolves.toBe(`${c} ${filePath}`);
+    });
+
+    test(`-m option ${filePath}`, () => {
+      const argv = [' ', ' ', '-m', filePath];
+      expect(myWC(argv, undefined)).resolves.toBe(`${m} ${filePath}`);
     });
 
     test(`No command option ${filePath}`, () => {
@@ -52,6 +62,11 @@ describe('Testing without filename', () => {
     const l = output[0];
     const w = output[1];
     const c = output[2];
+    const m = execSync(`cat ${filePath} | wc -m`)
+      .toString()
+      .trim()
+      .replace(/ +(?= )/g, '')
+      .split(' ')[0];
 
     test(`-l option ${filePath}`, async () => {
       const stream = fs.createReadStream(filePath);
@@ -75,6 +90,14 @@ describe('Testing without filename', () => {
       const result = await myWC(argv, stream);
       stream.destroy();
       expect(result).toBe(c);
+    });
+
+    test(`-m option ${filePath}`, async () => {
+      const stream = fs.createReadStream(filePath);
+      const argv = [' ', ' ', '-m'];
+      const result = await myWC(argv, stream);
+      stream.destroy();
+      expect(result).toBe(m);
     });
 
     test(`No option ${filePath}`, async () => {

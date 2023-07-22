@@ -1,5 +1,12 @@
 const fs = require('fs');
 
+/**
+ * This function Reads the given stream and returns a Buffer.
+ *
+ * @async
+ * @param {NodeJS.ReadStream} stream
+ * @returns {Promise<Buffer>}
+ */
 async function readStream(stream: NodeJS.ReadStream): Promise<Buffer> {
   const chunks = [];
   for await (const chunk of stream) {
@@ -8,14 +15,32 @@ async function readStream(stream: NodeJS.ReadStream): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
+/**
+ * This function returns the number of bytes consisting the given file.
+ *
+ * @param {string} filename
+ * @returns {number}
+ */
 function byteCount(filename: string): number {
   return fs.statSync(filename).size;
 }
 
+/**
+ * This function returns the number of lines in a given text.
+ *
+ * @param {string} text
+ * @returns {number}
+ */
 function lineCount(text: string): number {
   return text.split(/\r\n|\r|\n/).length - 1;
 }
 
+/**
+ * This function returns the number of words stored in a text.
+ *
+ * @param {string} text
+ * @returns {number}
+ */
 function wordCount(text: string): number {
   if (text.length <= 0) {
     return 0;
@@ -24,10 +49,20 @@ function wordCount(text: string): number {
 }
 
 /**
+ * This function returns the number of characters in a given text.
+ *
+ * @param {string} text
+ * @returns {number}
+ */
+function charCount(text: string): number {
+  return text.length;
+}
+
+/**
  * This function is the unix wc command implementation
  *
  * @async
- * @param {string[]} argv - The first two are reserved arguments consering the
+ * @param {string[]} argv - The first two are reserved arguments considering the
  *      node call to the file
  * @param {?NodeJS.ReadStream} [stream] - This can be a file read stream or the
  *      stdin stream
@@ -51,6 +86,8 @@ async function myWC(
           return lineCount(fileContents).toString() + ' ' + filename;
         case '-w':
           return wordCount(fileContents).toString() + ' ' + filename;
+        case '-m':
+          return charCount(fileContents) + ' ' + filename;
         default:
           throw new Error('Invalid option');
       }
@@ -92,6 +129,8 @@ async function myWC(
             return lineCount(fileContents).toString();
           case '-w':
             return wordCount(fileContents).toString();
+          case '-m':
+            return charCount(fileContents).toString();
           default:
             throw new Error('Invalid option');
         }
