@@ -1,6 +1,8 @@
 import { Algorithm } from './enum';
 import { unixSort } from './sort';
 
+const startTime = new Date().getTime();
+
 let unique = false;
 let algorithm;
 
@@ -25,3 +27,5 @@ for (let i = 0; i < process.argv.length; i++) {
 const arr = unixSort(process.argv[2], unique, algorithm);
 const output = arr.join('\n');
 process.stdout.write(output);
+const endTime = new Date().getTime();
+process.stdout.write(`\n\nTotal Running time:  ${endTime - startTime} ms\n`);
