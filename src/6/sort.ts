@@ -2,6 +2,7 @@ import fs from 'fs';
 import { Algorithm } from './enum';
 import { mergeSort } from './merge_sort';
 import { radixSort } from './radix_sort';
+import { quicksort } from './quick_sort';
 
 function unixSort(
   filename: string,
@@ -22,6 +23,8 @@ function unixSort(
         return radixSort(arr);
       case Algorithm.MERGE_SORT:
         return mergeSort(arr);
+      case Algorithm.QUICK_SORT:
+        return quicksort(arr);
       default:
         return arr.sort();
     }
