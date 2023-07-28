@@ -45,6 +45,12 @@ describe('Test Step 1', () => {
       expect(output.length).toBe(expectedOutput.length);
       expect(output).toStrictEqual(expectedOutput);
     });
+
+    test(`Testing ${filename} with random sort`, () => {
+      const output = unixSort(filename, false, Algorithm.RANDOM_SORT);
+
+      expect(output.length).toBe(expectedOutput.length);
+    });
   });
 });
 
@@ -89,6 +95,12 @@ describe('Test Step 2', () => {
 
       expect(output.length).toBe(expectedOutput.length);
       expect(output).toStrictEqual(expectedOutput);
+    });
+
+    test(`Testing ${filename} with unique and random sort`, () => {
+      const output = unixSort(filename, true, Algorithm.RANDOM_SORT);
+
+      expect(output.length).toBe(expectedOutput.length);
     });
   });
 });

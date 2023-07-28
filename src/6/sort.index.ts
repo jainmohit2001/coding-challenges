@@ -17,6 +17,8 @@ for (let i = 0; i < process.argv.length; i++) {
     algorithm = Algorithm.QUICK_SORT;
   } else if (arg === '--heap-sort') {
     algorithm = Algorithm.HEAP_SORT;
+  } else if (arg === '--random-sort') {
+    algorithm = Algorithm.RANDOM_SORT;
   }
 }
 

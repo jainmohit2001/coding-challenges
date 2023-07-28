@@ -4,6 +4,7 @@ import { mergeSort } from './merge_sort';
 import { radixSort } from './radix_sort';
 import { quicksort } from './quick_sort';
 import { heapSort } from './heap_sort';
+import { randomSort } from './random_sort';
 
 function unixSort(
   filename: string,
@@ -28,6 +29,8 @@ function unixSort(
         return quicksort(arr);
       case Algorithm.HEAP_SORT:
         return heapSort(arr);
+      case Algorithm.RANDOM_SORT:
+        return randomSort(arr);
       default:
         return arr.sort();
     }
