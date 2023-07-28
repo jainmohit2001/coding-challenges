@@ -6,6 +6,8 @@ let algorithm;
 
 for (let i = 0; i < process.argv.length; i++) {
   const arg = process.argv[i];
+
+  // Represents if the output should contain unique elements
   if (arg === '-u') {
     unique = true;
   }
