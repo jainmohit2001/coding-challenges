@@ -5,13 +5,16 @@ let unique = false;
 let algorithm;
 
 for (let i = 0; i < process.argv.length; i++) {
-  if (process.argv[i] === '-u') {
+  const arg = process.argv[i];
+  if (arg === '-u') {
     unique = true;
   }
-  if (process.argv[i] === '--merge-sort') {
+  if (arg === '--merge-sort') {
     algorithm = Algorithm.MERGE_SORT;
-  } else if (process.argv[i] === '--quick-sort') {
+  } else if (arg === '--quick-sort') {
     algorithm = Algorithm.QUICK_SORT;
+  } else if (arg === '--heap-sort') {
+    algorithm = Algorithm.HEAP_SORT;
   }
 }
 
