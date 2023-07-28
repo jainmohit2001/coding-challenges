@@ -3,6 +3,7 @@ import { Algorithm } from './enum';
 import { mergeSort } from './merge_sort';
 import { radixSort } from './radix_sort';
 import { quicksort } from './quick_sort';
+import { heapSort } from './heap_sort';
 
 function unixSort(
   filename: string,
@@ -25,6 +26,8 @@ function unixSort(
         return mergeSort(arr);
       case Algorithm.QUICK_SORT:
         return quicksort(arr);
+      case Algorithm.HEAP_SORT:
+        return heapSort(arr);
       default:
         return arr.sort();
     }
