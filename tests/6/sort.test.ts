@@ -4,6 +4,7 @@ import { Algorithm } from '../../src/6/enum';
 
 describe('Test Step 1', () => {
   const filenames = ['./tests/6/words.small.txt', './tests/6/words.txt'];
+
   filenames.forEach((filename) => {
     const expectedOutput = execSync(`sort ${filename}`)
       .toString()
