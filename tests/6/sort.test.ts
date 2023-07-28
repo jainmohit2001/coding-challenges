@@ -30,6 +30,13 @@ describe('Test Step 1', () => {
       expect(output.length).toBe(expectedOutput.length);
       expect(output).toStrictEqual(expectedOutput);
     });
+
+    test(`Testing ${filename} with quick sort`, () => {
+      const output = unixSort(filename, false, Algorithm.QUICK_SORT);
+
+      expect(output.length).toBe(expectedOutput.length);
+      expect(output).toStrictEqual(expectedOutput);
+    });
   });
 });
 
@@ -57,6 +64,13 @@ describe('Test Step 2', () => {
 
     test(`Testing ${filename} with unique and radix sort`, () => {
       const output = unixSort(filename, true, Algorithm.RADIX_SORT);
+
+      expect(output.length).toBe(expectedOutput.length);
+      expect(output).toStrictEqual(expectedOutput);
+    });
+
+    test(`Testing ${filename} with unique and quick sort`, () => {
+      const output = unixSort(filename, true, Algorithm.QUICK_SORT);
 
       expect(output.length).toBe(expectedOutput.length);
       expect(output).toStrictEqual(expectedOutput);

@@ -10,6 +10,8 @@ for (let i = 0; i < process.argv.length; i++) {
   }
   if (process.argv[i] === '--merge-sort') {
     algorithm = Algorithm.MERGE_SORT;
+  } else if (process.argv[i] === '--quick-sort') {
+    algorithm = Algorithm.QUICK_SORT;
   }
 }
 
