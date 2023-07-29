@@ -1,13 +1,37 @@
 import { RespArray } from './types';
 
 interface IRedisSerializer {
+  /**
+   * This function serializes a given object.
+   * The object should be of a valid RESP Type, otherwise it throws an Error.
+   *
+   * @param {unknown} input
+   * @returns {string}
+   */
   serialize(input: unknown): string;
+
+  /**
+   * This function is sued to serialize strings.
+   * The strings can have any binary supported character.
+   *
+   * @param {(string | null)} input
+   * @returns {string}
+   */
   serializeBulkStrings(input: string | null): string;
 }
 
+/**
+ * This function checks whether the input has a valid RESP Type.
+ * If the input provided is a nested data structure, it recursively checks all the elements.
+ * @date 7/29/2023 - 7:00:14 PM
+ *
+ * @param {unknown} input
+ * @returns {boolean}
+ */
 function isARespType(input: unknown): boolean {
   const typeofInput = typeof input;
 
+  // If the input is of type string, number, null, or Error.
   if (
     typeofInput === 'string' ||
     typeofInput === 'number' ||
@@ -17,9 +41,13 @@ function isARespType(input: unknown): boolean {
     return true;
   }
 
+  // If the input is an Array.
+
   if (Array.isArray(input)) {
     let isValid = true;
+
     for (const elem in input) {
+      // check wether each element is a valid RESP Type or not.
       isValid = isValid && isARespType(elem);
       if (!isValid) {
         return false;
