@@ -1,76 +1,103 @@
-import express, { Request, Response } from 'express';
-import { IncomingMessage, Server, ServerResponse } from 'http';
+import net from 'net';
 import { RedisSerializer } from './redis_serializer';
 import { RedisDeserializer } from './redis_deserializer';
 import { RedisCommands } from './redis_commands';
 import { RespType } from './types';
 
 interface IRedisServer {
+  host: string;
   port: number;
   debug: boolean;
   startServer(): void;
-  stopServer(): void;
+  stopServer(): Promise<void>;
 }
 
 export class RedisServer implements IRedisServer {
+  host;
   port;
   debug;
-  private server?: Server<typeof IncomingMessage, typeof ServerResponse>;
+  private server: net.Server;
   private serializer: RedisSerializer;
   private map: Map<string, RespType>;
+  private sockets: Map<string, net.Socket>;
 
-  constructor(port: number = 6379, debug: boolean = false) {
+  constructor(
+    port: number = 6379,
+    host: string = '127.0.0.1',
+    debug: boolean = false
+  ) {
+    this.host = host;
     this.port = port;
     this.debug = debug;
     this.serializer = new RedisSerializer();
     this.map = new Map<string, string>();
+    this.server = new net.Server();
+    this.sockets = new Map<string, net.Socket>();
   }
 
   startServer() {
-    const app = express();
-
-    app.use(express.text());
-    const serializer = this.serializer;
-
-    app.use(function (req, res, next) {
-      const send = res.send;
-      req.body = new RedisDeserializer(req.body).parse();
-      res.send = function (body) {
-        body = serializer.serialize(body);
-        send.call(this, body);
-        return res;
-      };
-      next();
+    this.server.listen(this.port, this.host, () => {
+      if (this.debug) {
+        console.log('Redis server started listening on port: ' + this.port);
+      }
     });
 
-    // Starts listening on given port
-    this.server = app.listen(this.port, () => {
-      console.log('Redis server started on ' + this.port);
-    });
+    this.server.on('connection', (sock) => {
+      this.sockets.set(sock.remoteAddress + ':' + sock.remotePort, sock);
+      console.log('CONNECTED: ' + sock.remoteAddress + ':' + sock.remotePort);
 
-    app.post('/', (req, res) => this.handleRequests(req, res));
+      sock.on('error', (err) => {
+        console.error(err.message);
+        sock.end();
+      });
+
+      sock.on('close', () => {
+        console.log('CLOSED: ' + sock.remoteAddress + ':' + sock.remotePort);
+        this.sockets.delete(sock.remoteAddress + ':' + sock.remotePort);
+      });
+
+      sock.on('data', (data) => {
+        const dataStr = data.toString();
+        if (this.debug) {
+          console.log(
+            'DATA ' +
+              sock.remoteAddress +
+              ':' +
+              sock.remotePort +
+              ' :' +
+              JSON.stringify(dataStr)
+          );
+        }
+
+        const serializedData = new RedisDeserializer(
+          dataStr
+        ).parse() as Array<string>;
+
+        this.handleRequests(sock, serializedData);
+      });
+
+      sock.addListener('sendResponse', (data: RespType) => {
+        const str = this.serializer.serialize(data, true);
+        sock.write(str);
+      });
+    });
   }
 
-  private handleRequests(req: Request, res: Response) {
-    const data = req.body;
-    const clientAddress = req.socket.remoteAddress;
-    if (this.debug) {
-      console.debug('DATA ' + clientAddress + ': ' + JSON.stringify(data));
-    }
+  private handleRequests(sock: net.Socket, data: Array<string>) {
     try {
       const command = data[0];
       switch (command) {
         case RedisCommands.PING:
-          this.handlePing(res, data);
+          this.handlePing(sock, data);
           break;
         case RedisCommands.ECHO:
-          this.handleEcho(res, data);
+          this.handleEcho(sock, data);
           break;
         case RedisCommands.SET:
-          this.handleSet(res, data);
+          this.handleSet(sock, data);
           break;
         case RedisCommands.GET:
-          this.handleGet(res, data);
+          this.handleGet(sock, data);
           break;
         default:
           throw new Error(`UNKNOWN_COMMAND: ${command}`);
@@ -78,12 +105,11 @@ export class RedisServer implements IRedisServer {
     } catch (e) {
       if (e instanceof Error) {
         console.error(e.message);
-        res.send(e);
       }
     }
   }
 
-  private handlePing(res: Response, data: Array<string>) {
+  private handlePing(sock: net.Socket, data: Array<string>) {
     if (data === null) {
       throw new Error('PING: Invalid data');
     }
@@ -92,31 +118,41 @@ export class RedisServer implements IRedisServer {
     if (message !== undefined) {
       response = message;
     }
-    res.send(response);
+    sock.emit('sendResponse', response);
   }
 
-  private handleEcho(res: Response, data: Array<string>) {
-    res.send(data[1]);
+  private handleEcho(sock: net.Socket, data: Array<string>) {
+    sock.emit('sendResponse', data[1]);
   }
 
-  private handleSet(res: Response, data: Array<string>) {
+  private handleSet(sock: net.Socket, data: Array<string>) {
     const key = data[1];
     const value = data[2];
     this.map.set(key, value);
-    res.send('OK');
+    sock.emit('sendResponse', 'OK');
   }
 
-  private handleGet(res: Response, data: Array<string>) {
+  private handleGet(sock: net.Socket, data: Array<string>) {
     const key = data[1];
     const response = this.map.get(key) ?? null;
     if (typeof response !== 'string') {
       throw new Error(`INVALID type of value ${typeof response}`);
     }
-    res.send(response);
+    sock.emit('sendResponse', response);
   }
 
-  stopServer() {
-    this.server?.close();
-    console.log('Redis server stopped listening on port ' + this.port);
+  stopServer(): Promise<void> {
+    return new Promise<void>((res) => {
+      this.sockets.forEach((sock) => {
+        sock.destroy();
+      });
+
+      this.server?.close();
+
+      this.server.on('close', () => {
+        console.log('Redis server stopped listening on port ' + this.port);
+        res();
+      });
+    });
   }
 }

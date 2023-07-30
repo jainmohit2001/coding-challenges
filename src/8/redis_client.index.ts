@@ -3,10 +3,13 @@ import { RedisCommands } from './redis_commands';
 
 const client = new RedisClient();
 
-process.stdin.on('data', (input) => {
+client.connect();
+
+process.stdin.on('data', async (input) => {
   const data = input.toString().trim();
 
   if (data === 'exit') {
+    await client.disconnect();
     process.exit(0);
   }
 
@@ -17,7 +20,7 @@ process.stdin.on('data', (input) => {
     switch (command) {
       case RedisCommands.PING: {
         const message = arr[1];
-        client.ping(message);
+        await client.ping(message);
         break;
       }
       case RedisCommands.ECHO: {
@@ -26,7 +29,7 @@ process.stdin.on('data', (input) => {
           console.error('Please provide a message');
           break;
         }
-        client.echo(message);
+        await client.echo(message);
         break;
       }
       case RedisCommands.SET: {
@@ -36,7 +39,7 @@ process.stdin.on('data', (input) => {
           console.error('Invalid key or value provided');
           break;
         }
-        client.set(key, value);
+        await client.set(key, value);
         break;
       }
       case RedisCommands.GET: {
@@ -45,7 +48,8 @@ process.stdin.on('data', (input) => {
           console.error('Please provide a key');
           break;
         }
-        client.get(key);
+        const value = await client.get(key);
+        console.log(value);
         break;
       }
       default:
