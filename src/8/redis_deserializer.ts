@@ -1,6 +1,6 @@
 import { RespArray, RespType } from './types';
 
-interface IRedisDeserializer {
+export interface IRedisDeserializer {
   /**
    * This function parses the text input.
    * It also raises Error if the input is invalid.
