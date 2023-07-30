@@ -1,14 +1,15 @@
 import { RespArray } from './types';
 
-interface IRedisSerializer {
+export interface IRedisSerializer {
   /**
    * This function serializes a given object.
    * The object should be of a valid RESP Type, otherwise it throws an Error.
    *
    * @param {unknown} input
+   * @param {boolean} useBulkString - Uses bulk strings to serialize instead of using simple strings
    * @returns {string}
    */
-  serialize(input: unknown): string;
+  serialize(input: unknown, useBulkString?: boolean): string;
 
   /**
    * This function is sued to serialize strings.
@@ -60,15 +61,18 @@ function isARespType(input: unknown): boolean {
 }
 
 export class RedisSerializer implements IRedisSerializer {
-  serialize(input: unknown): string {
+  serialize(input: unknown, useBulkString?: boolean): string {
     if (input === null) {
       return this.serializeNull();
     } else if (typeof input === 'string') {
+      if (useBulkString === true) {
+        return this.serializeBulkStrings(input);
+      }
       return this.serializeSimpleString(input);
     } else if (typeof input === 'number') {
       return this.serializeInteger(input);
     } else if (Array.isArray(input) && isARespType(input)) {
-      return this.serializeArrays(input);
+      return this.serializeArrays(input, useBulkString);
     } else if (input instanceof Error) {
       return this.serializerError(input);
     }
@@ -101,13 +105,13 @@ export class RedisSerializer implements IRedisSerializer {
     return '$-1\r\n';
   }
 
-  private serializeArrays(input: RespArray): string {
+  private serializeArrays(input: RespArray, useBulkString?: boolean): string {
     if (input === null) {
       return '*-1\r\n';
     }
     let str = '*' + input.length + '\r\n';
     for (let i = 0; i < input.length; i++) {
-      str += this.serialize(input[i]);
+      str += this.serialize(input[i], useBulkString);
     }
     return str;
   }
