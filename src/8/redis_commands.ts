@@ -1,8 +1,8 @@
 enum RedisCommands {
   PING = 'PING',
   ECHO = 'ECHO',
-  SET = 'set',
-  GET = 'get'
+  SET = 'SET',
+  GET = 'GET'
 }
 
 export { RedisCommands };
