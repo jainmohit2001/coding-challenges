@@ -8,24 +8,37 @@ export interface IRedisDeserializer {
    * @returns {RespType}
    */
   parse(): RespType;
+
+  /**
+   * Returns the current position of the cursor while traversing the input.
+   *
+   * @returns {number}
+   */
+  getPos(): number;
 }
 
 export class RedisDeserializer implements IRedisDeserializer {
   private input: string;
   private pos: number;
   private inputLength: number;
+  private multipleCommands: boolean;
 
-  constructor(input: string) {
+  constructor(input: string, multipleCommands: boolean = false) {
     this.input = input;
     this.pos = 0;
     this.inputLength = input.length;
+    this.multipleCommands = multipleCommands;
+  }
+
+  getPos(): number {
+    return this.pos;
   }
 
   parse(): RespType {
     const output = this.parseValue();
 
     // If the input text still has characters
-    if (this.hasNext()) {
+    if (this.hasNext() && !this.multipleCommands) {
       throw new Error(
         `Invalid token ${JSON.stringify(this.getCurrentToken())} at ${this.pos}`
       );

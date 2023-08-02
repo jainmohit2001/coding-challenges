@@ -13,6 +13,7 @@ interface IRedisClient {
   set(key: string, value: string): void;
   echo(message: string): void;
   get(key: string): Promise<string | null>;
+  delete(key: string): Promise<number>;
   setTimeout(timeout: number): void;
 }
 
@@ -139,5 +140,18 @@ export class RedisClient implements IRedisClient {
       throw response;
     }
     return null;
+  }
+
+  async delete(key: string): Promise<number> {
+    const data: string[] = [RedisCommands.DEL, key];
+
+    const response = await this.write(data);
+    if (typeof response === 'number') {
+      return response;
+    }
+    if (response instanceof Error) {
+      throw response;
+    }
+    throw 0;
   }
 }
