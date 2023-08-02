@@ -52,6 +52,16 @@ process.stdin.on('data', async (input) => {
         console.log(value);
         break;
       }
+      case RedisCommands.DEL: {
+        const key = arr[1];
+        if (key === undefined) {
+          console.error('Please provide a key');
+          break;
+        }
+        const value = await client.delete(key);
+        console.log(value);
+        break;
+      }
       default:
         console.error('Invalid command %s', command);
         break;

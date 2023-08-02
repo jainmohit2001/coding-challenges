@@ -44,7 +44,10 @@ export class RedisServer implements IRedisServer {
 
     this.server.on('connection', (sock) => {
       this.sockets.set(sock.remoteAddress + ':' + sock.remotePort, sock);
-      console.log('CONNECTED: ' + sock.remoteAddress + ':' + sock.remotePort);
+
+      if (this.debug) {
+        console.log('CONNECTED: ' + sock.remoteAddress + ':' + sock.remotePort);
+      }
 
       sock.on('error', (err) => {
         console.error(err.message);
@@ -52,12 +55,13 @@ export class RedisServer implements IRedisServer {
       });
 
       sock.on('close', () => {
-        console.log('CLOSED: ' + sock.remoteAddress + ':' + sock.remotePort);
         this.sockets.delete(sock.remoteAddress + ':' + sock.remotePort);
       });
 
       sock.on('data', (data) => {
         const dataStr = data.toString();
+        const dataLength = dataStr.length;
+
         if (this.debug) {
           console.log(
             'DATA ' +
@@ -68,12 +72,25 @@ export class RedisServer implements IRedisServer {
               JSON.stringify(dataStr)
           );
         }
+        let currentPos = 0;
 
-        const serializedData = new RedisDeserializer(
-          dataStr
-        ).parse() as Array<string>;
-
-        this.handleRequests(sock, serializedData);
+        while (currentPos < dataLength) {
+          try {
+            const deserializer = new RedisDeserializer(
+              dataStr.substring(currentPos),
+              true
+            );
+            const serializedData = deserializer.parse() as Array<string>;
+            currentPos += deserializer.getPos();
+            this.handleRequests(sock, serializedData);
+          } catch (e) {
+            if (this.debug) {
+              console.error(e);
+            }
+            sock.emit('sendResponse', new Error('Cannot parse'));
+            break;
+          }
+        }
       });
 
       sock.addListener('sendResponse', (data: RespType) => {
@@ -99,11 +116,14 @@ export class RedisServer implements IRedisServer {
         case RedisCommands.GET:
           this.handleGet(sock, data);
           break;
+        case RedisCommands.DEL:
+          this.handleDelete(sock, data);
+          break;
         default:
           throw new Error(`UNKNOWN_COMMAND: ${command}`);
       }
     } catch (e) {
-      if (e instanceof Error) {
+      if (e instanceof Error && this.debug) {
         console.error(e.message);
       }
     }
@@ -141,6 +161,12 @@ export class RedisServer implements IRedisServer {
     sock.emit('sendResponse', response);
   }
 
+  private handleDelete(sock: net.Socket, data: Array<string>) {
+    const key = data[1];
+    const response = this.map.delete(key) ? 1 : 0;
+    sock.emit('sendResponse', response);
+  }
+
   stopServer(): Promise<void> {
     return new Promise<void>((res) => {
       this.sockets.forEach((sock) => {
@@ -150,7 +176,9 @@ export class RedisServer implements IRedisServer {
       this.server?.close();
 
       this.server.on('close', () => {
-        console.log('Redis server stopped listening on port ' + this.port);
+        if (this.debug) {
+          console.log('Redis server stopped listening on port ' + this.port);
+        }
         res();
       });
     });
