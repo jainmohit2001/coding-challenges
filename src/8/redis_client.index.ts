@@ -6,6 +6,7 @@ const client = new RedisClient();
 client.connect();
 
 process.stdin.on('data', async (input) => {
+  // Read the input provided by the user
   const data = input.toString().trim();
 
   if (data === 'exit') {
@@ -14,9 +15,12 @@ process.stdin.on('data', async (input) => {
   }
 
   try {
+    // The Redis commands are a list of strings.
     const arr = data.split(' ');
     const command = arr[0];
 
+    // Cross check if a valid command is provided or not.
+    // Send the command to the server
     switch (command) {
       case RedisCommands.PING: {
         const message = arr[1];

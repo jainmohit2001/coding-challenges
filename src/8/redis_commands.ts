@@ -1,3 +1,8 @@
+/**
+ * Supported commands by the Redis Server
+ *
+ * @enum {number}
+ */
 enum RedisCommands {
   PING = 'PING',
   ECHO = 'ECHO',

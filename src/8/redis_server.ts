@@ -5,10 +5,42 @@ import { RedisCommands } from './redis_commands';
 import { RespType } from './types';
 
 interface IRedisServer {
+  /**
+   * The host on which the Redis Server will start.
+   *    e.g.: 127.0.0.1
+   *
+   * @type {string}
+   */
   host: string;
+
+  /**
+   * The port on which the Redis Server will start listening to messages.
+   * @date 8/3/2023 - 1:00:36 PM
+   *
+   * @type {number}
+   */
   port: number;
+
+  /**
+   * Used for debugging purposes.
+   * If true, then the Server will log messages to console.
+   *
+   * @type {boolean}
+   */
   debug: boolean;
+
+  /**
+   * This function starts listening on the given host and port.
+   * It also attaches various a listener on the 'connection' event.
+   * This listener handles the messages from a Socket instance.
+   */
   startServer(): void;
+
+  /**
+   * This function returns a Promise that gets resolved when all the connection of the Server are closed and a 'close' event is emitted from the Server.
+   *
+   * @returns {Promise<void>}
+   */
   stopServer(): Promise<void>;
 }
 
@@ -50,15 +82,18 @@ export class RedisServer implements IRedisServer {
       }
 
       sock.on('error', (err) => {
+        // End the Socket whe encountered an error.
         console.error(err.message);
         sock.end();
       });
 
       sock.on('close', () => {
+        // When the Socket is closed, remove the Socket from the Map of Clients.
         this.sockets.delete(sock.remoteAddress + ':' + sock.remotePort);
       });
 
       sock.on('data', (data) => {
+        // This data can have multiple commands stitched together
         const dataStr = data.toString();
         const dataLength = dataStr.length;
 
@@ -75,15 +110,27 @@ export class RedisServer implements IRedisServer {
         let currentPos = 0;
 
         while (currentPos < dataLength) {
+          // Keep on parsing commands until you reach the end of data.
+          // This doesn't handle the case when the data is fragmented between two reads.
           try {
+            // Deserialize the data
             const deserializer = new RedisDeserializer(
               dataStr.substring(currentPos),
               true
             );
             const serializedData = deserializer.parse() as Array<string>;
+
+            // Update the current position
             currentPos += deserializer.getPos();
+
+            // Handle the command received.
             this.handleRequests(sock, serializedData);
           } catch (e) {
+            /**
+             * If some error occurred while deserialization, send an error to the client.
+             * This doesn't handle the case when there are multiple commands still pending after this error.
+             * The execution for the data parsing is stopped after this.
+             */
             if (this.debug) {
               console.error(e);
             }
@@ -94,6 +141,7 @@ export class RedisServer implements IRedisServer {
       });
 
       sock.addListener('sendResponse', (data: RespType) => {
+        // Send the serialized data to the client
         const str = this.serializer.serialize(data, true);
         sock.write(str);
       });
@@ -169,18 +217,21 @@ export class RedisServer implements IRedisServer {
 
   stopServer(): Promise<void> {
     return new Promise<void>((res) => {
+      // Close all the sockets first
       this.sockets.forEach((sock) => {
         sock.destroy();
       });
 
-      this.server?.close();
-
+      // On 'close' event, resolve the Promise
       this.server.on('close', () => {
         if (this.debug) {
           console.log('Redis server stopped listening on port ' + this.port);
         }
         res();
       });
+
+      // Close the server
+      this.server?.close();
     });
   }
 }
