@@ -5,15 +5,80 @@ import { RedisDeserializer } from './redis_deserializer';
 import { Queue } from '../utils/queue';
 
 interface IRedisClient {
+  /**
+   * The Redis Server host value.
+   *    e.g.: '127.0.0.1'
+   *
+   * @type {string}
+   */
   host: string;
+
+  /**
+   * The Redis Server port.
+   *    e.g.: 6789
+   *
+   * @type {number}
+   */
   port: number;
+
+  /**
+   * This function connects the client to the given host and port.
+   * It create a socket and assigns listens to various events such as
+   *    'close', 'connect', 'timeout', 'error', and 'data'.
+   */
   connect(): void;
+
+  /**
+   * This function closes the Socket to the server.
+   */
   disconnect(): void;
+
+  /**
+   * Sends the PING command to the Redis Server with optional message.
+   *
+   * @param {?string} [message] - Optional message in PING
+   */
   ping(message?: string): void;
+
+  /**
+   * Sends the SET command to the Redis server with given key and value
+   *
+   * @param {string} key
+   * @param {string} value
+   */
   set(key: string, value: string): void;
+
+  /**
+   * Sends the ECHO command to the Redis server with provided message.
+   *
+   * @param {string} message
+   */
   echo(message: string): void;
+
+  /**
+   * Sends the GET command to the Redis server.
+   * Waits for the server to return the value (if present) otherwise null.
+   *
+   * @param {string} key
+   * @returns {Promise<string | null>}
+   */
   get(key: string): Promise<string | null>;
+
+  /**
+   * Sends the DEL command to the Server.
+   * Waits for the server to respond with a number,
+   * representing the elements deleted in the delete operation.
+   *
+   * @param {string} key
+   * @returns {Promise<number>}
+   */
   delete(key: string): Promise<number>;
+
+  /**
+   * This function sets the timeout for the TCP Socket.
+   *
+   * @param {number} timeout
+   */
   setTimeout(timeout: number): void;
 }
 
@@ -81,10 +146,13 @@ export class RedisClient implements IRedisClient {
       const dataStr = data.toString();
 
       const elem = this.commandsQueue.dequeue()!;
+      // Get the element from the queue.
       try {
+        // Deserialize the response and resolve the Promise with the response.
         const ans = new RedisDeserializer(dataStr).parse();
         elem.resolve(ans);
       } catch (err) {
+        // If some error occurred in Deserialization, then reject the Promise.
         console.log(err);
         if (err instanceof Error) {
           elem.reject(err.message);
@@ -93,12 +161,26 @@ export class RedisClient implements IRedisClient {
     });
   }
 
+  /**
+   * This function creates a Promise on which the client waits till the server responds to the command.
+   *
+   * @private
+   * @async
+   * @param {Array<string>} data
+   * @returns {Promise<unknown>}
+   */
   private async write(data: Array<string>): Promise<unknown> {
+    // Check if the Socket connection is open
     if (this.sock && this.sock.readyState === 'open') {
+      // Creates a new Promise and appends to the queue.
+      // When the data is received from the server,
+      // the Promise is resolved or rejects based on the servers' response.
       const newPromise = new Promise((res, rej) => {
         const elem = new CommandWaitingForReply(res, rej);
         this.commandsQueue.enqueue(elem);
       });
+
+      // Write the serialized data in RESP format
       this.sock.write(this.serializer.serialize(data, true));
       return newPromise;
     }

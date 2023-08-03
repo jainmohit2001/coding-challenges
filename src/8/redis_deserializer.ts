@@ -37,7 +37,7 @@ export class RedisDeserializer implements IRedisDeserializer {
   parse(): RespType {
     const output = this.parseValue();
 
-    // If the input text still has characters
+    // If the input text still has characters and this is a single command
     if (this.hasNext() && !this.multipleCommands) {
       throw new Error(
         `Invalid token ${JSON.stringify(this.getCurrentToken())} at ${this.pos}`
