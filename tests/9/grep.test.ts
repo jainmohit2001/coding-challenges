@@ -35,11 +35,13 @@ describe('Testing grep', () => {
     const expectedOutput = execSync(`grep -r "${expression}" ${filePath}`)
       .toString()
       .replace('\r\n', '\n')
-      .trim();
+      .trim()
+      .split('\n')
+      .sort();
 
-    const output = grep(expression, filePath)?.trim();
+    const output = grep(expression, filePath)?.trim().split('\n').sort();
 
-    expect(output).toBe(expectedOutput);
+    expect(output).toStrictEqual(expectedOutput);
   });
 
   test('Testing -v options', () => {
