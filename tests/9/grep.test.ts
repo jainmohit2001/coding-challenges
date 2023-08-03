@@ -4,7 +4,7 @@ import { grep } from '../../src/9/grep';
 describe('Testing grep', () => {
   test('Testing empty expression', () => {
     const expression = '';
-    const filePath = './tests/9/test.txt';
+    const filePath = './tests/9/files/test.txt';
 
     const expectedOutput = execSync(
       `grep "${expression}" ${filePath}`
@@ -16,7 +16,7 @@ describe('Testing grep', () => {
 
   test('Testing simple pattern', () => {
     const expression = 'J';
-    const filePath = './tests/9/rockbands.txt';
+    const filePath = './tests/9/files/rockbands.txt';
 
     const expectedOutput = execSync(`grep "${expression}" ${filePath}`)
       .toString()
@@ -30,7 +30,7 @@ describe('Testing grep', () => {
 
   test('Testing recursion of a directory tree', () => {
     const expression = 'Nirvana';
-    const filePath = './tests/9';
+    const filePath = './tests/9/files';
 
     const expectedOutput = execSync(`grep -r "${expression}" ${filePath}`)
       .toString()
@@ -44,7 +44,7 @@ describe('Testing grep', () => {
 
   test('Testing -v options', () => {
     const expression = 'Madonna';
-    const filePath = './tests/9/rockbands.txt';
+    const filePath = './tests/9/files/rockbands.txt';
 
     const expectedOutput = execSync(`grep -v "${expression}" ${filePath}`)
       .toString()
@@ -57,7 +57,7 @@ describe('Testing grep', () => {
 
   test('Testing \\d option', () => {
     const expression = '\\d';
-    const filePath = './tests/9/test-subdir/BFS1985.txt';
+    const filePath = './tests/9/files/test-subdir/BFS1985.txt';
 
     const expectedOutput = execSync(`grep -P "\\d" ${filePath}`)
       .toString()
@@ -70,7 +70,7 @@ describe('Testing grep', () => {
 
   test('Testing \\w option', () => {
     const expression = '\\w';
-    const filePath = './tests/9/symbols.txt';
+    const filePath = './tests/9/files/symbols.txt';
 
     const expectedOutput = execSync(`grep -P "\\w" ${filePath}`)
       .toString()
@@ -83,7 +83,7 @@ describe('Testing grep', () => {
 
   test('Testing ^ character matching', () => {
     const expression = '^A';
-    const filePath = './tests/9/rockbands.txt';
+    const filePath = './tests/9/files/rockbands.txt';
 
     const expectedOutput = execSync(`grep "${expression}" ${filePath}`)
       .toString()
@@ -96,7 +96,7 @@ describe('Testing grep', () => {
 
   test('Testing $ character matching', () => {
     const expression = 'na$';
-    const filePath = './tests/9/rockbands.txt';
+    const filePath = './tests/9/files/rockbands.txt';
 
     const expectedOutput = execSync(`grep "${expression}" ${filePath}`)
       .toString()
@@ -109,7 +109,7 @@ describe('Testing grep', () => {
 
   test('Testing -i option', () => {
     const expression = 'A';
-    const filePath = './tests/9/rockbands.txt';
+    const filePath = './tests/9/files/rockbands.txt';
 
     const expectedOutput = execSync(`grep -i ${expression} ${filePath}`)
       .toString()
