@@ -17,13 +17,30 @@ describe('Testing redis commands', () => {
     await client.connect();
   });
 
-  test('Testing SET, GET & DEL', async () => {
+  test('Testing PING, and ECO', async () => {
+    const randomString = randomBytes(1024).toString('ascii');
+
+    const pingData = await client.ping(randomString);
+    expect(pingData).toBe(randomString);
+
+    const echoData = await client.echo(randomString);
+    expect(echoData).toBe(randomString);
+  });
+
+  test('Testing SET, GET, and DEL', async () => {
     const randomString = randomBytes(1024).toString('ascii');
     await client.set(randomString, randomString);
+
     const value = await client.get(randomString);
     expect(value).toBe(randomString);
+
     const deletedElements = await client.del(randomString);
     expect(deletedElements).toBe(1);
+
+    const deletedElement = await client.del(
+      randomBytes(1024).toString('ascii')
+    );
+    expect(deletedElement).toBe(0);
   });
 
   afterAll(async () => {
@@ -50,7 +67,8 @@ describe('Testing parallel commands from same client', () => {
     const randomString = randomBytes(1024).toString('ascii');
     await Promise.all([
       client.set(randomString, randomString),
-      client.get(randomString)
+      client.get(randomString),
+      client.del(randomString)
     ]);
   });
 
@@ -86,11 +104,13 @@ describe('Testing parallel commands from same client', () => {
     await Promise.all([
       Promise.all([
         client1.set(randomString, randomString),
-        client1.get(randomString)
+        client1.get(randomString),
+        client1.del(randomString)
       ]),
       Promise.all([
         client2.set(randomString, randomString),
-        client2.get(randomString)
+        client2.get(randomString),
+        client1.del(randomString)
       ])
     ]);
   });
