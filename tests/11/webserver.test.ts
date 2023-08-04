@@ -32,9 +32,19 @@ describe('Testing WebServer', () => {
   );
 
   test(
+    'Server 500 error code',
+    async () => {
+      const url = baseUrl + '/throw-error';
+      const response = await axios.get(url, { validateStatus: () => true });
+      expect(response.status).toBe(500);
+    },
+    timeout
+  );
+
+  test(
     'Invalid path',
     async () => {
-      const url = baseUrl + '/garbage';
+      const url = baseUrl + '/invalid-path';
       const response = await axios.get(url, { validateStatus: () => true });
       expect(response.status).toBe(404);
     },
