@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { webServer } from '../../src/11';
+import { createWebServer } from '../../src/11';
 import { HttpServer } from '../../src/11/webserver';
 
 describe('Testing WebServer', () => {
-  const server: HttpServer = webServer;
+  const server: HttpServer = createWebServer(undefined, 8000);
   const baseUrl = `http://${server.host}:${server.port}`;
   const timeout = 30000;
 
