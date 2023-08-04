@@ -2,12 +2,50 @@ import net from 'net';
 import fs from 'fs';
 
 interface IHttpRequest {
+  /**
+   * Represents the type of HTTP request.
+   *    Possible values - GET, POST, DELETE, PUT, PATCH
+   *
+   * @type {string}
+   */
   method: string;
+
+  /**
+   * The path for the HTTP request
+   *
+   * @type {string}
+   */
   path: string;
+
+  /**
+   * Headers for the HTTP request
+   *
+   * @type {Map<string, string>}
+   */
   headers: Map<string, string>;
+
+  /**
+   * Http Version for the request.
+   *
+   * @type {string}
+   */
   httpVersion: string;
+
+  /**
+   * Send the response for the request.
+   * Multiple overrides for this function.
+   *
+   * @param {?string} [data]
+   */
   send(data?: string): void;
   send(data?: string, statusCode?: number): void;
+
+  /**
+   * Send a file to the client for the request.
+   * Can be used for serving HTML files
+   *
+   * @param {string} path
+   */
   sendFile(path: string): void;
 }
 
