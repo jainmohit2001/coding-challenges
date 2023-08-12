@@ -1,5 +1,5 @@
+import fs from 'fs';
 import { JsonParser } from '../../src/2/json-parser';
-const fs = require('fs');
 
 describe('Step 2 tests', () => {
   const dir = './tests/2/step2/';

@@ -30,7 +30,7 @@ export class JsonParser {
       process.exit(FAILURE_EXIT_CODE);
     }
 
-    console.log('Parsed successffully %s', value);
+    console.log('Parsed successfully %s', value);
     process.exit(SUCCESS_EXIT_CODE);
   }
 
