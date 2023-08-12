@@ -1,5 +1,5 @@
-const fs = require('fs');
-const readline = require('readline');
+import fs from 'fs';
+import readline from 'readline';
 
 function processLine(text: string, delimiter: string = '\t'): string[] {
   return text.split(delimiter);
@@ -49,12 +49,18 @@ async function handleFieldsCommand(
         fileStream = fs.createReadStream(filename);
       } catch (err) {
         rej(err);
+        return;
       }
     }
+
+    if (fileStream === undefined) {
+      rej('Invalid stream');
+      return;
+    }
+
     const rl = readline.createInterface({
       input: fileStream,
-      output: null,
-      console: false
+      output: undefined
     });
     let output = '';
 
@@ -123,7 +129,7 @@ function main(argv: string[] = process.argv): Promise<string> {
     }
   }
   if (command === null) {
-    console.error('Invalid command %s or filename %s', command, filename);
+    console.error('Invalid command %s', command);
     process.exit(1);
   }
   if (filename === null || filename === '-') {

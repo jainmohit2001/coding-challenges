@@ -1,6 +1,5 @@
+import { execSync } from 'child_process';
 import { main } from '../../src/4/cut';
-
-const { execSync } = require('child_process');
 
 describe('Testing Field command with input file', () => {
   const filenames = ['./tests/4/sample.tsv'];
