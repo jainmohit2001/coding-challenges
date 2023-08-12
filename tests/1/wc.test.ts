@@ -1,6 +1,6 @@
+import { execSync } from 'child_process';
+import fs from 'fs';
 import { myWC } from '../../src/1/wc';
-const { execSync } = require('child_process');
-const fs = require('fs');
 
 const filePaths = ['./tests/1/test1.txt', './tests/1/test2.txt'];
 

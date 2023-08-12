@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 
 /**
  * This function Reads the given stream and returns a Buffer.
@@ -7,7 +7,9 @@ const fs = require('fs');
  * @param {NodeJS.ReadStream} stream
  * @returns {Promise<Buffer>}
  */
-async function readStream(stream: NodeJS.ReadStream): Promise<Buffer> {
+async function readStream(
+  stream: NodeJS.ReadStream | fs.ReadStream
+): Promise<Buffer> {
   const chunks = [];
   for await (const chunk of stream) {
     chunks.push(Buffer.from(chunk));
@@ -64,13 +66,13 @@ function charCount(text: string): number {
  * @async
  * @param {string[]} argv - The first two are reserved arguments considering the
  *      node call to the file
- * @param {?NodeJS.ReadStream} [stream] - This can be a file read stream or the
+ * @param {?NodeJS.ReadStream | fs.ReadStream } [stream] - This can be a file read stream or the
  *      stdin stream
  * @returns {Promise<string>}
  */
 async function myWC(
   argv: string[],
-  stream?: NodeJS.ReadStream
+  stream?: NodeJS.ReadStream | fs.ReadStream
 ): Promise<string> {
   // Option is given, file is given
   if (argv.length === 4) {
