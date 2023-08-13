@@ -7,7 +7,7 @@ import fs from 'fs';
  * @export
  * @param {string} s1
  * @param {string} s2
- * @returns {string[]} - [lcs, inserted characters, deleted characters]
+ * @returns {string[]} [lcs, inserted characters, deleted characters]
  */
 export function lcs(s1: string, s2: string): string[] {
   const m = s1.length;
@@ -81,6 +81,15 @@ export function lcs(s1: string, s2: string): string[] {
   return [str, inserted, deleted];
 }
 
+/**
+ * The function finds the LCS between two array of strings and returns the LCS along with the differences.
+ * @date 8/13/2023 - 2:03:31 PM
+ *
+ * @export
+ * @param {string[]} arr1
+ * @param {string[]} arr2
+ * @returns {string[][]} [lcs, differences - array of strings]
+ */
 export function lcsArray(arr1: string[], arr2: string[]): string[][] {
   const m = arr1.length;
   const n = arr2.length;
@@ -118,6 +127,8 @@ export function lcsArray(arr1: string[], arr2: string[]): string[][] {
   const str: string[] = [];
   let i = m,
     j = n;
+  // Used to create the final difference array.
+  // Required to maintain the order of strings in the final output.
   let insertions = new Array<{ index: number; str: string }>();
   let deletions = new Array<{ index: number; str: string }>();
 
@@ -152,6 +163,7 @@ export function lcsArray(arr1: string[], arr2: string[]): string[][] {
 
   const differences: string[] = [];
 
+  // Reversal is required as the push is called with decreasing indices
   insertions = insertions.reverse();
   deletions = deletions.reverse();
 
@@ -161,6 +173,7 @@ export function lcsArray(arr1: string[], arr2: string[]): string[][] {
     length2 = deletions.length;
 
   while (x < length1 && y < length2) {
+    // Priority to deletion statements in case of equality
     if (deletions[y].index <= insertions[x].index) {
       differences.push(deletions[y].str);
       y++;
@@ -184,7 +197,15 @@ export function lcsArray(arr1: string[], arr2: string[]): string[][] {
   return [str.reverse(), differences];
 }
 
-export function diffBetweenFiles(path1: string, path2: string) {
+/**
+ * This function takes in the paths of two files that needs to be compared.
+ *
+ * @export
+ * @param {string} path1
+ * @param {string} path2
+ * @returns {string[][]} [lcs, differences - array of string]
+ */
+export function diffBetweenFiles(path1: string, path2: string): string[][] {
   const arr1 = fs
     .readFileSync(path1)
     .toString()
