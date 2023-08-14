@@ -5,23 +5,12 @@ import fs from 'fs';
 import { homedir } from 'os';
 import path from 'path';
 
+// Storing History in a list
 const HISTORY_FILE_PATH = path.join(homedir(), '.ccsh_history');
-
-const rl = readline.createInterface({
-  input: stdin,
-  output: stdout
-});
-
 const capacity = 1000;
 const history = new Array<string>();
 
-function addToHistory(input: string) {
-  if (history.length === capacity) {
-    history.splice(0, 1);
-  }
-  history.push(input);
-}
-
+// Populate the history array from the file
 if (fs.existsSync(HISTORY_FILE_PATH)) {
   const data = fs.readFileSync(HISTORY_FILE_PATH).toString().split('\n');
   data.forEach((input) => {
@@ -29,10 +18,46 @@ if (fs.existsSync(HISTORY_FILE_PATH)) {
   });
 }
 
+// Using the readline package to get input from the user
+const rl = readline.createInterface({
+  input: stdin,
+  output: stdout
+});
+
+/**
+ * Function to add a command to the history array.
+ *
+ * @param {string} input
+ */
+function addToHistory(input: string) {
+  if (history.length === capacity) {
+    history.splice(0, 1);
+  }
+  history.push(input);
+}
+
+/**
+ * This function writes the history array back to the disk.
+ */
+function writeHistory() {
+  fs.writeFileSync(HISTORY_FILE_PATH, history.join('\n'));
+}
+
+/**
+ * This function returns a child process if the given command is not an
+ * internal command. Otherwise it returns null.
+ *
+ * @param {string} input
+ * @returns {(ChildProcessWithoutNullStreams | null)}
+ */
 function processCommand(input: string): ChildProcessWithoutNullStreams | null {
   const inputArr = input.split(' ');
+
+  // The first word is command
   const command = inputArr[0];
-  const args = inputArr.slice(1, inputArr.length);
+
+  // The rest of the data is args to the command
+  const args = input.substring(command.length).trim();
 
   switch (command) {
     case '': {
@@ -49,7 +74,9 @@ function processCommand(input: string): ChildProcessWithoutNullStreams | null {
     }
     case 'cd': {
       try {
-        chdir(args[0] ?? '');
+        // Calling the inbuilt chdir of the process,
+        // since cd and pwd are built into the command line.
+        chdir(args ?? '');
         addToHistory(input);
       } catch (e) {
         if (e instanceof Error) {
@@ -59,12 +86,13 @@ function processCommand(input: string): ChildProcessWithoutNullStreams | null {
       return null;
     }
     case 'exit': {
-      fs.writeFileSync(HISTORY_FILE_PATH, history.join('\n'));
+      // Write history data back to file and exit the process
+      writeHistory();
       return process.exit(0);
     }
     default: {
       try {
-        const newProcess = spawn(command, args);
+        const newProcess = spawn(command, [args]);
         return newProcess;
       } catch (e) {
         stderr.write('No such file or directory (os error 2)\n');
@@ -74,34 +102,61 @@ function processCommand(input: string): ChildProcessWithoutNullStreams | null {
   }
 }
 
-function processPipedCommand(input: string) {
-  const index = input.indexOf('|');
-  const input1 = input.substring(0, index).trim();
-  const input2 = input.substring(index + 1, input.length).trim();
+/**
+ * This function processes the given piped commands.
+ * It creates multiple processes and pipes the output of the first process
+ * to the input of the subsequent process.
+ *
+ * @param {string} input
+ * @returns {ChildProcessWithoutNullStreams | null}
+ */
+function processPipedCommand(
+  input: string
+): ChildProcessWithoutNullStreams | null {
+  // Break the input into commands
+  const commands = input.split('|');
 
-  const input1Arr = input1.split(' ');
-  const command1 = input1Arr[0];
-  const args1 = input1Arr.slice(1, input1Arr.length);
-
-  const input2Arr = input2.split(' ');
-  const command2 = input2Arr[0];
-  const args2 = input2Arr.slice(2, input1Arr.length);
+  // This array will store all the processes
+  const processes = new Array<ChildProcessWithoutNullStreams>();
 
   try {
-    const p1 = spawn(command1, args1);
-    const p2 = spawn(command2, args2);
+    // Initialize the first processes
+    const input0Arr = commands[0].trim().split(' ');
+    const command0 = input0Arr[0];
+    const args0 = input0Arr.slice(1, input0Arr.length);
+    processes.push(spawn(command0, args0));
 
-    p1.stdout.pipe(p2.stdin);
+    for (let i = 1; i < commands.length; i++) {
+      // Create a new processes based on the command
+      const inputI = commands[i].trim().split(' ');
 
-    p1.on('error', () => {
-      stderr.write('No such file or directory (os error 2)\n');
-    });
+      // If no command is provided between two pipes
+      if (inputI.length === 0) {
+        stderr.write('No such file or directory (os error 2)\n');
+        return null;
+      }
+      const commandI = inputI[0];
+      const argsI = inputI.slice(1, inputI.length);
 
-    p1.stderr.on('data', (data) => {
-      stderr.write(data.toString());
-    });
+      const pi = spawn(commandI, argsI);
 
-    return p2;
+      // Pipe the output of the previous process
+      processes[i - 1].stdout.pipe(pi.stdin);
+
+      // Push the new process into the array
+      processes.push(pi);
+
+      // Handle errors in the processes except the last one
+      processes[i - 1].on('error', () => {
+        stderr.write('No such file or directory (os error 2)\n');
+      });
+      processes[i - 1].stderr.on('data', (data) => {
+        stderr.write(data.toString());
+      });
+    }
+
+    // Return the last process
+    return processes[processes.length - 1];
   } catch (e) {
     stderr.write('No such file or directory (os error 2)\n');
   }
@@ -109,22 +164,38 @@ function processPipedCommand(input: string) {
   return null;
 }
 
+/**
+ * Checks if the given command from the user is a piped command or not
+ *
+ * @param {string} input
+ * @returns {boolean}
+ */
 function checkIfPipeCommand(input: string): boolean {
   return input.indexOf('|') > 0;
 }
 
+// This variable is used to store the current running process
 let childProcess: ChildProcessWithoutNullStreams | null;
+
+// Handle when the user sends CTRL + C
 process.on('SIGINT', () => {
+  // If a child process is connected then kill it
   if (childProcess && childProcess.connected) {
     childProcess.kill('SIGINT');
     return;
   }
 
-  fs.writeFileSync(HISTORY_FILE_PATH, history.join('\n'));
-
+  // Otherwise write the history back to disk and exit.
+  writeHistory();
   process.exit(0);
 });
 
+/**
+ * This function takes in the input command and creates a child process.
+ * It attaches listeners to the stdout and stderr of the child process.
+ *
+ * @param {string} input
+ */
 function handleInput(input: string) {
   if (checkIfPipeCommand(input)) {
     childProcess = processPipedCommand(input);
@@ -133,7 +204,9 @@ function handleInput(input: string) {
   }
 
   if (childProcess !== null) {
+    // When the child process is completed
     childProcess.on('close', (code, signal) => {
+      // If the command was successfully executed
       if (signal === null && code === 0) {
         addToHistory(input);
       }
@@ -148,6 +221,7 @@ function handleInput(input: string) {
       stderr.write(data.toString());
     });
 
+    // Spawn error or other unhandled error
     childProcess.on('error', () => {
       stderr.write('No such file or directory (os error 2)\n');
     });
@@ -156,12 +230,17 @@ function handleInput(input: string) {
   }
 }
 
+/**
+ * Prompts the user with ccsh> as prefix.
+ * After the user provides the input (ENTER key is pressed),
+ * it calls the {@link handleInput} function.
+ */
 function promptUser() {
   rl.question('ccsh>', (input) => {
     const cleanedInput = input.trim();
-    console.log(cleanedInput);
     handleInput(cleanedInput);
   });
 }
 
+// Entry point of the program
 promptUser();
