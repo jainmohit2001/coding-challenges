@@ -57,7 +57,7 @@ function processCommand(input: string): ChildProcessWithoutNullStreams | null {
   const command = inputArr[0];
 
   // The rest of the data is args to the command
-  const args = input.substring(command.length).trim();
+  const args = inputArr.splice(1, inputArr.length);
 
   switch (command) {
     case '': {
@@ -76,7 +76,7 @@ function processCommand(input: string): ChildProcessWithoutNullStreams | null {
       try {
         // Calling the inbuilt chdir of the process,
         // since cd and pwd are built into the command line.
-        chdir(args ?? '');
+        chdir(args[0] ?? '');
         addToHistory(input);
       } catch (e) {
         if (e instanceof Error) {
@@ -92,7 +92,7 @@ function processCommand(input: string): ChildProcessWithoutNullStreams | null {
     }
     default: {
       try {
-        const newProcess = spawn(command, [args]);
+        const newProcess = spawn(command, args);
         return newProcess;
       } catch (e) {
         stderr.write('No such file or directory (os error 2)\n');
