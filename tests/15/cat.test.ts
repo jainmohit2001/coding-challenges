@@ -51,10 +51,7 @@ describe('Testing cat tool', () => {
   });
 
   it('Should handle input from stdin', (done) => {
-    const expectedOutput = execSync(`head -n1 ${testFile1} | cat -`)
-      .toString()
-      .split(/\r\n|\n/)
-      .join('\r\n');
+    const expectedOutput = execSync(`head -n1 ${testFile1} | cat -`).toString();
 
     catTool = spawn('node', ['./build/src/15/cat.js', '-']);
 
