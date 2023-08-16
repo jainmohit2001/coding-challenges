@@ -1,4 +1,6 @@
 const SPACE = ' ';
+const DISALLOWED_CHARS = '\x00\r\n :';
+const CRLF = '\r\n';
 
 export interface IRCMessage {
   command: string;
@@ -16,6 +18,10 @@ export class IRCParser implements IRCParserInterface {
   private inputLength;
 
   constructor(input: string) {
+    const lastTwoChars = input.substring(input.length - 2, input.length);
+    if (lastTwoChars === CRLF) {
+      input = input.substring(0, input.length - 2);
+    }
     this.input = input;
     this.pos = 0;
     this.inputLength = this.input.length;
@@ -36,13 +42,97 @@ export class IRCParser implements IRCParserInterface {
     if (this.getCurrentToken() === SPACE) {
       params = this.parseParams();
     }
+    if (this.pos < this.inputLength) {
+      throw new Error(`Invalid token ${this.getCurrentToken()} at ${this.pos}`);
+    }
     return { command, params, prefix };
+  }
+
+  private isNoSpaceCrLfCl(char: string): boolean {
+    return !DISALLOWED_CHARS.includes(char);
+  }
+
+  private parseTrailing(): string {
+    let str = '';
+
+    while (this.pos < this.inputLength) {
+      const token = this.getCurrentToken();
+
+      if (token === ':' || token === ' ') {
+        str += token;
+        this.consumeToken();
+        continue;
+      }
+
+      if (!this.isNoSpaceCrLfCl(token)) {
+        throw new Error(`Invalid token ${token} at ${this.pos}`);
+      }
+
+      str += token;
+      this.consumeToken();
+    }
+    return str;
+  }
+
+  private parseMiddle(): string {
+    let str = '';
+
+    let token = this.getCurrentToken();
+    if (!this.isNoSpaceCrLfCl(token)) {
+      throw new Error(`Invalid token ${token} at ${this.pos}`);
+    }
+
+    while (this.pos < this.inputLength) {
+      token = this.getCurrentToken();
+
+      if (token === ' ') {
+        break;
+      }
+
+      if (token === ':') {
+        str += token;
+        this.consumeToken();
+        continue;
+      }
+
+      if (!this.isNoSpaceCrLfCl(token)) {
+        throw new Error(`Invalid token ${token} at ${this.pos}`);
+      }
+
+      str += token;
+      this.consumeToken();
+    }
+    return str;
   }
 
   private parseParams(): string[] {
     const params: string[] = [];
+
     this.consumeToken(SPACE);
-    // TODO: handle middle and trailing part
+    let spacesEncountered = 0;
+
+    while (
+      this.pos < this.inputLength &&
+      params.length <= 15 &&
+      spacesEncountered <= 14
+    ) {
+      const token = this.getCurrentToken();
+
+      if (token === ':' || params.length === 14) {
+        const trailing = this.parseTrailing();
+        params.push(trailing);
+        break;
+      }
+
+      const middle = this.parseMiddle();
+
+      params.push(middle);
+
+      if (this.getCurrentToken() === SPACE) {
+        spacesEncountered++;
+        this.consumeToken(SPACE);
+      }
+    }
     return params;
   }
 
@@ -62,7 +152,7 @@ export class IRCParser implements IRCParserInterface {
     for (let i = 0; i < 3; i++) {
       const token = this.getCurrentToken();
 
-      if (!(token > '0' && token < '9')) {
+      if (!(token >= '0' && token <= '9')) {
         throw new Error(`Invalid token ${token} at ${this.pos}`);
       }
 
@@ -75,7 +165,7 @@ export class IRCParser implements IRCParserInterface {
   private parseCommand(): string {
     const token = this.getCurrentToken();
 
-    if (token > '0' && token < '9') {
+    if (token >= '0' && token <= '9') {
       return this.parseCommandDigit();
     }
 
@@ -88,7 +178,7 @@ export class IRCParser implements IRCParserInterface {
         break;
       }
 
-      if ((token > 'a' && token < 'z') || (token > 'A' && token < 'Z')) {
+      if ((token >= 'a' && token <= 'z') || (token >= 'A' && token <= 'Z')) {
         str += token;
         this.consumeToken();
       } else {
