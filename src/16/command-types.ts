@@ -1,4 +1,4 @@
-export enum IRCCommands {
+export enum IRCReplies {
   // The server sends Replies 001 to 004 to a user upon successful registration.
   /**
    * "Welcome to the Internet Relay Network `<nick>`!`<user>`@`<host>`"
@@ -44,5 +44,87 @@ export enum IRCCommands {
    * Parameters: `<server> [ <server2> ]`
    * @example PONG csd.bu.edu tolsun.oulu.fi // PONG message from csd.bu.edu to tolsun.oulu.fi
    */
-  PONG = 'PONG'
+  PONG = 'PONG',
+
+  /**
+   * "`<channel>` :Cannot join channel (+b)"
+   */
+  ERR_BANNEDFROMCHAN = '474',
+
+  /**
+   * "`<channel>` :Cannot join channel (+i)"
+   */
+  ERR_INVITEONLYCHAN = '473',
+
+  /**
+   * "`<channel>` :Cannot join channel (+k)"
+   */
+  ERR_BADCHANNELKEY = '475',
+
+  /**
+   * "`<channel>` :Cannot join channel (+l)"
+   */
+  ERR_CHANNELISFULL = '471',
+
+  /**
+   * "`<channel>` :Bad Channel Mask"
+   */
+  ERR_BADCHANMASK = '476',
+
+  /**
+   * "`<channel name>` :No such channel"
+   */
+  ERR_NOSUCHCHANNEL = '403',
+
+  /**
+   * "`<channel name>` :You have joined too many channels"
+   */
+  ERR_TOOMANYCHANNELS = '405',
+
+  /**
+   * "`<target>` :`<error code>` recipients. `<abort message>`"
+   */
+  ERR_TOOMANYTARGETS = '407',
+
+  /**
+   * "`<nick/channel>` :Nick/channel is temporarily unavailable"
+   */
+  ERR_UNAVAILRESOURCE = '437',
+
+  /**
+   * "`<channel>` :No topic is set"
+   */
+  RPL_NOTOPIC = '331',
+
+  /**
+   * "`<channel>` :`<topic>`"
+   */
+  RPL_TOPIC = '332',
+
+  /**
+   * When a user sends a JOIN message and if it is successful,
+   * the server will send a JOIN message as confirmation.
+   */
+  JOIN = 'JOIN',
+
+  /**
+   * When the user sends a PART message and if it is successful,
+   * the server will send a PART message as confirmation.
+   */
+  PART = 'PART',
+
+  /**
+   * "( "=" / "*" / "@" ) `<channel>`
+   *  :[ "@" / "+" ] `<nick>` *( " " [ "@" / "+" ] `<nick>` )"
+   *
+   * "@" is used for secret channels,
+   * "*" for private channels,
+   * and "=" for others (public channels).
+   */
+  RPL_NAMREPLY = '353',
+
+  /**
+   * "`<channel>` :End of NAMES list"
+   */
+  RPL_ENDOFNAMES = '366'
 }
