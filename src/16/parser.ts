@@ -156,7 +156,7 @@ export class IRCParser implements IRCParserInterface {
     while (
       this.pos < this.inputLength &&
       params.length <= 15 &&
-      spacesEncountered <= 14
+      spacesEncountered <= 15
     ) {
       const token = this.getCurrentToken();
 

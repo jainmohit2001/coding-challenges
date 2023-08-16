@@ -31,7 +31,8 @@ describe('Testing IRC Parser', () => {
     ':CCIRC!~guest@freenode-kge.qup.pic9tt.IP PART :#cc',
     ':Guest4454!~guest@freenode-kge.qup.pic9tt.IP NICK :JohnC',
     ':JohnC!~JohnC@freenode-kge.qup.pic9tt.IP PRIVMSG #cc :Hi There!',
-    ':*.freenode.net 002 CCIRC'
+    ':*.freenode.net 002 CCIRC',
+    ':*.freenode.net 005 MJ EXTBAN=,ACNOQRSTUacjmnpruwz HOSTLEN=64 INVEX=I KEYLEN=32 KICKLEN=255 LINELEN=512 MAXLIST=I:100,X:100,b:100,e:100,w:100 MAXTARGETS=20 MODES=20 MONITOR=30 NAMELEN=128 NAMESX NETWORK=freenode :are supported by this server'
   ];
 
   validInputs.forEach((input) => {
