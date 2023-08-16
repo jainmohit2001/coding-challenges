@@ -109,7 +109,11 @@ async function handlePart(channels: string[]) {
   }
 
   const props: PartCommandProps = { channels: channels };
-  await client.part(props);
+  try {
+    await client.part(props);
+  } catch (e) {
+    console.error(e);
+  }
 
   return prompt();
 }

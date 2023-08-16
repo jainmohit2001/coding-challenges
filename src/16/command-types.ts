@@ -77,6 +77,11 @@ export enum IRCReplies {
   ERR_NOSUCHCHANNEL = '403',
 
   /**
+   * "`<channel>` :You're not on that channel"
+   */
+  ERR_NOTONCHANNEL = '442',
+
+  /**
    * "`<channel name>` :You have joined too many channels"
    */
   ERR_TOOMANYCHANNELS = '405',

@@ -3,6 +3,11 @@ import IRCClient from '../../src/16/irc-client';
 import { IRCParser } from '../../src/16/parser';
 import path from 'path';
 
+const host = 'irc.freenode.net';
+const port = 6667;
+const nickName = 'MJ';
+const fullName = 'Mohit Jain';
+const channel = '#cc';
 const logger = createLogger({
   transports: [
     new transports.File({
@@ -60,20 +65,70 @@ describe('Testing IRC Parser', () => {
   });
 });
 
-describe('Testing IRC Client', () => {
-  const host = 'irc.freenode.net';
-  const port = 6667;
-  const nickName = 'MJ';
-  const fullName = 'Mohit Jain';
+describe('Testing IRC Client normal commands', () => {
   let client: IRCClient;
 
-  afterEach(async () => {
+  beforeAll(async () => {
+    client = new IRCClient(host, port, nickName, fullName, true, logger);
+  });
+
+  afterAll(async () => {
     await client.disconnect();
   });
 
   it('Should connect to server successfully', async () => {
-    client = new IRCClient(host, port, nickName, fullName, true, logger);
     await client.connect();
     expect(client.connected).toBe(true);
+  }, 10000);
+
+  it('Should JOIN to a channel successfully', async () => {
+    await client.join([{ channel: channel }]);
+    const clientDetails = client.getChannelDetails(channel);
+    expect(clientDetails?.channel).toBe(channel);
+  });
+
+  it('Should PART a channel successfully', async () => {
+    await client.part({ channels: [channel], partMessage: 'Bye Bye' });
+    const clientDetails = client.getChannelDetails(channel);
+    expect(clientDetails).toBe(undefined);
+  });
+});
+
+describe('Testing IRC Client error handling', () => {
+  let client: IRCClient;
+
+  beforeAll(async () => {
+    client = new IRCClient(host, port, nickName, fullName, true, logger);
+    await client.connect();
+  }, 10000);
+
+  afterAll(async () => {
+    await client.disconnect();
+  });
+
+  it('Should reject JOIN command with zero channels', () => {
+    expect(async () => await client.join([])).rejects.toThrow();
+  });
+
+  it('Should reject JOIN command with more than one channels', () => {
+    expect(
+      async () => await client.join([{ channel: '#123' }, { channel: '#234' }])
+    ).rejects.toThrow();
+  });
+
+  it('Should reject PART command with zero channels', () => {
+    expect(async () => await client.part({ channels: [] })).rejects.toThrow();
+  });
+
+  it('Should reject PART command with more than one channels', () => {
+    expect(
+      async () => await client.part({ channels: ['#123', '#234'] })
+    ).rejects.toThrow();
+  });
+
+  it('Should throw error if invalid channel name provided', () => {
+    expect(
+      async () => await client.part({ channels: ['#123'] })
+    ).rejects.toThrow();
   });
 });

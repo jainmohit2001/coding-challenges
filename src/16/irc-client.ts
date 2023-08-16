@@ -4,27 +4,15 @@ import { Logger } from 'winston';
 import { IRCReplies } from './command-types';
 import { Queue } from '../utils/queue';
 import {
+  ChannelDetails,
+  CommandWaitingForReply,
   IChannelDetails,
   IRCClientInterface,
   JoinCommand,
-  PartCommandProps
+  PartCommandProps,
+  SupportedCommands
 } from './types';
-
-class CommandWaitingForReply {
-  resolve;
-  reject;
-  command: string;
-
-  constructor(
-    resolve: (value: unknown) => void,
-    reject: (value: unknown) => void,
-    command: string
-  ) {
-    this.resolve = resolve;
-    this.reject = reject;
-    this.command = command;
-  }
-}
+import { getParamWithoutSemiColor } from './utils';
 
 export default class IRCClient implements IRCClientInterface {
   host;
@@ -66,7 +54,7 @@ export default class IRCClient implements IRCClientInterface {
     return this.channels.get(channel);
   }
 
-  connect(): Promise<void> {
+  connect(): Promise<unknown> {
     return new Promise((res, rej) => {
       this.socket.connect(this.port, this.host, () => {});
 
@@ -74,6 +62,9 @@ export default class IRCClient implements IRCClientInterface {
         // Create initial message
         let message = `NICK ${this.nickName}\r\n`;
         message += `USER guest 0 * :${this.realName}\r\n`;
+
+        const elem = new CommandWaitingForReply(res, rej, 'USER');
+        this.commandsQueue.enqueue(elem);
 
         // Send the message to server
         this.socket.write(message);
@@ -84,7 +75,6 @@ export default class IRCClient implements IRCClientInterface {
         if (this.debug && this.logger) {
           this.logger.info('Connected to Server');
         }
-        res();
       });
 
       this.socket.on('data', (data) => {
@@ -156,7 +146,10 @@ export default class IRCClient implements IRCClientInterface {
     return this.waitForReply('PART', params);
   }
 
-  private waitForReply(command: string, params: string[]): Promise<unknown> {
+  private waitForReply(
+    command: SupportedCommands,
+    params: string[]
+  ): Promise<unknown> {
     // Check if socket is open
     if (!(this.socket && this.socket.readyState === 'open')) {
       throw new Error('Connection to server is not open');
@@ -261,6 +254,7 @@ export default class IRCClient implements IRCClientInterface {
         case IRCReplies.ERR_BADCHANMASK:
         case IRCReplies.ERR_NOSUCHCHANNEL:
         case IRCReplies.ERR_TOOMANYCHANNELS:
+        case IRCReplies.ERR_NOTONCHANNEL:
           this.handleChannelErrorResponse(message);
           break;
         case IRCReplies.RPL_NAMREPLY:
@@ -277,8 +271,9 @@ export default class IRCClient implements IRCClientInterface {
   private handlePartResponse(message: IRCMessage) {
     // TODO: handle the case when some other leaves a channel
 
-    const channel = message.params[0];
-    const partMessage = message.params[1];
+    // Leaving the ":" character out
+    const channel = getParamWithoutSemiColor(message.params[0]);
+    const partMessage = getParamWithoutSemiColor(message.params[1]);
 
     this.channels.delete(channel);
     const elem = this.commandsQueue.dequeue();
@@ -306,14 +301,10 @@ export default class IRCClient implements IRCClientInterface {
     // TODO: add support for when other user's join the channel
 
     // leaving out the first ":" char
-    const channel = message.params[0].substring(1, message.params[0].length);
+    const channel = getParamWithoutSemiColor(message.params[0]);
 
     const elem = this.commandsQueue.dequeue();
-    const channelDetails: IChannelDetails = {
-      channel: channel,
-      topic: null,
-      names: new Set<string>()
-    };
+    const channelDetails = new ChannelDetails(channel);
     this.channels.set(channel, channelDetails);
 
     if (elem?.command === 'JOIN') {
@@ -328,30 +319,36 @@ export default class IRCClient implements IRCClientInterface {
     const elem = this.commandsQueue.dequeue();
 
     const channel = message.params[0];
-    const info = message.params[1];
+    const info = getParamWithoutSemiColor(message.params[1]);
 
-    if (elem && elem.command === 'JOIN') {
+    if (elem?.command === 'JOIN') {
       elem.reject(info);
+      return;
     }
+
+    if (message.command === IRCReplies.ERR_NOSUCHCHANNEL) {
+      if (elem?.command === 'PART') {
+        elem.reject(new Error(info));
+      }
+    }
+
+    elem?.reject(new Error(`Invalid element ${elem} received from queue`));
   }
 
   private handleTopicResponse(message: IRCMessage) {
     const channel = message.params[0];
-    const topic = message.params[1];
+    const topic = getParamWithoutSemiColor(message.params[1]);
     let channelDetails = this.channels.get(channel);
 
     if (message.command === IRCReplies.RPL_NOTOPIC) {
       if (channelDetails !== undefined) {
-        channelDetails.topic = null;
+        channelDetails.setTopic(null);
         this.channels.set(channel, channelDetails);
       } else {
-        channelDetails = {
-          channel: channel,
-          topic: null
-        };
+        channelDetails = new ChannelDetails(channel);
       }
     } else if (message.command === IRCReplies.RPL_TOPIC) {
-      channelDetails = { channel: channel, topic: topic };
+      channelDetails = new ChannelDetails(channel, topic);
     }
 
     if (channelDetails !== undefined) {
@@ -370,6 +367,11 @@ export default class IRCClient implements IRCClientInterface {
   }
 
   private handleWelcomeMessage(message: IRCMessage) {
-    // TODO: Handle welcome messages
+    if (message.command === IRCReplies.RPL_MYINFO) {
+      const elem = this.commandsQueue.dequeue();
+      if (elem?.command === 'USER') {
+        elem.resolve('Connected to Server');
+      }
+    }
   }
 }
