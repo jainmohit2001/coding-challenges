@@ -1,6 +1,7 @@
 import net from 'net';
 import { IRCMessage, IRCParser } from './parser';
 import { Logger } from 'winston';
+import { IRCCommands } from './command-types';
 
 interface IRCClientInterface {
   host: string;
@@ -53,6 +54,9 @@ export default class IRCClient implements IRCClientInterface {
         message += `USER guest 0 * :${this.realName}\r\n`;
         this.write(message);
         this.connected = true;
+        if (this.debug && this.logger) {
+          this.logger.info('Connected to Server');
+        }
         res();
       });
 
@@ -118,15 +122,23 @@ export default class IRCClient implements IRCClientInterface {
 
     parsedMessages.forEach((message) => {
       switch (message.command) {
-        case 'PING':
+        case IRCCommands.PING:
           this.handlePing(message);
           break;
-        case 'NOTICE':
-        case '002':
+        case IRCCommands.NOTICE:
+          this.handleNotice(message);
+          break;
+        case IRCCommands.RPL_WELCOME:
+        case IRCCommands.RPL_YOURHOST:
+        case IRCCommands.RPL_CREATED:
+        case IRCCommands.RPL_MYINFO:
+        case IRCCommands.RPL_BOUNCE:
           this.handleWelcomeMessage(message);
       }
     });
   }
+
+  private handleNotice(message: IRCMessage) {}
 
   private handlePing(message: IRCMessage) {
     this.sendMessage('PONG', message.params);
