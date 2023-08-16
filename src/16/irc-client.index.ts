@@ -3,6 +3,7 @@ import readline from 'readline';
 import { createLogger, transports, format } from 'winston';
 import path from 'path';
 
+// File logger
 const logger = createLogger({
   transports: [
     new transports.File({
@@ -18,17 +19,22 @@ const logger = createLogger({
   )
 });
 
+// Read input from user
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
 
+/**
+ * Function to prompt input from user.
+ */
 function prompt() {
   rl.question('client>', async (line) => {
     if (line === 'exit') {
       await client.disconnect();
       process.exit(0);
     } else if (line === 'connect') {
+      // If client is already connected
       if (client && client.connected) {
         return;
       }
@@ -39,6 +45,7 @@ function prompt() {
     }
   });
 }
+
 prompt();
 
 const host = 'irc.freenode.net';
