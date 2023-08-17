@@ -180,6 +180,12 @@ export class IRCParser implements IRCParserInterface {
         break;
       }
 
+      if (token === SPACE) {
+        spacesEncountered++;
+        this.consumeToken(SPACE);
+        continue;
+      }
+
       // Otherwise parse middle
       const middle = this.parseMiddle();
       params.push(middle);
