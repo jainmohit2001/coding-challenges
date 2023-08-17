@@ -62,4 +62,9 @@ describe('Testing IRC Client normal commands', () => {
     expect(client.getChannelDetails(channel)?.channel).toBe(channel);
     client.privateMessage(channel, 'Hello World');
   });
+
+  it('Should be able to quit the server', async () => {
+    await client.quit();
+    expect(client.connected).toBe(false);
+  });
 });

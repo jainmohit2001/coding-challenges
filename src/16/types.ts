@@ -64,6 +64,7 @@ interface IRCClientInterface {
     event: 'NICK',
     listener: (previousNickName: string, newNickName: string) => void
   ): void;
+  quit(message?: string): Promise<unknown>;
   getChannelDetails(channel: string): IChannelDetails | undefined;
 }
 
@@ -108,7 +109,7 @@ class ChannelDetails implements IChannelDetails {
   }
 }
 
-type SupportedCommands = 'USER' | 'JOIN' | 'PART' | 'NICK' | 'PRIVMSG';
+type SupportedCommands = 'USER' | 'JOIN' | 'PART' | 'NICK' | 'PRIVMSG' | 'QUIT';
 
 class CommandWaitingForReply {
   resolve;

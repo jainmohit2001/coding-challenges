@@ -94,17 +94,24 @@ export default class IRCClient implements IRCClientInterface {
           this.logger.info('Disconnected from server');
         }
         this.connected = false;
+
+        const elem = this.commandsQueue.dequeue();
+        if (elem?.command === 'QUIT') {
+          elem.resolve('Disconnected from server');
+        }
       });
     });
   }
 
-  disconnect(): Promise<void> {
-    return new Promise<void>((res) => {
-      this.socket.destroy();
-      this.socket.on('close', () => {
-        res();
+  async disconnect(): Promise<void> {
+    if (this.connected && this.socket.readyState === 'open') {
+      return new Promise<void>((res) => {
+        this.socket.destroy();
+        this.socket.on('close', () => {
+          res();
+        });
       });
-    });
+    }
   }
 
   join(channels: JoinCommand[]): Promise<unknown> {
@@ -158,6 +165,13 @@ export default class IRCClient implements IRCClientInterface {
     return this.sendMessage('PRIVMSG', [msgtarget, ':' + text]);
   }
 
+  quit(message?: string): Promise<unknown> {
+    if (message !== undefined) {
+      return this.waitForReply('QUIT', [message]);
+    }
+    return this.waitForReply('QUIT');
+  }
+
   on(
     event: 'PRIVMSG' | 'JOIN' | 'PART' | 'NICK',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -168,7 +182,7 @@ export default class IRCClient implements IRCClientInterface {
 
   private waitForReply(
     command: SupportedCommands,
-    params: string[]
+    params?: string[]
   ): Promise<unknown> {
     // Check if socket is open
     if (!(this.socket && this.socket.readyState === 'open')) {
@@ -201,7 +215,7 @@ export default class IRCClient implements IRCClientInterface {
     return promise;
   }
 
-  private sendMessage(command: string, params: string[]) {
+  private sendMessage(command: string, params?: string[]) {
     // Check if socket is open
     if (!(this.socket && this.socket.readyState === 'open')) {
       throw new Error('Connection to server is not open');

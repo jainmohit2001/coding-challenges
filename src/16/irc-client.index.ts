@@ -56,6 +56,8 @@ function prompt() {
           return await handleNick(input[1]);
         case '/privmsg':
           return await handlePrivMsg(input.slice(1, input.length));
+        case '/quit':
+          return await handleQuit(input[1]);
         default:
           console.error('Invalid command');
           prompt();
@@ -160,6 +162,11 @@ async function handlePrivMsg(args: string[]) {
 async function connect() {
   client = new IRCClient(host, port, nickName, fullName, debug, logger);
   await client.connect();
+}
+
+async function handleQuit(message?: string) {
+  await client.quit(message);
+  return prompt();
 }
 
 prompt();
