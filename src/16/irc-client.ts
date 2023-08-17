@@ -86,7 +86,7 @@ export default class IRCClient implements IRCClientInterface {
         if (this.debug && this.logger) {
           this.logger.error(error);
         }
-        rej(error);
+        this.handleDataFromServer(error.toString());
       });
 
       this.socket.on('close', () => {
