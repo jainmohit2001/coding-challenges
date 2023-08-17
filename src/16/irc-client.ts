@@ -325,6 +325,7 @@ export default class IRCClient implements IRCClientInterface {
     const msgTarget = getParamWithoutSemiColon(message.params[0]);
     const text = getParamWithoutSemiColon(message.params[1]);
 
+    // If the Private message is sent by some other User
     if (
       message.prefix?.nickName !== undefined &&
       message.prefix.nickName !== this.nickName
@@ -333,6 +334,8 @@ export default class IRCClient implements IRCClientInterface {
       return;
     }
 
+    // Private message is sent by this client.
+    // Resolve the element from the queue.
     const elem = this.commandsQueue.dequeue();
     if (elem?.command === 'PRIVMSG') {
       elem.resolve(text);
@@ -345,6 +348,7 @@ export default class IRCClient implements IRCClientInterface {
   private handleNickResponse(message: IRCMessage) {
     const newNickName = getParamWithoutSemiColon(message.params[0]);
 
+    // If the message is from other user
     if (
       message.prefix?.nickName !== undefined &&
       message.prefix.nickName !== this.nickName
@@ -353,8 +357,9 @@ export default class IRCClient implements IRCClientInterface {
       return;
     }
 
+    // Otherwise update this client's nick name.
+    // Resolve the Promise for the NICK command.
     this.nickName = newNickName;
-
     const elem = this.commandsQueue.dequeue();
     if (elem?.command === 'NICK') {
       elem.resolve(newNickName);
@@ -386,9 +391,9 @@ export default class IRCClient implements IRCClientInterface {
       return;
     }
 
+    // If the PART message was for this client
     this.channels.delete(channel);
     const elem = this.commandsQueue.dequeue();
-
     if (elem?.command === 'PART') {
       elem.resolve(partMessage);
       return;
@@ -398,7 +403,6 @@ export default class IRCClient implements IRCClientInterface {
 
   private handleNameReply(message: IRCMessage) {
     const params = message.params;
-    const channelType = params[1];
     const channel = this.channels.get(params[2])!;
 
     const trailing = params[3].substring(1, params[3].length).split(' ');
@@ -422,10 +426,10 @@ export default class IRCClient implements IRCClientInterface {
       return;
     }
 
+    // The JOIN response for this client
     const elem = this.commandsQueue.dequeue();
     const channelDetails = new ChannelDetails(channel);
     this.channels.set(channel, channelDetails);
-
     if (elem?.command === 'JOIN') {
       elem.resolve('');
       return;

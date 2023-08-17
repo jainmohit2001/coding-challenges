@@ -107,16 +107,28 @@ async function handleJoin(channels: string[]) {
   return prompt();
 }
 
+/**
+ * The `args` present in the parameter is of the following format:
+ * "#foo,#bar leaving channel"
+ * The channels are separated by a comma.
+ * Afterwards an optional PART message is present
+ *
+ * @async
+ * @param {string} args
+ */
 async function handlePart(args: string) {
   let i = 0;
+
+  // get the first space
   for (i; i < args.length; i++) {
     if (args[i] === ' ') {
       break;
     }
   }
+
+  // Get channel and partMessage
   const channels = args.substring(0, i).split(',');
   const partMessage = args.substring(i, args.length);
-  console.log(channels, partMessage);
 
   if (channels.length === 0) {
     throw new Error('No channels provided to join');
