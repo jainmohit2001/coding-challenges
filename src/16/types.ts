@@ -1,3 +1,31 @@
+interface IPrefix {
+  serverName?: string;
+  nickName?: string;
+  user?: string;
+  host?: string;
+}
+
+interface IRCMessage {
+  /**
+   * The command sent by the server.
+   *
+   * @type {string}
+   */
+  command: string;
+  /**
+   * This is a list of string used by server to pass various parameters.
+   *
+   * @type {string[]}
+   */
+  params: string[];
+  /**
+   * An optional prefix sent by the server
+   *
+   * @type {?string}
+   */
+  prefix?: IPrefix;
+}
+
 interface JoinCommand {
   channel: string;
   key?: string;
@@ -19,6 +47,23 @@ interface IRCClientInterface {
   join(channels: JoinCommand[]): Promise<unknown>;
   part(props: PartCommandProps): Promise<unknown>;
   nick(nickname: string): Promise<unknown>;
+  privateMessage(msgtarget: string, text: string): void;
+  on(
+    event: 'PRIVMSG',
+    listener: (prefix: IPrefix, msgTarget: string, text: string) => void
+  ): void;
+  on(
+    event: 'JOIN',
+    listener: (channel: string, nickName: string) => void
+  ): void;
+  on(
+    event: 'PART',
+    listener: (channel: string, nickName: string) => void
+  ): void;
+  on(
+    event: 'NICK',
+    listener: (previousNickName: string, newNickName: string) => void
+  ): void;
   getChannelDetails(channel: string): IChannelDetails | undefined;
 }
 
@@ -63,7 +108,7 @@ class ChannelDetails implements IChannelDetails {
   }
 }
 
-type SupportedCommands = 'USER' | 'JOIN' | 'PART' | 'NICK';
+type SupportedCommands = 'USER' | 'JOIN' | 'PART' | 'NICK' | 'PRIVMSG';
 
 class CommandWaitingForReply {
   resolve;
@@ -81,6 +126,17 @@ class CommandWaitingForReply {
   }
 }
 
+interface IRCParserInterface {
+  /**
+   * This function parses the input provided in the Parser.
+   * It throw an error if the input provided is wrong otherwise
+   * returns the parsed message.
+   *
+   * @returns {IRCMessage}
+   */
+  parse(): IRCMessage;
+}
+
 export {
   JoinCommand,
   PartCommandProps,
@@ -88,5 +144,8 @@ export {
   IChannelDetails,
   ChannelDetails,
   CommandWaitingForReply,
-  SupportedCommands
+  SupportedCommands,
+  IPrefix,
+  IRCMessage,
+  IRCParserInterface
 };

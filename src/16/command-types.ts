@@ -156,5 +156,38 @@ export enum IRCReplies {
   /**
    * "`<nick>` :Nickname collision KILL from `<user>`@`<host>`"
    */
-  ERR_NICKCOLLISION = '436'
+  ERR_NICKCOLLISION = '436',
+
+  PRIVMSG = 'PRIVMSG',
+
+  /**
+   * ":No recipient given (`<command>`)"
+   * @date 8/17/2023 - 4:15:03 PM
+   */
+  ERR_NORECIPIENT = '411',
+
+  /**
+   * ":No text to send"
+   */
+  ERR_NOTEXTTOSEND = '412',
+
+  /**
+   * "`<channel name>` :Cannot send to channel"
+   */
+  ERR_CANNOTSENDTOCHAN = '404',
+
+  /**
+   * "`<mask>` :No toplevel domain specified"
+   */
+  ERR_NOTOPLEVEL = '413',
+
+  /**
+   * "`<mask>` :Wildcard in toplevel domain"
+   */
+  ERR_WILDTOPLEVEL = '414',
+
+  /**
+   * "`<nick>` :<away message>"
+   */
+  RPL_AWAY = '301'
 }

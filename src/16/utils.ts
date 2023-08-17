@@ -1,4 +1,7 @@
-export const getParamWithoutSemiColon = (param: string): string => {
+export const getParamWithoutSemiColon = (param: string | undefined): string => {
+  if (param == undefined) {
+    return '';
+  }
   if (param[0] === ':') {
     return param.substring(1, param.length);
   }

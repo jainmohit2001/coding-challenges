@@ -4,6 +4,13 @@ import { createLogger, transports, format } from 'winston';
 import path from 'path';
 import { JoinCommand, PartCommandProps } from './types';
 
+const host = 'irc.freenode.net';
+const port = 6667;
+const nickName = 'MJ';
+const fullName = 'Mohit Jain';
+const debug = true;
+let client: IRCClient;
+
 // File logger
 const logger = createLogger({
   transports: [
@@ -33,21 +40,32 @@ function prompt() {
   rl.question('client>', async (line) => {
     const input = line.trim().split(' ');
     const command = input[0];
-
-    switch (command) {
-      case 'exit':
-        return await handleExit();
-      case 'connect':
-        return await handleConnect();
-      case '/join':
-        return await handleJoin(input.slice(1, input.length));
-      case '/part':
-        return await handlePart(input.slice(1, input.length));
-      case '/nick':
-        return await handleNick(input[1]);
-      default:
-        console.error('Invalid command');
-        prompt();
+    try {
+      switch (command) {
+        case 'exit':
+          return await handleExit();
+        case 'connect':
+          return await handleConnect();
+        case '/join':
+          return await handleJoin(input.slice(1, input.length));
+        case '/part':
+          return await handlePart(
+            line.substring(command.length, line.length).trim()
+          );
+        case '/nick':
+          return await handleNick(input[1]);
+        case '/privmsg':
+          return await handlePrivMsg(input.slice(1, input.length));
+        default:
+          console.error('Invalid command');
+          prompt();
+      }
+    } catch (e) {
+      if (e instanceof Error) {
+        console.error(e.message);
+      } else {
+        console.error(e);
+      }
     }
   });
 }
@@ -69,15 +87,13 @@ async function handleConnect() {
 
 async function handleJoin(channels: string[]) {
   if (channels.length === 0) {
-    console.error('No channels provided to join');
-    return prompt();
+    throw new Error('No channels provided to join');
   }
 
   // Allowing only one channel to join right now
   // TODO: Add support for multiple channels
   if (channels.length > 1) {
-    console.error('Only allowed to join one channel at a time');
-    return prompt();
+    throw new Error('Only allowed to join one channel at a time');
   }
   const props: JoinCommand[] = [];
 
@@ -85,63 +101,65 @@ async function handleJoin(channels: string[]) {
     props.push({ channel });
   });
 
-  try {
-    await client.join(props);
-  } catch (e) {
-    console.error(e);
-  }
-
+  await client.join(props);
   return prompt();
 }
 
-async function handlePart(channels: string[]) {
+async function handlePart(args: string) {
+  let i = 0;
+  for (i; i < args.length; i++) {
+    if (args[i] === ' ') {
+      break;
+    }
+  }
+  const channels = args.substring(0, i).split(',');
+  const partMessage = args.substring(i, args.length);
+  console.log(channels, partMessage);
+
   if (channels.length === 0) {
-    console.error('No channels provided to join');
-    return prompt();
+    throw new Error('No channels provided to join');
   }
 
-  // Allowing only one channel to join right now with no part message
+  // Allowing only one channel to join right now
   // TODO: Add support for multiple channels
   if (channels.length > 1) {
-    console.error(
-      `Only allowed to join one channel at a time.
-      The support for part message is not available yet`
+    throw new Error(
+      'Only allowed to join one channel at a time. The support for part message is not available yet'
     );
-    return prompt();
   }
 
-  const props: PartCommandProps = { channels: channels };
-  try {
-    await client.part(props);
-  } catch (e) {
-    console.error(e);
-  }
+  const props: PartCommandProps = {
+    channels: channels,
+    partMessage: partMessage
+  };
+  await client.part(props);
 
   return prompt();
 }
 
 async function handleNick(nickName: string) {
-  if (nickName.length < 9 || nickName.length === 0) {
+  if (nickName.length > 9 || nickName.length === 0) {
     throw new Error('Invalid nickname provided');
   }
-  try {
-    await client.nick(nickName);
-  } catch (e) {
-    console.error(e);
-  }
+  await client.nick(nickName);
+
   return prompt();
 }
 
-prompt();
+async function handlePrivMsg(args: string[]) {
+  const msgTarget = args[0];
+  const text = args[1];
 
-const host = 'irc.freenode.net';
-const port = 6667;
-const nickName = 'MJ';
-const fullName = 'Mohit Jain';
-const debug = true;
-let client: IRCClient;
+  if (msgTarget === undefined || text === undefined) {
+    throw new Error('Invalid target or message text');
+  }
+  client.privateMessage(msgTarget, text);
+  return prompt();
+}
 
 async function connect() {
   client = new IRCClient(host, port, nickName, fullName, debug, logger);
   await client.connect();
 }
+
+prompt();

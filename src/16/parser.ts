@@ -1,17 +1,11 @@
 // https://datatracker.ietf.org/doc/html/rfc2812#section-2.3.1
 
+import { IPrefix, IRCMessage, IRCParserInterface } from './types';
 import { getParamWithoutSemiColon } from './utils';
 
 const SPACE = ' ';
 const DISALLOWED_CHARS = '\x00\r\n :';
 const CRLF = '\r\n';
-
-interface IPrefix {
-  serverName?: string;
-  nickName?: string;
-  user?: string;
-  host?: string;
-}
 
 class Prefix implements IPrefix {
   serverName?: string;
@@ -53,38 +47,6 @@ class Prefix implements IPrefix {
     this.host = host;
     this.user = user;
   }
-}
-
-export interface IRCMessage {
-  /**
-   * The command sent by the server.
-   *
-   * @type {string}
-   */
-  command: string;
-  /**
-   * This is a list of string used by server to pass various parameters.
-   *
-   * @type {string[]}
-   */
-  params: string[];
-  /**
-   * An optional prefix sent by the server
-   *
-   * @type {?string}
-   */
-  prefix?: IPrefix;
-}
-
-interface IRCParserInterface {
-  /**
-   * This function parses the input provided in the Parser.
-   * It throw an error if the input provided is wrong otherwise
-   * returns the parsed message.
-   *
-   * @returns {IRCMessage}
-   */
-  parse(): IRCMessage;
 }
 
 export class IRCParser implements IRCParserInterface {

@@ -1,5 +1,4 @@
 import net from 'net';
-import { IRCMessage, IRCParser } from './parser';
 import { Logger } from 'winston';
 import { IRCReplies } from './command-types';
 import { Queue } from '../utils/queue';
@@ -8,11 +7,13 @@ import {
   CommandWaitingForReply,
   IChannelDetails,
   IRCClientInterface,
+  IRCMessage,
   JoinCommand,
   PartCommandProps,
   SupportedCommands
 } from './types';
 import { getParamWithoutSemiColon } from './utils';
+import { IRCParser } from './parser';
 
 export default class IRCClient implements IRCClientInterface {
   host;
@@ -140,7 +141,7 @@ export default class IRCClient implements IRCClientInterface {
     const params = [props.channels.join(',')];
 
     if (props.partMessage !== undefined) {
-      params.push(':' + props.partMessage);
+      params.push(':' + props.partMessage.trim());
     }
 
     return this.waitForReply('PART', params);
@@ -151,6 +152,18 @@ export default class IRCClient implements IRCClientInterface {
       throw new Error('Invalid nickName provided');
     }
     return this.waitForReply('NICK', [nickName]);
+  }
+
+  privateMessage(msgtarget: string, text: string): void {
+    return this.sendMessage('PRIVMSG', [msgtarget, ':' + text]);
+  }
+
+  on(
+    event: 'PRIVMSG' | 'JOIN' | 'PART' | 'NICK',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    listener: (...args: any[]) => void
+  ): void {
+    this.socket.on(event, listener);
   }
 
   private waitForReply(
@@ -237,23 +250,18 @@ export default class IRCClient implements IRCClientInterface {
     parsedMessages.forEach((message) => {
       switch (message.command) {
         case IRCReplies.PING:
-          this.handlePing(message);
-          break;
+          return this.handlePing(message);
         case IRCReplies.NOTICE:
-          this.handleNotice(message);
-          break;
+          return this.handleNotice(message);
         case IRCReplies.RPL_WELCOME:
         case IRCReplies.RPL_YOURHOST:
         case IRCReplies.RPL_CREATED:
         case IRCReplies.RPL_MYINFO:
-          this.handleWelcomeMessage(message);
-          break;
+          return this.handleWelcomeMessage(message);
         case IRCReplies.JOIN:
-          this.handleJoinResponse(message);
-          break;
+          return this.handleJoinResponse(message);
         case IRCReplies.PART:
-          this.handlePartResponse(message);
-          break;
+          return this.handlePartResponse(message);
         case IRCReplies.ERR_BANNEDFROMCHAN:
         case IRCReplies.ERR_INVITEONLYCHAN:
         case IRCReplies.ERR_BADCHANNELKEY:
@@ -262,26 +270,62 @@ export default class IRCClient implements IRCClientInterface {
         case IRCReplies.ERR_NOSUCHCHANNEL:
         case IRCReplies.ERR_TOOMANYCHANNELS:
         case IRCReplies.ERR_NOTONCHANNEL:
-          this.handleChannelErrorResponse(message);
-          break;
+          return this.handleChannelErrorResponse(message);
         case IRCReplies.RPL_NAMREPLY:
-          this.handleNameReply(message);
-          return;
+          return this.handleNameReply(message);
         case IRCReplies.RPL_TOPIC:
         case IRCReplies.RPL_NOTOPIC:
-          this.handleTopicResponse(message);
-          break;
+          return this.handleTopicResponse(message);
         case IRCReplies.NICK:
-          this.handleNickResponse(message);
-          break;
+          return this.handleNickResponse(message);
         case IRCReplies.ERR_NICKCOLLISION:
         case IRCReplies.ERR_NICKNAMEINUSE:
         case IRCReplies.ERR_NONICKNAMEGIVEN:
         case IRCReplies.ERR_ERRONEUSNICKNAME:
-          this.handleNickErrorResponse(message);
-          break;
+          return this.handleNickErrorResponse(message);
+        case IRCReplies.ERR_NORECIPIENT:
+        case IRCReplies.ERR_NOTEXTTOSEND:
+        case IRCReplies.ERR_CANNOTSENDTOCHAN:
+        case IRCReplies.ERR_NOTOPLEVEL:
+        case IRCReplies.ERR_WILDTOPLEVEL:
+        case IRCReplies.RPL_AWAY:
+          return this.handlePrivateMessageErrorResponse(message);
+        case IRCReplies.PRIVMSG:
+          return this.handlePrivateMessageResponse(message);
       }
     });
+  }
+
+  private handlePrivateMessageErrorResponse(message: IRCMessage) {
+    const elem = this.commandsQueue.dequeue();
+
+    if (elem?.command === 'PRIVMSG') {
+      elem.reject(new Error(message.params.join(' ')));
+      return;
+    }
+
+    elem?.reject(new Error(`Invalid element ${elem} received from queue`));
+  }
+
+  private handlePrivateMessageResponse(message: IRCMessage) {
+    const msgTarget = getParamWithoutSemiColon(message.params[0]);
+    const text = getParamWithoutSemiColon(message.params[1]);
+
+    if (
+      message.prefix?.nickName !== undefined &&
+      message.prefix.nickName !== this.nickName
+    ) {
+      this.socket.emit('PRIVMSG', message.prefix, msgTarget, text);
+      return;
+    }
+
+    const elem = this.commandsQueue.dequeue();
+    if (elem?.command === 'PRIVMSG') {
+      elem.resolve(text);
+      return;
+    }
+
+    elem?.reject(new Error(`Invalid element ${elem} received from queue`));
   }
 
   private handleNickResponse(message: IRCMessage) {
@@ -291,6 +335,7 @@ export default class IRCClient implements IRCClientInterface {
       message.prefix?.nickName !== undefined &&
       message.prefix.nickName !== this.nickName
     ) {
+      this.socket.emit('NICK', message.prefix.nickName, newNickName);
       return;
     }
 
@@ -323,6 +368,7 @@ export default class IRCClient implements IRCClientInterface {
       message.prefix.nickName !== this.nickName
     ) {
       this.channels.get(channel)?.removeName(message.prefix?.nickName);
+      this.socket.emit('PART', channel, message.prefix.nickName);
       return;
     }
 
@@ -358,6 +404,7 @@ export default class IRCClient implements IRCClientInterface {
       message.prefix.nickName !== this.nickName
     ) {
       this.channels.get(channel)?.addName(message.prefix.nickName);
+      this.socket.emit('JOIN', channel, message.prefix.nickName);
       return;
     }
 
