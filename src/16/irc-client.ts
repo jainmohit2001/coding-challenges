@@ -311,7 +311,7 @@ export default class IRCClient implements IRCClientInterface {
     // If the JOIN message comes from a different user
     if (
       message.prefix?.nickName !== undefined &&
-      message.prefix.nickName === this.nickName
+      message.prefix.nickName !== this.nickName
     ) {
       this.channels.get(channel)?.addName(message.prefix.nickName);
       return;
