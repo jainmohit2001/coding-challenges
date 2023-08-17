@@ -265,8 +265,6 @@ export default class IRCClient implements IRCClientInterface {
       switch (message.command) {
         case IRCReplies.PING:
           return this.handlePing(message);
-        case IRCReplies.NOTICE:
-          return this.handleNotice(message);
         case IRCReplies.RPL_WELCOME:
         case IRCReplies.RPL_YOURHOST:
         case IRCReplies.RPL_CREATED:
@@ -470,10 +468,6 @@ export default class IRCClient implements IRCClientInterface {
     }
 
     return;
-  }
-
-  private handleNotice(message: IRCMessage) {
-    // TODO: Handle NOTICE messages
   }
 
   private handlePing(message: IRCMessage) {
