@@ -269,11 +269,18 @@ export default class IRCClient implements IRCClientInterface {
   }
 
   private handlePartResponse(message: IRCMessage) {
-    // TODO: handle the case when some other leaves a channel
-
     // Leaving the ":" character out
     const channel = getParamWithoutSemiColon(message.params[0]);
     const partMessage = getParamWithoutSemiColon(message.params[1]);
+
+    // If the PART message comes from a different user
+    if (
+      message.prefix?.nickName !== undefined &&
+      message.prefix.nickName !== this.nickName
+    ) {
+      this.channels.get(channel)?.removeName(message.prefix?.nickName);
+      return;
+    }
 
     this.channels.delete(channel);
     const elem = this.commandsQueue.dequeue();
@@ -298,10 +305,17 @@ export default class IRCClient implements IRCClientInterface {
   }
 
   private handleJoinResponse(message: IRCMessage) {
-    // TODO: add support for when other user's join the channel
-
     // leaving out the first ":" char
     const channel = getParamWithoutSemiColon(message.params[0]);
+
+    // If the JOIN message comes from a different user
+    if (
+      message.prefix?.nickName !== undefined &&
+      message.prefix.nickName === this.nickName
+    ) {
+      this.channels.get(channel)?.addName(message.prefix.nickName);
+      return;
+    }
 
     const elem = this.commandsQueue.dequeue();
     const channelDetails = new ChannelDetails(channel);
