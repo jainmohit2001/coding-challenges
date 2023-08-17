@@ -1,8 +1,59 @@
 // https://datatracker.ietf.org/doc/html/rfc2812#section-2.3.1
 
+import { getParamWithoutSemiColon } from './utils';
+
 const SPACE = ' ';
 const DISALLOWED_CHARS = '\x00\r\n :';
 const CRLF = '\r\n';
+
+interface IPrefix {
+  serverName?: string;
+  nickName?: string;
+  user?: string;
+  host?: string;
+}
+
+class Prefix implements IPrefix {
+  serverName?: string;
+  nickName?: string;
+  user?: string;
+  host?: string;
+
+  constructor(prefix?: string) {
+    let serverName, nickName, host, user;
+
+    if (prefix !== undefined) {
+      prefix = getParamWithoutSemiColon(prefix);
+      // If host is present in prefix
+      if (prefix.indexOf('@') >= 0) {
+        // Split the prefix
+        const prefixArr = prefix.split('@');
+
+        // Since no "@" is allowed expect for the case when host is present,
+        // the second element will always be the host.
+        host = prefixArr[1];
+
+        // If nickName and user both are present
+        if (prefixArr[0].indexOf('!') >= 0) {
+          [nickName, user] = prefixArr[0].split('!');
+        }
+        // Only nickName is present
+        else {
+          nickName = prefixArr[0];
+        }
+      }
+      // Otherwise only serverName is present
+      else {
+        serverName = prefix;
+      }
+    }
+
+    this.serverName = serverName;
+    this.nickName = nickName;
+    this.host = host;
+    this.user = user;
+  }
+}
 
 export interface IRCMessage {
   /**
@@ -22,7 +73,7 @@ export interface IRCMessage {
    *
    * @type {?string}
    */
-  prefix?: string;
+  prefix?: IPrefix;
 }
 
 interface IRCParserInterface {
@@ -181,14 +232,14 @@ export class IRCParser implements IRCParserInterface {
     return params;
   }
 
-  private parsePrefix(): string {
+  private parsePrefix(): IPrefix {
     let str = '';
 
     while (this.getCurrentToken() !== SPACE) {
       str += this.consumeToken();
     }
 
-    return str;
+    return new Prefix(str);
   }
 
   /**

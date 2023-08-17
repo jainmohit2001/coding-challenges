@@ -12,7 +12,7 @@ import {
   PartCommandProps,
   SupportedCommands
 } from './types';
-import { getParamWithoutSemiColor } from './utils';
+import { getParamWithoutSemiColon } from './utils';
 
 export default class IRCClient implements IRCClientInterface {
   host;
@@ -272,8 +272,8 @@ export default class IRCClient implements IRCClientInterface {
     // TODO: handle the case when some other leaves a channel
 
     // Leaving the ":" character out
-    const channel = getParamWithoutSemiColor(message.params[0]);
-    const partMessage = getParamWithoutSemiColor(message.params[1]);
+    const channel = getParamWithoutSemiColon(message.params[0]);
+    const partMessage = getParamWithoutSemiColon(message.params[1]);
 
     this.channels.delete(channel);
     const elem = this.commandsQueue.dequeue();
@@ -301,7 +301,7 @@ export default class IRCClient implements IRCClientInterface {
     // TODO: add support for when other user's join the channel
 
     // leaving out the first ":" char
-    const channel = getParamWithoutSemiColor(message.params[0]);
+    const channel = getParamWithoutSemiColon(message.params[0]);
 
     const elem = this.commandsQueue.dequeue();
     const channelDetails = new ChannelDetails(channel);
@@ -319,25 +319,16 @@ export default class IRCClient implements IRCClientInterface {
     const elem = this.commandsQueue.dequeue();
 
     const channel = message.params[0];
-    const info = getParamWithoutSemiColor(message.params[1]);
+    const info = getParamWithoutSemiColon(message.params[1]);
 
-    if (elem?.command === 'JOIN') {
-      elem.reject(info);
-      return;
+    if (elem !== undefined) {
+      elem.reject(new Error(`${channel} ${info}`));
     }
-
-    if (message.command === IRCReplies.ERR_NOSUCHCHANNEL) {
-      if (elem?.command === 'PART') {
-        elem.reject(new Error(info));
-      }
-    }
-
-    elem?.reject(new Error(`Invalid element ${elem} received from queue`));
   }
 
   private handleTopicResponse(message: IRCMessage) {
     const channel = message.params[0];
-    const topic = getParamWithoutSemiColor(message.params[1]);
+    const topic = getParamWithoutSemiColon(message.params[1]);
     let channelDetails = this.channels.get(channel);
 
     if (message.command === IRCReplies.RPL_NOTOPIC) {
