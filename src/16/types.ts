@@ -18,6 +18,7 @@ interface IRCClientInterface {
   disconnect(): Promise<void>;
   join(channels: JoinCommand[]): Promise<unknown>;
   part(props: PartCommandProps): Promise<unknown>;
+  nick(nickname: string): Promise<unknown>;
   getChannelDetails(channel: string): IChannelDetails | undefined;
 }
 

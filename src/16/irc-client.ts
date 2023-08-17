@@ -146,6 +146,13 @@ export default class IRCClient implements IRCClientInterface {
     return this.waitForReply('PART', params);
   }
 
+  nick(nickName: string): Promise<unknown> {
+    if (nickName.length > 9 || nickName.length === 0) {
+      throw new Error('Invalid nickName provided');
+    }
+    return this.waitForReply('NICK', [nickName]);
+  }
+
   private waitForReply(
     command: SupportedCommands,
     params: string[]
@@ -264,8 +271,45 @@ export default class IRCClient implements IRCClientInterface {
         case IRCReplies.RPL_NOTOPIC:
           this.handleTopicResponse(message);
           break;
+        case IRCReplies.NICK:
+          this.handleNickResponse(message);
+          break;
+        case IRCReplies.ERR_NICKCOLLISION:
+        case IRCReplies.ERR_NICKNAMEINUSE:
+        case IRCReplies.ERR_NONICKNAMEGIVEN:
+        case IRCReplies.ERR_ERRONEUSNICKNAME:
+          this.handleNickErrorResponse(message);
+          break;
       }
     });
+  }
+
+  private handleNickResponse(message: IRCMessage) {
+    const newNickName = getParamWithoutSemiColon(message.params[0]);
+
+    if (
+      message.prefix?.nickName !== undefined &&
+      message.prefix.nickName !== this.nickName
+    ) {
+      return;
+    }
+
+    this.nickName = newNickName;
+
+    const elem = this.commandsQueue.dequeue();
+    if (elem?.command === 'NICK') {
+      elem.resolve(newNickName);
+      return;
+    }
+
+    elem?.reject(new Error(`Invalid element ${elem} received from the queue`));
+  }
+
+  private handleNickErrorResponse(message: IRCMessage) {
+    const error = message.params.join(' ');
+
+    const elem = this.commandsQueue.dequeue();
+    elem?.reject(new Error(error));
   }
 
   private handlePartResponse(message: IRCMessage) {

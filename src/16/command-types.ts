@@ -131,5 +131,30 @@ export enum IRCReplies {
   /**
    * "`<channel>` :End of NAMES list"
    */
-  RPL_ENDOFNAMES = '366'
+  RPL_ENDOFNAMES = '366',
+
+  /**
+   * When the user sends a NICK request,
+   * the server responds back with a NICK response.
+   */
+  NICK = 'NICK',
+
+  /**
+   *  ":No nickname given"
+   */
+  ERR_NONICKNAMEGIVEN = '431',
+  /**
+   * "`<nick>` :Erroneous nickname"
+   */
+  ERR_ERRONEUSNICKNAME = '432',
+
+  /**
+   * "`<nick>` :Nickname is already in use"
+   */
+  ERR_NICKNAMEINUSE = '433',
+
+  /**
+   * "`<nick>` :Nickname collision KILL from `<user>`@`<host>`"
+   */
+  ERR_NICKCOLLISION = '436'
 }

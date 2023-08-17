@@ -43,6 +43,8 @@ function prompt() {
         return await handleJoin(input.slice(1, input.length));
       case '/part':
         return await handlePart(input.slice(1, input.length));
+      case '/nick':
+        return await handleNick(input[1]);
       default:
         console.error('Invalid command');
         prompt();
@@ -115,6 +117,18 @@ async function handlePart(channels: string[]) {
     console.error(e);
   }
 
+  return prompt();
+}
+
+async function handleNick(nickName: string) {
+  if (nickName.length < 9 || nickName.length === 0) {
+    throw new Error('Invalid nickname provided');
+  }
+  try {
+    await client.nick(nickName);
+  } catch (e) {
+    console.error(e);
+  }
   return prompt();
 }
 
