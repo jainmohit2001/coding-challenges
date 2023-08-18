@@ -2,20 +2,95 @@ import net from 'net';
 import { parseMemCommand } from './command';
 
 interface IMemCachedServer {
+  /**
+   * Port on which the server will start listening to connections.
+   *
+   * @type {number}
+   */
   port: number;
+
+  /**
+   * Host on which the server will start listening to connections.
+   *
+   * @type {string}
+   */
   host: string;
+
+  /**
+   * Status of the server when starts listening to connections.
+   *
+   * @type {('listening' | 'closed' | 'error')}
+   */
   status: 'listening' | 'closed' | 'error';
+
+  /**
+   * Function to start the server.
+   *
+   * @returns {Promise<void>}
+   */
   startServer(): Promise<void>;
+
+  /**
+   * Function to stop the server.
+   *
+   * @returns {Promise<void>}
+   */
   stopServer(): Promise<void>;
+
+  /**
+   * Return the total number of client connected to the server.
+   *
+   * @returns {number}
+   */
   getConnectedClientsCount(): number;
 }
 
+/**
+ * The data stored in the Memcached server storage.
+ *
+ * @interface MemData
+ */
 interface MemData {
+  /**
+   * The key of the entry.
+   *
+   * @type {string}
+   */
   key: string;
+
+  /**
+   * The value of the entry.
+   *
+   * @type {string}
+   */
   value: string;
+
+  /**
+   * Flags passed by the user
+   *
+   * @type {number}
+   */
   flags: number;
+
+  /**
+   * Total number of bytes corresponding to value
+   *
+   * @type {number}
+   */
   byteCount: number;
+
+  /**
+   * DateTime when the entry was set.
+   *
+   * @type {Date}
+   */
   addedAt: Date;
+
+  /**
+   * The expTime in seconds
+   *
+   * @type {number}
+   */
   expTime: number;
 }
 
@@ -53,11 +128,13 @@ export default class MemCachedServer implements IMemCachedServer {
 
         console.log(`Client connected ${key}`);
 
+        // add client to the map
         this.clients.set(key, socket);
 
         socket.on('data', (data) => this.handleDataFromClient(socket, data));
 
         socket.on('close', () => {
+          // Remove client from the map
           this.clients.delete(key);
         });
       });
@@ -91,15 +168,23 @@ export default class MemCachedServer implements IMemCachedServer {
       const name = command.name;
 
       if (name === 'set' || name === 'add' || name === 'replace') {
+        // We need to read the data line by line,
+        // since it can be distributed between multiple lines.
         let bytes = command.byteCount!;
 
         let finalValue = '';
 
         while (bytes > 0) {
+          // Go to next line
           i++;
+
+          // Read the data, CRLF is already removed
           finalValue += arr[i];
+
+          // Decrease the total number of bytes left to read
           bytes -= finalValue.length;
         }
+
         this.handleSetAddReplaceCommand(
           socket,
           name,
@@ -107,7 +192,8 @@ export default class MemCachedServer implements IMemCachedServer {
           finalValue,
           command.flags!,
           command.byteCount!,
-          command.expTime!
+          command.expTime!,
+          command.noReply
         );
       } else if (name === 'get') {
         this.handleGetCommand(socket, command.key);
@@ -122,15 +208,24 @@ export default class MemCachedServer implements IMemCachedServer {
     value: string,
     flags: number,
     byteCount: number,
-    expTime: number
+    expTime: number,
+    noreply: boolean = false
   ) {
     // add command: when storage already has a data with the given key
     if (name === 'add' && this.storage.has(key)) {
+      if (noreply) {
+        return;
+      }
+
       socket.write('NOT_STORED\r\n');
       return;
     }
     // replace command: when storage doesn't have a data with the given key
     else if (name === 'replace' && !this.storage.has(key)) {
+      if (noreply) {
+        return;
+      }
+
       socket.write('NOT_STORED\r\n');
       return;
     }
@@ -146,6 +241,9 @@ export default class MemCachedServer implements IMemCachedServer {
       });
     }
 
+    if (noreply) {
+      return;
+    }
     socket.write('STORED\r\n');
   }
 

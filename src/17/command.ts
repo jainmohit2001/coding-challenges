@@ -1,11 +1,50 @@
 type SupportCommands = 'set' | 'get' | 'add' | 'replace';
 
 export interface IMemCommand {
+  /**
+   * The name of the support command.
+   *
+   * @type {SupportCommands}
+   */
   name: SupportCommands;
+
+  /**
+   * The key corresponding to the command.
+   *
+   * @type {string}
+   */
   key: string;
+
+  /**
+   * Flags for the command.
+   * This is used in set, add and replace command.
+   *
+   * @type {?number}
+   */
   flags?: number;
+
+  /**
+   * The expiry time in seconds for the data.
+   * This is used in set, add and replace command.
+   *
+   * @type {?number}
+   */
   expTime?: number;
+
+  /**
+   * Number of bytes for the data.
+   * This is used in set, add and replace command.
+   * @date 8/18/2023 - 9:14:01 PM
+   *
+   * @type {?number}
+   */
   byteCount?: number;
+
+  /**
+   * If true then the server will not reply to the command.
+   *
+   * @type {?boolean}
+   */
   noReply?: boolean;
 }
 
@@ -34,7 +73,20 @@ export class MemCommand implements IMemCommand {
   }
 }
 
+/**
+ * Function used to parse a valid command.
+ * The commands follow the following format:
+ *
+ * `<command name> <key> <flags> <expTime> <byte count> [noreply]`
+ *
+ * The trailing CRLF is already removed while reading the data from the socket.
+ *
+ * @export
+ * @param {string} input
+ * @returns {IMemCommand}
+ */
 export function parseMemCommand(input: string): IMemCommand {
+  // Split the command params with space
   const params = input.split(' ');
 
   const name = params[0] as SupportCommands;

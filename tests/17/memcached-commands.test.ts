@@ -9,8 +9,8 @@ describe('Testing Memcached server with basic commands', () => {
   let client: MemCached;
   const host = '127.0.0.1';
   const port = 11211;
-  const key = 'test';
-  const value = 1234;
+  const key = randomBytes(4).toString('hex');
+  const value = randomBytes(4).toString('hex');
 
   beforeAll(() => {
     server = new MemCachedServer(port, host);
@@ -62,15 +62,15 @@ describe('Testing Memcached server with basic commands', () => {
     client.set(key, value, delay, (err, result) => {
       expect(result).toBe(true);
 
-      // Sleep for delay/2 seconds
+      // Sleep for (delay / 2) seconds
       sleep((delay / 2) * 1000).then(() => {
         // Get the data
         client.get(key, (err, data) => {
           // Data should be present
           expect(data).toBe(value);
 
-          // Sleep for delay / 2 seconds
-          sleep((delay / 2) * 1000).then(() => {
+          // Sleep for (delay / 2 + 1) seconds
+          sleep((delay / 2 + 1) * 1000).then(() => {
             // Data should be absent
             client.get(key, (err, data) => {
               expect(data).toBe(undefined);
