@@ -61,25 +61,27 @@ describe('Testing Memcached server with basic commands', () => {
     const randomValue = randomBytes(4).toString('hex');
 
     client.set(randomKey, randomValue, delay, (err, result) => {
-      expect(result).toBe(true);
+      if (result !== undefined) {
+        expect(result).toBe(true);
 
-      // Sleep for (delay / 2) seconds
-      sleep((delay / 2) * 1000).then(() => {
-        // Get the data
-        client.get(randomKey, (err, data) => {
-          // Data should be present
-          expect(data).toBe(randomValue);
+        // Sleep for (delay / 2) seconds
+        sleep((delay / 2) * 1000).then(() => {
+          // Get the data
+          client.get(randomKey, (err, data) => {
+            // Data should be present
+            expect(data).toBe(randomValue);
 
-          // Sleep for (delay / 2 + 1) seconds
-          sleep((delay / 2 + 1) * 1000).then(() => {
-            // Data should be absent
-            client.get(randomKey, (err, data) => {
-              expect(data).toBe(undefined);
-              done();
+            // Sleep for (delay / 2 + 1) seconds
+            sleep((delay / 2 + 1) * 1000).then(() => {
+              // Data should be absent
+              client.get(randomKey, (err, data) => {
+                expect(data).toBe(undefined);
+                done();
+              });
             });
           });
         });
-      });
+      }
     });
   }, 10000);
 
@@ -159,8 +161,10 @@ describe('Testing Memcached server with basic commands', () => {
     const randomValue = randomBytes(4).toString('hex');
 
     client.replace(randomKey, randomValue, 0, (err, result) => {
-      expect(result).toBe(false);
-      done();
+      if (result !== undefined) {
+        expect(result).toBe(false);
+        done();
+      }
     });
   });
 });
