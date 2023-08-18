@@ -57,22 +57,23 @@ describe('Testing Memcached server with basic commands', () => {
 
   it('Should handle expiry time when set to non zero', (done) => {
     const delay = 4;
-    const key = 'newKey';
-    const value = 'newValue';
-    client.set(key, value, delay, (err, result) => {
+    const randomKey = randomBytes(4).toString('hex');
+    const randomValue = randomBytes(4).toString('hex');
+
+    client.set(randomKey, randomValue, delay, (err, result) => {
       expect(result).toBe(true);
 
       // Sleep for (delay / 2) seconds
       sleep((delay / 2) * 1000).then(() => {
         // Get the data
-        client.get(key, (err, data) => {
+        client.get(randomKey, (err, data) => {
           // Data should be present
-          expect(data).toBe(value);
+          expect(data).toBe(randomValue);
 
           // Sleep for (delay / 2 + 1) seconds
           sleep((delay / 2 + 1) * 1000).then(() => {
             // Data should be absent
-            client.get(key, (err, data) => {
+            client.get(randomKey, (err, data) => {
               expect(data).toBe(undefined);
               done();
             });
@@ -108,10 +109,15 @@ describe('Testing Memcached server with basic commands', () => {
   });
 
   it('should handle add command when data is already present', (done) => {
-    client.set(key, value, 0, (err, result) => {
+    const randomKey = randomBytes(4).toString('hex');
+    const randomValue = randomBytes(4).toString('hex');
+
+    // Set the data first
+    client.set(randomKey, randomValue, 0, (err, result) => {
       expect(result).toBe(true);
 
-      client.add(key, value, 0, (err, result) => {
+      // Check for add command
+      client.add(randomKey, randomValue, 0, (err, result) => {
         expect(result).toBe(false);
         done();
       });
@@ -119,20 +125,32 @@ describe('Testing Memcached server with basic commands', () => {
   });
 
   it('should handle replace command when data is already present', (done) => {
+    const randomKey = randomBytes(4).toString('hex');
     const randomValue = randomBytes(4).toString('hex');
 
-    client.replace(key, randomValue, 0, (err, result) => {
+    // Set a data first
+    client.set(randomKey, randomValue, 0, (err, result) => {
       expect(result).toBe(true);
-      client.get(key, (err, data) => {
-        expect(data).toBe(randomValue);
-        done();
+
+      // Call the replace function with the same key and new value
+      const newRandomValue = randomBytes(4).toString('hex');
+      client.replace(randomKey, newRandomValue, 0, (err, result) => {
+        expect(result).toBe(true);
+
+        // Cross check the new value
+        client.get(randomKey, (err, data) => {
+          expect(data).toBe(newRandomValue);
+          done();
+        });
       });
     });
-  });
+  }, 10000);
 
   it('should handle replace command when data is not already present', (done) => {
     const randomKey = randomBytes(4).toString('hex');
-    client.replace(randomKey, value, 0, (err, result) => {
+    const randomValue = randomBytes(4).toString('hex');
+
+    client.replace(randomKey, randomValue, 0, (err, result) => {
       expect(result).toBe(false);
       done();
     });
