@@ -54,6 +54,30 @@ describe('Testing set and get commands', () => {
       done();
     });
   });
+});
+
+describe('Testing expTime', () => {
+  let server: MemCachedServer;
+  let client: MemCached;
+  const host = '127.0.0.1';
+  const port = 11211;
+
+  beforeAll(async () => {
+    server = new MemCachedServer(port, host);
+    await server.startServer();
+  });
+
+  beforeEach(() => {
+    client = new MemCached(`${host}:${port}`, { idle: 10000 });
+  });
+
+  afterEach(() => {
+    client.end();
+  });
+
+  afterAll(async () => {
+    await server.stopServer();
+  });
 
   it('Should handle expiry time when set to non zero', (done) => {
     const delay = 4;
@@ -86,11 +110,14 @@ describe('Testing set and get commands', () => {
   }, 10000);
 
   it('should handle expiry time when set to -1', (done) => {
-    client.set(key, value, -1, (err, result) => {
+    const randomKey = randomBytes(4).toString('hex');
+    const randomValue = randomBytes(4).toString('hex');
+
+    client.set(randomKey, randomValue, -1, (err, result) => {
       if (result !== undefined) {
         expect(result).toBe(true);
 
-        client.get(key, (err, data) => {
+        client.get(randomKey, (err, data) => {
           expect(data).toBe(undefined);
           done();
         });
@@ -108,11 +135,17 @@ describe('Testing add and replace commands', () => {
   beforeAll(async () => {
     server = new MemCachedServer(port, host);
     await server.startServer();
+  });
+
+  beforeEach(() => {
     client = new MemCached(`${host}:${port}`, { idle: 10000 });
   });
 
-  afterAll(async () => {
+  afterEach(() => {
     client.end();
+  });
+
+  afterAll(async () => {
     await server.stopServer();
   });
 
