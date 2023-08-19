@@ -121,6 +121,9 @@ describe('Testing add and replace commands', () => {
     const randomValue = randomBytes(4).toString('hex');
 
     client.add(randomKey, randomValue, 0, (err, result) => {
+      if (err) {
+        console.error(err);
+      }
       if (result !== undefined) {
         expect(result).toBe(true);
 
@@ -138,6 +141,9 @@ describe('Testing add and replace commands', () => {
 
     // Set the data first
     client.set(randomKey, randomValue, 0, (err, result) => {
+      if (err) {
+        console.error(err);
+      }
       if (result !== undefined) {
         expect(result).toBe(true);
 
@@ -179,6 +185,9 @@ describe('Testing add and replace commands', () => {
     const randomValue = randomBytes(4).toString('hex');
 
     client.replace(randomKey, randomValue, 0, (err, result) => {
+      if (err) {
+        console.error(err);
+      }
       if (result !== undefined) {
         expect(result).toBe(false);
         done();
