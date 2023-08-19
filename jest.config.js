@@ -11,5 +11,5 @@ module.exports = {
   coverageDirectory: './coverage',
   collectCoverage: true,
   detectOpenHandles: true,
-  silent: false,
+  silent: false
 };

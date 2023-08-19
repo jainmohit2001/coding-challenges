@@ -37,7 +37,7 @@ npm test
 To run tests for specific challenge, use the following command:
 
 ```bash
-# npm test tests/<challenge-number>
-npm test tests/2
-npm test tests/3
+# npm test tests/<challenge-number>/
+npm test tests/2/
+npm test tests/3/
 ```
