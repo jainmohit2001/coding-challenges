@@ -62,27 +62,27 @@ describe('Testing expTime', () => {
   const host = '127.0.0.1';
   const port = 11211;
 
+  beforeAll(async () => {
+    server = new MemCachedServer(port, host);
+    await server.startServer();
+  });
+
+  beforeEach(() => {
+    client = new MemCached(`${host}:${port}`, { idle: 10000 });
+  });
+
+  afterEach(() => {
+    client.end();
+  });
+
+  afterAll(async () => {
+    await server.stopServer();
+  });
+
   it('Should handle expiry time when set to non zero', (done) => {
     const delay = 4;
     const randomKey = randomBytes(4).toString('hex');
     const randomValue = randomBytes(4).toString('hex');
-
-    beforeAll(async () => {
-      server = new MemCachedServer(port, host);
-      await server.startServer();
-    });
-
-    beforeEach(() => {
-      client = new MemCached(`${host}:${port}`, { idle: 10000 });
-    });
-
-    afterEach(() => {
-      client.end();
-    });
-
-    afterAll(async () => {
-      await server.stopServer();
-    });
 
     client.set(randomKey, randomValue, delay, (err, result) => {
       if (result !== undefined) {
