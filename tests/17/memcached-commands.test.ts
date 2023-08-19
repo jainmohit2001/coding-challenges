@@ -108,11 +108,17 @@ describe('Testing add and replace commands', () => {
   beforeAll(async () => {
     server = new MemCachedServer(port, host);
     await server.startServer();
+  });
+
+  beforeEach(() => {
     client = new MemCached(`${host}:${port}`, { idle: 10000 });
   });
 
-  afterAll(async () => {
+  afterEach(() => {
     client.end();
+  });
+
+  afterAll(async () => {
     await server.stopServer();
   });
 
