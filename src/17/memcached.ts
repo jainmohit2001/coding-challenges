@@ -80,11 +80,11 @@ interface MemData {
   byteCount: number;
 
   /**
-   * DateTime when the entry was set.
+   * UTC seconds when the entry was set.
    *
-   * @type {Date}
+   * @type {number}
    */
-  addedAt: Date;
+  addedAt: number;
 
   /**
    * The expTime in seconds
@@ -236,7 +236,7 @@ export default class MemCachedServer implements IMemCachedServer {
         value,
         flags,
         byteCount,
-        addedAt: new Date(),
+        addedAt: new Date().getUTCSeconds(),
         expTime
       });
     }
@@ -263,7 +263,7 @@ export default class MemCachedServer implements IMemCachedServer {
     }
 
     // Object is present and expTime > 0
-    const diff = new Date().getSeconds() - obj.addedAt.getSeconds();
+    const diff = new Date().getUTCSeconds() - obj.addedAt;
 
     // Object is expired
     if (diff >= obj.expTime) {
