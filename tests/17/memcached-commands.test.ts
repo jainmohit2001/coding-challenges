@@ -4,7 +4,7 @@ import MemCachedServer from '../../src/17/memcached';
 import sleep from '../../src/utils/sleep';
 import { randomBytes } from 'crypto';
 
-describe('Testing Memcached server with basic commands', () => {
+describe('Testing set and get commands', () => {
   let server: MemCachedServer;
   let client: MemCached;
   const host = '127.0.0.1';
@@ -96,6 +96,24 @@ describe('Testing Memcached server with basic commands', () => {
         });
       }
     });
+  });
+});
+
+describe('Testing add and replace commands', () => {
+  let server: MemCachedServer;
+  let client: MemCached;
+  const host = '127.0.0.1';
+  const port = 11211;
+
+  beforeAll(async () => {
+    server = new MemCachedServer(port, host);
+    await server.startServer();
+    client = new MemCached(`${host}:${port}`, { idle: 10000 });
+  });
+
+  afterAll(async () => {
+    client.end();
+    await server.stopServer();
   });
 
   it('should handle add command when data is not already present', (done) => {
