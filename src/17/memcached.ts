@@ -211,6 +211,7 @@ export default class MemCachedServer implements IMemCachedServer {
     expTime: number,
     noreply: boolean = false
   ) {
+    console.log(name, key, value, this.storage.has(key));
     // add command: when storage already has a data with the given key
     if (name === 'add' && this.storage.has(key)) {
       if (noreply) {
