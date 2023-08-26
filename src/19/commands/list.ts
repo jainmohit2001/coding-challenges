@@ -7,11 +7,9 @@ import Storage from '../challenges';
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('challenge')
-    .setDescription(
-      'Get a random challenge from Coding Challenges back catalogue'
-    ),
+    .setName('list')
+    .setDescription('Get the list of available challenges'),
   async execute(interaction: ChatInputCommandInteraction<CacheType>) {
-    await interaction.reply(Storage.getRandomChallenge());
+    await interaction.reply(Storage.listChallenges().join('\n'));
   }
 };
