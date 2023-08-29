@@ -26,4 +26,4 @@ To run the tests for the JSON parser tool, go to the root directory of this repo
 npm run test tests/2/
 ```
 
-The tests are located in the `tests/1/` directory. All the tests are made for **LINUX** environment only. If you want to run the tests in Windows environment, you can use the Git Bash terminal or Windows Subsystem for Linux (WSL).
+The tests are located in the `tests/2/` directory. All the tests are made for **LINUX** environment only. If you want to run the tests in Windows environment, you can use the Git Bash terminal or Windows Subsystem for Linux (WSL).
