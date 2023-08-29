@@ -18,17 +18,29 @@ npx ts-node index.ts -f2 filename
 The cut tool supports the following options:
 
 - Single Field index support
-  - Example: `npx ts-node index.ts -f1 filename`: prints out the first field
+  ```bash
+  # prints out the first field
+  npx ts-node index.ts -f1 filename
+  ```
 - Delimiter support
-  - Example: `npx ts-node index.ts -f1 -d, filename`: use delimiter `,` to separate fields and print out the first field
+  ```bash
+  # use delimiter "," to separate fields and print out the first field
+  npx ts-node index.ts -f1 -d, filename
+  ```
 - Field list support
-  - Example: `npx ts-node index.ts -f1,2`: prints out the first and second fields
+  ```bash
+  # prints out the first and second fields
+  npx ts-node index.ts -f1,2
+  ```
 - Standard Input support
-  - Example: `cat test.csv | npx ts-node index.ts -d, -f"1 2"`: prints out the first and second fields from the standard input delimited by `,`
+  ```bash
+  # prints out the first and second fields from the standard input delimited by ","
+  cat test.csv | npx ts-node index.ts -d, -f"1 2"
+  ```
 
 ## Run tests
 
-To run the tests for the CUTtool, go to the root directory of this repository and run the following command:
+To run the tests for the CUT tool, go to the root directory of this repository and run the following command:
 
 ```bash
 npm run test tests/4/
