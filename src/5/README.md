@@ -1,4 +1,4 @@
-# Challenge 4 - Write You Own Load Balancer
+# Challenge 5 - Write You Own Load Balancer
 
 This challenge corresponds to the fifth part of the Coding Challenges series by John Crickett https://codingchallenges.fyi/challenges/challenge-load-balancer.
 
