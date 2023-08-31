@@ -4,7 +4,7 @@ This challenge corresponds to the ninth part of the Coding Challenges series by 
 
 ## Description
 
-The WC tool is written in `grep.ts` file and the `grep.index.ts` is the command line version of the tool. The tool is used to search for a pattern in a file or a directory and print the matching lines.
+The GREP tool is written in `grep.ts` file and the `grep.index.ts` is the command line version of the tool. The tool is used to search for a pattern in a file or a directory and print the matching lines.
 
 The implementation is using the inbuilt `RegExp` class of JavaScript.
 
