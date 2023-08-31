@@ -14,7 +14,6 @@ Apart from the builtin commands - `cd`, `pwd`, `exit`, `history` are executed by
 You can use `ts-node` to run the tool as follows:
 
 ```bash
-# Using input file
 npx ts-node shell.ts
 ```
 
