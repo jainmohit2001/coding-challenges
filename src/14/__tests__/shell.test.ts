@@ -3,19 +3,20 @@ import path from 'path';
 
 describe('Testing normal command execution', () => {
   const inputs = [
-    'uniq --count ./tests/10/countries.txt\n',
-    'uniq --repeated ./tests/10/test.txt\n',
+    'uniq --count ./src/10/__tests__/countries.txt\n',
+    'uniq --repeated ./src/10/__tests__/test.txt\n',
     'ls\n',
     'cat README.md\n',
     'cat README.md | wc\n',
     'cat README.md | wc | wc\n',
     'pwd\n',
-    'cut -f2 -d, ./tests/4/fourchords.csv | uniq | wc -l\n'
+    'cut -f2 -d, ./src/4/__tests__/fourchords.csv | uniq | wc -l\n'
   ];
 
   // File path to the shell.js file relative to this test file
   const filePath = path.join(
     __dirname,
+    '..',
     '..',
     '..',
     'build',
