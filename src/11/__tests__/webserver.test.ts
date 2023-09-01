@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { createWebServer } from '../../src/11';
-import { HttpServer } from '../../src/11/webserver';
+import { createWebServer } from '..';
+import { HttpServer } from '../webserver';
 
 describe('Testing WebServer', () => {
   const server: HttpServer = createWebServer(undefined, 8000);
