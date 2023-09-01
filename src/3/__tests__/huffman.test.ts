@@ -1,9 +1,10 @@
-import { packBitString, readFile, unpack } from '../../src/3/utils';
-import HuffManTree from '../../src/3/huffman';
+import { packBitString, readFile, unpack } from '../utils';
+import HuffManTree from '../huffman';
 import fs from 'fs';
+import path from 'path';
 
 describe('Verify frequency table', () => {
-  const filename = './tests/3/test_files/test1.txt';
+  const filename = path.join(__dirname, 'test1.txt');
   const text = readFile(filename);
 
   test(`Test -  ${filename}`, () => {
@@ -35,10 +36,12 @@ describe('Verify Huffman tree creation', () => {
 });
 
 describe('Verify whole process', () => {
-  const dir = './tests/3/test_files/';
-  const filenames = fs.readdirSync(dir);
+  const filenames = [
+    path.join(__dirname, 'test1.txt'),
+    path.join(__dirname, 'test2.txt')
+  ];
   filenames.forEach((filename) => {
-    const text = fs.readFileSync(dir + filename, 'utf-8').toString();
+    const text = fs.readFileSync(filename, 'utf-8').toString();
     test(`Testing ${filename} `, () => {
       const huffmanTree = new HuffManTree();
       const [compressedText, padding] = huffmanTree.compress(text);

@@ -37,7 +37,5 @@ Where the `compressed-file` corresponds to the compressed input file and the `ou
 To run the tests for the compression tool, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/3/
+npm test src/3/
 ```
-
-The tests are located in the `tests/3/` directory.
