@@ -15,7 +15,7 @@ describe('Testing with filenames', () => {
       .trim()
       .replace(/ +(?= )/g, '')
       .split(' ');
-    // Sample output - 0 0 0 ./tests/1/test1.txt
+    // Sample output - 0 0 0 ./src/1/__tests__/test1.txt
 
     const l = output[0];
     const w = output[1];
@@ -61,7 +61,7 @@ describe('Testing without filename', () => {
       .trim()
       .replace(/ +(?= )/g, '')
       .split(' ');
-    // Sample output - 0 0 0 ./tests/1/test1.txt
+    // Sample output - 0 0 0 ./src/1/__tests__/test1.txt
 
     const l = output[0];
     const w = output[1];
