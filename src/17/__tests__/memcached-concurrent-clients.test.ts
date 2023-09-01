@@ -1,5 +1,5 @@
 import MemCached from 'memcached';
-import MemCachedServer from '../../src/17/memcached';
+import MemCachedServer from '../memcached';
 
 describe('Handling concurrent clients', () => {
   const key1 = 'test1',

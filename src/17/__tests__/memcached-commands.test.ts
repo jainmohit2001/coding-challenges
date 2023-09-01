@@ -1,7 +1,7 @@
 import MemCached from 'memcached';
 
-import MemCachedServer from '../../src/17/memcached';
-import sleep from '../../src/utils/sleep';
+import MemCachedServer from '../memcached';
+import sleep from '../../utils/sleep';
 import { randomBytes } from 'crypto';
 
 describe('Testing set and get commands', () => {

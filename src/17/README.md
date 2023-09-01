@@ -36,7 +36,5 @@ node path/to/memcached.index.js -p 11211
 To run the tests for the IRC Client, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/17/
+npm test src/17/
 ```
-
-The tests are located in the `tests/17/` directory.
