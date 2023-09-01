@@ -16,8 +16,12 @@ function catToolStdoutChecker(
   done: jest.DoneCallback,
   debug: boolean = false
 ) {
-  catTool.on('error', () => {});
-  catTool.stderr.on('data', () => {});
+  catTool.on('error', (err) => {
+    console.error(err);
+  });
+  catTool.stderr.on('data', (data) => {
+    console.error(data.toString());
+  });
   let finalData = '';
 
   catTool.stdout.on('data', (data) => {

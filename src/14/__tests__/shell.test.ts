@@ -1,5 +1,4 @@
 import { ChildProcessWithoutNullStreams, execSync, spawn } from 'child_process';
-import path from 'path';
 
 describe('Testing normal command execution', () => {
   const inputs = [
@@ -14,16 +13,7 @@ describe('Testing normal command execution', () => {
   ];
 
   // File path to the shell.js file relative to this test file
-  const filePath = path.join(
-    __dirname,
-    '..',
-    '..',
-    '..',
-    'build',
-    'src',
-    '14',
-    'shell.js'
-  );
+  const filePath = './build/src/14/shell.js';
 
   let shell: ChildProcessWithoutNullStreams;
 
