@@ -1,7 +1,7 @@
-import { main } from './cut';
+import { unixCut } from './cut';
 
 const func = async () => {
-  const result = await main();
+  const result = await unixCut();
   process.stdout.write(result);
 };
 
