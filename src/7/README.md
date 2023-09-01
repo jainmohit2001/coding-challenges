@@ -31,6 +31,16 @@ const str = '1 + 1';
 const value = new Calculator(str).calculate(); // value = 2
 ```
 
+You can also use the command line tool as follows:
+
+```bash
+# Using node
+node /path/to/calculator.index.js '1 + 1'
+
+# Using ts-node
+npx ts-node calculator.index.ts '1 + 1'
+```
+
 ## Run tests
 
 To run the tests for the Calculator tool, go to the root directory of this repository and run the following command:

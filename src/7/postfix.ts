@@ -3,13 +3,55 @@ import { Stack } from '../utils/stack';
 import { OperatorTokens } from './tokens';
 
 export class Postfix {
+  /**
+   * Input infix string
+   *
+   * @private
+   * @type {string}
+   */
   private text: string;
+
+  /**
+   * Position of the current token
+   *
+   * @private
+   * @type {number}
+   */
   private pos: number = 0;
+
+  /**
+   * Final output queue
+   *
+   * @private
+   * @type {Queue<string>}
+   */
   private outputQueue: Queue<string>;
+
+  /**
+   * Data structure to store the operators
+   *
+   * @private
+   * @type {Stack<string>}
+   */
   private operatorStack: Stack<string>;
   private textLength: number;
-  private operatorCount = 0;
-  private numberCount = 0;
+
+  /**
+   * Number of operators encountered till `this.pos`
+   *
+   * @private
+   * @type {number}
+   */
+  private operatorCount: number = 0;
+
+  /**
+   * Number of operands encountered till `this.pos`
+   * @date 9/1/2023 - 1:44:00 PM
+   *
+   * @private
+   * @type {number}
+   */
+  private numberCount: number = 0;
 
   constructor(text: string) {
     this.text = text;
@@ -81,6 +123,7 @@ export class Postfix {
   private parseRightParenthesis() {
     this.consumeToken();
 
+    // Pop all operators from the stack until we encounter a left parenthesis.
     while (this.operatorStack.peek() !== '(') {
       if (this.operatorStack.size() === 0) {
         throw new Error('Mismatched Parenthesis');
@@ -101,6 +144,7 @@ export class Postfix {
     this.consumeToken();
     const token1 = OperatorTokens.get(o1)!;
 
+    // While there is an operator token, o2, at the top of the stack
     while (this.operatorStack.size() > 0) {
       const o2 = this.operatorStack.peek()!;
 
@@ -108,6 +152,7 @@ export class Postfix {
         break;
       }
 
+      // If o1 is left-associative and its precedence is less than or equal to that of o2,
       const token2 = OperatorTokens.get(o2)!;
       if (
         token2.precedence > token1.precedence ||
@@ -126,6 +171,7 @@ export class Postfix {
   private parseNumber(): string {
     this.numberCount++;
     let str = '';
+
     while (this.pos < this.textLength) {
       const token = this.getCurrentToken();
       if (token === ' ' || token === ')') {
@@ -134,6 +180,7 @@ export class Postfix {
       str += token;
       this.consumeToken();
     }
+
     return str;
   }
 
