@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { execSync } from 'child_process';
-import { uniq } from '../../src/10/uniq';
+import { uniq } from '../uniq';
+import path from 'path';
 
 function expectLineByLine(buffer: Buffer, output: string) {
   const expectedOutput = buffer
@@ -16,7 +17,10 @@ function expectLineByLine(buffer: Buffer, output: string) {
 }
 
 describe('Testing with files', () => {
-  const files = ['./tests/10/countries.txt', './tests/10/test.txt'];
+  const files = [
+    path.join(__dirname, 'countries.txt'),
+    path.join(__dirname, 'test.txt')
+  ];
 
   files.forEach((file) => {
     test(`Handle default behavior ${file}`, async () => {
@@ -58,7 +62,7 @@ describe('Testing with files', () => {
 });
 
 describe('Testing with streams', () => {
-  const file = './tests/10/test.txt';
+  const file = path.join(__dirname, 'test.txt');
   const stream = fs.createReadStream(file);
 
   test(`Handle default behavior ${file}`, async () => {
