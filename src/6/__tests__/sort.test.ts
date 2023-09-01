@@ -1,9 +1,13 @@
 import { execSync } from 'child_process';
-import { unixSort } from '../../src/6/sort';
-import { Algorithm } from '../../src/6/enum';
+import { unixSort } from '../sort';
+import { Algorithm } from '../enum';
+import path from 'path';
 
 describe('Test Step 1', () => {
-  const filenames = ['./tests/6/words.small.txt', './tests/6/words.txt'];
+  const filenames = [
+    path.join(__dirname, 'words.small.txt'),
+    path.join(__dirname, 'words.txt')
+  ];
 
   filenames.forEach((filename) => {
     const expectedOutput = execSync(`sort ${filename}`)
@@ -55,7 +59,10 @@ describe('Test Step 1', () => {
 });
 
 describe('Test Step 2', () => {
-  const filenames = ['./tests/6/words.small.txt', './tests/6/words.txt'];
+  const filenames = [
+    path.join(__dirname, 'words.small.txt'),
+    path.join(__dirname, 'words.txt')
+  ];
   filenames.forEach((filename) => {
     const expectedOutput = execSync(`sort -u ${filename}`)
       .toString()
