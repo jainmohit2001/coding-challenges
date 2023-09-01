@@ -1,4 +1,4 @@
-import { IRCParser } from '../../src/16/parser';
+import { IRCParser } from '../parser';
 
 describe('Testing IRC Parser', () => {
   const validInputs = [

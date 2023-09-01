@@ -1,7 +1,7 @@
 import path from 'path';
 import { createLogger, format, transports } from 'winston';
-import { IRCClientInterface } from '../../src/16/types';
-import IRCClient from '../../src/16/irc-client';
+import { IRCClientInterface } from '../types';
+import IRCClient from '../irc-client';
 
 const host = 'irc.freenode.net';
 const port = 6667;
