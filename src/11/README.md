@@ -46,7 +46,5 @@ webServer.startServer();
 To run the tests for the webserver, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/11/
+npm test src/11/
 ```
-
-The tests are located in the `tests/11/` directory.

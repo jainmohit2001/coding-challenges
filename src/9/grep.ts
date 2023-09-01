@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 /**
  * This function runs the GREP functionality on a given file.
@@ -49,7 +50,7 @@ function grepFile(
   });
 
   if (output.length > 0) {
-    return output.join('\n');
+    return output.join('\n').replace(/\\/g, '/');
   }
   return null;
 }
@@ -57,18 +58,20 @@ function grepFile(
 /**
  * Helper function to recursively traverse a DIR.
  *
- * @param {string} path
+ * @param {string} dirname
  * @param {string[]} [arr=[]]
  * @returns {string[]}
  */
-function getFiles(path: string, arr: string[] = []): string[] {
-  const files = fs.readdirSync(path);
+function getFiles(dirname: string, arr: string[] = []): string[] {
+  const files = fs.readdirSync(dirname);
 
   files.forEach((file) => {
-    if (fs.statSync(path + '/' + file).isDirectory()) {
-      arr = getFiles(path + '/' + file, arr);
+    const filepath = path.join(dirname, file).replace(/\\/g, '/');
+
+    if (fs.statSync(filepath).isDirectory()) {
+      arr = getFiles(filepath, arr);
     } else {
-      arr.push(path + '/' + file);
+      arr.push(filepath);
     }
   });
 
@@ -80,25 +83,25 @@ function getFiles(path: string, arr: string[] = []): string[] {
  * Returns null if no match found
  *
  * @param {string} expression
- * @param {string} path
+ * @param {string} pathStr
  * @param {boolean} [exclude=false] - Represents the -v option
  * @param {boolean} [caseInsensitive=false] - Represents the -i option
  * @returns {(string | null)}
  */
 function grep(
   expression: string,
-  path: string,
+  pathStr: string,
   exclude: boolean = false,
   caseInsensitive: boolean = false
 ): string | null {
-  const stats = fs.statSync(path);
+  const stats = fs.statSync(pathStr);
   if (stats.isFile()) {
-    return grepFile(expression, path, false, exclude, caseInsensitive);
+    return grepFile(expression, pathStr, false, exclude, caseInsensitive);
   }
   const output: string[] = [];
 
   if (stats.isDirectory()) {
-    const files = getFiles(path);
+    const files = getFiles(pathStr);
 
     files.forEach((file) => {
       const fileOutput = grepFile(

@@ -106,10 +106,8 @@ You can add listeners to different command types supported by the IRC Client. Th
 To run the tests for the IRC Client, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/16/
+npm test src/16/
 ```
-
-The tests are located in the `tests/16/` directory.
 
 ## TODOs
 

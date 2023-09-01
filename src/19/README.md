@@ -44,5 +44,5 @@ Go to the root directory of this repository and run the following command to sta
 npx ts-node ./src/19/index.ts
 
 # Using node
-node ./build/src/19/index.js
+node ./build/19/index.js
 ```

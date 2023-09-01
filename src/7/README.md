@@ -46,7 +46,5 @@ npx ts-node calculator.index.ts '1 + 1'
 To run the tests for the Calculator tool, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/7/
+npm test src/7/
 ```
-
-The tests are located in the `tests/7/` directory.

@@ -22,7 +22,5 @@ npx ts-node diff.index.ts <file1> <file2>
 To run the tests for the diff tool, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/13/
+npm test src/13/
 ```
-
-The tests are located in the `tests/13/` directory.

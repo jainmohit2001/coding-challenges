@@ -26,7 +26,7 @@ The following options are supported:
 To run the tests for the grep tool, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/9/
+npm test src/9/
 ```
 
-The tests are located in the `tests/9/` directory. All the tests are made for **LINUX** environment only. If you want to run the tests in Windows environment, you can use the Git Bash terminal or Windows Subsystem for Linux (WSL).
+All the tests are made for **LINUX** environment only. If you want to run the tests in Windows environment, you can use the Git Bash terminal or Windows Subsystem for Linux (WSL).

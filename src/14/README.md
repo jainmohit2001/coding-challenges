@@ -28,7 +28,9 @@ The `pwd` and `cd` command support is implemented using the inbuilt `cwd()` and 
 To run the tests for the shell tool, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/14/
+npm test src/14/
 ```
 
-The tests are located in the `tests/14/` directory. All the tests are made for **LINUX** environment only. If you want to run the tests in Windows environment, you can use the Git Bash terminal or Windows Subsystem for Linux (WSL).
+All the tests are made for **LINUX** environment only. If you want to run the tests in Windows environment, you can use the Git Bash terminal or Windows Subsystem for Linux (WSL).
+
+**Note**: While testing for `pwd` command, the LINUX environment follows the convention of printing the path without a trailing slash. However, the Windows environment prints the path with a trailing slash. So, the tests for pwd will fail in Windows environment. This is an expected behavior and the tests should pass in LINUX environment.
