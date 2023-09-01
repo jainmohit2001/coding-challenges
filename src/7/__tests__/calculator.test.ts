@@ -1,4 +1,4 @@
-import { Calculator } from '../../src/7/calculator';
+import { Calculator } from '../calculator';
 
 describe('Testing Calculator ', () => {
   const validFormats = new Map<string, number>();

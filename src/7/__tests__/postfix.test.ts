@@ -1,4 +1,4 @@
-import { Postfix } from '../../src/7/postfix';
+import { Postfix } from '../postfix';
 
 describe('Testing Postfix parse function', () => {
   const validFormats = new Map<string, string>();
