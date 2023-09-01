@@ -1,8 +1,9 @@
 import fs from 'fs';
-import { JsonParser } from '../../src/2/json-parser';
+import { JsonParser } from '../json-parser';
+import path from 'path';
 
-describe('Step 4 tests', () => {
-  const dir = './tests/2/step4/';
+describe('Step 2 tests', () => {
+  const dir = path.join(__dirname, 'step2/');
   const files = fs.readdirSync(dir);
 
   afterEach(() => {

@@ -1,8 +1,9 @@
 import fs from 'fs';
-import { JsonParser } from '../../src/2/json-parser';
+import { JsonParser } from '../json-parser';
+import path from 'path';
 
-describe('Tests provided by JSON ORG', () => {
-  const dir = './tests/2/json_checker/';
+describe('Step 4 tests', () => {
+  const dir = path.join(__dirname, 'step4/');
   const files = fs.readdirSync(dir);
 
   afterEach(() => {
@@ -18,9 +19,9 @@ describe('Tests provided by JSON ORG', () => {
       } catch (err) {
         exitCode = 1;
       }
-      const parser = new JsonParser(input);
 
       test(`Testing ${dir}${file}`, (done) => {
+        const parser = new JsonParser(input);
         const mockExit = jest
           .spyOn(process, 'exit')
           .mockImplementation((number) => {

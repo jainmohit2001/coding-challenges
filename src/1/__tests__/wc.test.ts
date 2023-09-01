@@ -1,8 +1,12 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
-import { myWC } from '../../src/1/wc';
+import { myWC } from '../wc';
+import path from 'path';
 
-const filePaths = ['./tests/1/test1.txt', './tests/1/test2.txt'];
+const filePaths = [
+  path.join(__dirname, 'test1.txt'),
+  path.join(__dirname, 'test2.txt')
+];
 
 describe('Testing with filenames', () => {
   filePaths.forEach((filePath) => {
