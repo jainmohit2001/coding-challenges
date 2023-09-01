@@ -1,4 +1,4 @@
-import { lcs, lcsArray } from '../../src/13/diff';
+import { lcs, lcsArray } from '../diff';
 
 describe('Testing lcs Function', () => {
   // [s1, s2]
