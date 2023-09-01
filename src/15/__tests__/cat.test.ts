@@ -1,4 +1,5 @@
 import { ChildProcessWithoutNullStreams, execSync, spawn } from 'child_process';
+import path from 'path';
 
 /**
  * This is a helper function which waits for the program to finish,
@@ -32,11 +33,13 @@ function catToolStdoutChecker(
   });
 }
 
+const pathToCatJs = './build/src/15/cat.js';
+
 describe('Testing cat tool', () => {
   let catTool: ChildProcessWithoutNullStreams;
-  const testFile1 = './tests/15/test1.txt';
-  const testFile2 = './tests/15/test2.txt';
-  const testFile3 = './tests/15/test3.txt';
+  const testFile1 = path.join(__dirname, 'test1.txt');
+  const testFile2 = path.join(__dirname, 'test2.txt');
+  const testFile3 = path.join(__dirname, 'test3.txt');
 
   afterEach(() => {
     catTool.kill('SIGINT');
@@ -45,7 +48,7 @@ describe('Testing cat tool', () => {
   it('Should output when provided a valid file', (done) => {
     const expectedOutput = execSync('cat ' + testFile1).toString();
 
-    catTool = spawn('node', ['./build/src/15/cat.js', testFile1]);
+    catTool = spawn('node', [pathToCatJs, testFile1]);
 
     catToolStdoutChecker(catTool, expectedOutput, done);
   });
@@ -53,7 +56,7 @@ describe('Testing cat tool', () => {
   it('Should handle input from stdin', (done) => {
     const expectedOutput = execSync(`head -n1 ${testFile1} | cat -`).toString();
 
-    catTool = spawn('node', ['./build/src/15/cat.js', '-']);
+    catTool = spawn('node', [pathToCatJs, '-']);
 
     catToolStdoutChecker(catTool, expectedOutput, done);
 
@@ -64,7 +67,7 @@ describe('Testing cat tool', () => {
   it('Should concatenate files', (done) => {
     const expectedOutput = execSync(`cat ${testFile1} ${testFile2}`).toString();
 
-    catTool = spawn('node', ['./build/src/15/cat.js', testFile1, testFile2]);
+    catTool = spawn('node', [pathToCatJs, testFile1, testFile2]);
 
     catToolStdoutChecker(catTool, expectedOutput, done);
   });
@@ -76,7 +79,7 @@ describe('Testing cat tool', () => {
         .split(/\r\n|\n/)
         .join('\r\n');
 
-      catTool = spawn('node', ['./build/src/15/cat.js', '-n']);
+      catTool = spawn('node', [pathToCatJs, '-n']);
 
       catToolStdoutChecker(catTool, expectedOutput, done);
 
@@ -91,7 +94,7 @@ describe('Testing cat tool', () => {
       .split(/\r\n|\n/)
       .join('\r\n');
 
-    catTool = spawn('node', ['./build/src/15/cat.js', '-b']);
+    catTool = spawn('node', [pathToCatJs, '-b']);
 
     catToolStdoutChecker(catTool, expectedOutput, done);
 
