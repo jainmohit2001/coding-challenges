@@ -1,4 +1,4 @@
-import { RedisDeserializer } from '../../src/8/redis_deserializer';
+import { RedisDeserializer } from '../redis_deserializer';
 
 describe('Testing valid inputs', () => {
   const validInputs = [

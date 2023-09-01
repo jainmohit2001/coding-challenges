@@ -53,7 +53,5 @@ const size = 1024; // The size of key and value in bytes
 To run the tests for the REDIS server, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/8/
+npm test src/8/
 ```
-
-The tests are located in the `tests/8/` directory.

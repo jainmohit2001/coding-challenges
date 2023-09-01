@@ -1,4 +1,4 @@
-import { RedisSerializer } from '../../src/8/redis_serializer';
+import { RedisSerializer } from '../redis_serializer';
 
 const serializer = new RedisSerializer();
 

@@ -1,5 +1,5 @@
 import { createClient } from 'redis';
-import { RedisServer } from '../../src/8/redis_server';
+import { RedisServer } from '../redis_server';
 import { RedisClientType } from '@redis/client';
 import { randomBytes } from 'crypto';
 
