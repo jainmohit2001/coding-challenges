@@ -37,7 +37,7 @@ function catToolStdoutChecker(
   });
 }
 
-const pathToCatJs = './build/src/15/cat.js';
+const pathToCatJs = './build/15/cat.js';
 
 describe('Testing cat tool', () => {
   let catTool: ChildProcessWithoutNullStreams;

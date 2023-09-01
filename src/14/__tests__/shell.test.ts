@@ -13,7 +13,7 @@ describe('Testing normal command execution', () => {
   ];
 
   // File path to the shell.js file relative to this test file
-  const filePath = './build/src/14/shell.js';
+  const filePath = './build/14/shell.js';
 
   let shell: ChildProcessWithoutNullStreams;
 
