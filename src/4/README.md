@@ -43,7 +43,7 @@ The cut tool supports the following options:
 To run the tests for the CUT tool, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/4/
+npm test src/4/
 ```
 
-The tests are located in the `tests/4/` directory. All the tests are made for **LINUX** environment only. If you want to run the tests in Windows environment, you can use the Git Bash terminal or Windows Subsystem for Linux (WSL).
+All the tests are made for **LINUX** environment only. If you want to run the tests in Windows environment, you can use the Git Bash terminal or Windows Subsystem for Linux (WSL).

@@ -1,8 +1,10 @@
 import { execSync } from 'child_process';
-import { unixCut } from '../../src/4/cut';
+import { unixCut } from '../cut';
+import path from 'path';
 
 describe('Testing Field command with input file', () => {
-  const filenames = ['./tests/4/sample.tsv'];
+  const filenames = [path.join(__dirname, 'sample.tsv')];
+
   filenames.forEach((filename) => {
     const commandOptions = [
       // ['-f1'],
@@ -39,7 +41,8 @@ describe('Testing Field command with input file', () => {
 });
 
 describe('Testing Field command and delimiter command with input file', () => {
-  const filenames = ['./tests/4/fourchords.csv'];
+  const filenames = [path.join(__dirname, 'fourchords.csv')];
+
   filenames.forEach((filename) => {
     const commandOptions = [
       ['-f1', '-d,'],
