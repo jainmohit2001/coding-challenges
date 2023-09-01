@@ -105,7 +105,7 @@ function parseFieldListString(str: string) {
   return str.replaceAll('"', '').replaceAll(' ', ',');
 }
 
-function main(argv: string[] = process.argv): Promise<string> {
+function unixCut(argv: string[] = process.argv): Promise<string> {
   let delimiter = '\t';
   let command = null;
   let filename = null;
@@ -141,4 +141,4 @@ function main(argv: string[] = process.argv): Promise<string> {
 
   return processCommand(command, filename, delimiter);
 }
-export { main };
+export { unixCut };

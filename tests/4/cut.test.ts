@@ -1,5 +1,5 @@
 import { execSync } from 'child_process';
-import { main } from '../../src/4/cut';
+import { unixCut } from '../../src/4/cut';
 
 describe('Testing Field command with input file', () => {
   const filenames = ['./tests/4/sample.tsv'];
@@ -30,7 +30,7 @@ describe('Testing Field command with input file', () => {
           .toString()
           .replaceAll('\r', '');
         const argv = ['', '', ...options, filename];
-        const result = await main(argv);
+        const result = await unixCut(argv);
         expect(result.length).toBe(expectedOutput.length);
         expect(result).toBe(expectedOutput);
       });
@@ -69,7 +69,7 @@ describe('Testing Field command and delimiter command with input file', () => {
           .toString()
           .replaceAll('\r', '');
         const argv = ['', '', ...options, filename];
-        const result = await main(argv);
+        const result = await unixCut(argv);
         expect(result.length).toBe(expectedOutput.length);
         expect(result).toBe(expectedOutput);
       });
