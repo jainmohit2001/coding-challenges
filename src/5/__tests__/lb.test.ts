@@ -1,7 +1,7 @@
 import request from 'supertest';
-import { IBackendServer, BackendServer } from '../../src/5/be';
-import { ILBServer, LBServer } from '../../src/5/lb';
-import { SchedulingAlgorithm } from '../../src/5/enum';
+import { IBackendServer, BackendServer } from '../be';
+import { ILBServer, LBServer } from '../lb';
+import { SchedulingAlgorithm } from '../enum';
 
 const RESPONSE_STRING = 'Hello from backend Server';
 

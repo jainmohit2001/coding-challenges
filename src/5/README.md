@@ -50,7 +50,5 @@ The aim of this challenge is to write a load balancer that distributes the incom
 To run the tests for the Load Balancer, go to the root directory of this repository and run the following command:
 
 ```bash
-npm run test tests/5/
+npm test src/5/
 ```
-
-The tests are located in the `tests/5/` directory.
