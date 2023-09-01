@@ -31,11 +31,12 @@ describe('Testing grep', () => {
 
   test('Testing recursion of a directory tree', () => {
     const expression = 'Nirvana';
-    const filePath = path.join(__dirname, 'files/');
+    const filePath = path.join(__dirname, 'files').replace(/\\/g, '/');
 
     const expectedOutput = execSync(`grep -r "${expression}" ${filePath}`)
       .toString()
       .replace('\r\n', '\n')
+      .replace('\\', '/')
       .trim()
       .split('\n')
       .sort();
