@@ -38,6 +38,7 @@ Checkout my [Notion](https://mohitjain.notion.site/Coding-Challenges-af9b8197a43
 17. [Write Your Own Memcached Server](src/17/)
 18. [Write Your Own Spotify Client](https://github.com/jainmohit2001/spotify-client)
 19. [Write Your Own Discord Bot](src/19/)
+20. [Write Your Own LinkedIn Carousel Generator](https://github.com/jainmohit2001/carousel-gen)
 
 ## Installation
 
