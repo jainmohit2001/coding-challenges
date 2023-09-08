@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 const PATH_TO_SED_JS = './build/21/sed.js';
+const filename = path.join(__dirname, 'test.txt');
 
 describe('Testing invalid arguments for character replacement', () => {
   it('should print usage', (done) => {
@@ -95,7 +96,6 @@ describe('Testing invalid arguments for range of lines', () => {
 describe('Testing character replacement', () => {
   it('should replace all occurrences', (done) => {
     const pattern = 's/a/b/';
-    const filename = path.join(__dirname, 'test.txt');
     const content = fs.readFileSync(filename).toString();
     const expectedOutput = content.replaceAll('a', 'b');
 
@@ -117,7 +117,6 @@ describe('Testing range of lines', () => {
   it('should print only lines mentioned', (done) => {
     const [start, end] = [2, 4];
     const range = `${start},${end}p`;
-    const filename = path.join(__dirname, 'test.txt');
     const content = fs.readFileSync(filename).toString();
     const expectedOutput = content
       .split(/\r\n|\n/)
@@ -133,6 +132,34 @@ describe('Testing range of lines', () => {
 
     sed.on('close', () => {
       expect(output).toBe(expectedOutput);
+      done();
+    });
+  });
+
+  it('should print line containing the specific pattern only', (done) => {
+    const pattern = 'roads';
+    const content = fs.readFileSync(filename).toString();
+    const expectedOutput: string[] = [];
+    content.split(/\r\n|\rn/).forEach((line) => {
+      if (line.indexOf(pattern) >= 0) {
+        expectedOutput.push(line);
+      }
+    });
+    const sed = spawn('node', [
+      PATH_TO_SED_JS,
+      '-n',
+      `/${pattern}/p`,
+      filename
+    ]);
+
+    let output = '';
+
+    sed.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+
+    sed.on('close', () => {
+      expect(output).toBe(expectedOutput.join('\r\n'));
       done();
     });
   });

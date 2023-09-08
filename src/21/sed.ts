@@ -12,7 +12,7 @@ node sed.js -n "2,4p" <filename>
 \tPrint lines 2 to 4 from file <filename>
 `;
 
-function printUsage(exit: boolean) {
+function printUsage(exit: boolean): void {
   stdout.write(USAGE);
   if (exit) {
     process.exit(1);
@@ -27,7 +27,10 @@ function readFile(path: string): string {
   process.exit(1);
 }
 
-function parsePattern(str: string) {
+function parseCharacterReplacementInfo(str: string): {
+  pattern: string;
+  replacement: string;
+} {
   const regex = /^s\/(.*)\/(.*)\/g?$/;
   const match = regex.exec(str);
   if (match) {
@@ -40,7 +43,17 @@ function parsePattern(str: string) {
   process.exit(1);
 }
 
-function parseRange(str: string) {
+function parsePattern(str: string): string {
+  const regex = /^\/(.*)\/p$/;
+  const match = regex.exec(str);
+  if (match) {
+    return match[1];
+  }
+  stderr.write(`Invalid pattern ${str}`);
+  process.exit(1);
+}
+
+function parseRange(str: string): { start: number; end: number } {
   const regex = /^(\d),(\d)p$/;
   const match = regex.exec(str);
   if (match) {
@@ -57,24 +70,27 @@ function readStdin(): string {
   return fs.readFileSync(process.stdin.fd).toString();
 }
 
-function handleCharacterReplacement() {
+function getContent(index: number): string {
+  // if filename is provided
+  if (process.argv.length >= 4) {
+    return readFile(process.argv[index]);
+  }
+
+  // No filename present, read from stdin
+  return readStdin();
+}
+
+function handleCharacterReplacement(): void {
   // Make sure a character replacement info string is present
   if (process.argv.length < 3) {
     printUsage(true);
   }
 
   try {
-    let content = '';
-    const { pattern, replacement } = parsePattern(process.argv[2]);
-
-    // if filename is provided
-    if (process.argv.length === 4) {
-      content = readFile(process.argv[3]);
-    }
-    // No filename present, read from stdin
-    else {
-      content = readStdin();
-    }
+    const { pattern, replacement } = parseCharacterReplacementInfo(
+      process.argv[2]
+    );
+    const content = getContent(3);
 
     const newContent = content.replace(new RegExp(pattern, 'g'), replacement);
     stdout.write(newContent);
@@ -86,7 +102,7 @@ function handleCharacterReplacement() {
   }
 }
 
-function handleRangeOfLines() {
+function handleRangeOfLines(): void {
   // Make sure a range string is present
   if (process.argv.length < 4) {
     printUsage(true);
@@ -95,30 +111,51 @@ function handleRangeOfLines() {
   try {
     const range = process.argv[3];
     const { start, end } = parseRange(range);
-    let content = '';
-
-    // Filename is present
-    if (process.argv.length === 5) {
-      content = readFile(process.argv[4]);
-    }
-    // No filename is present, read from stdin
-    else {
-      content = readStdin();
-    }
+    const content = getContent(4);
 
     const lines = content.split(/\r\n|\n/);
     stdout.write(lines.slice(start, end + 1).join('\r\n'));
     process.exit(0);
   } catch (e) {
     const err = e as Error;
-    stdout.write(err.message);
+    stdout.write(err.toString());
+    printUsage(true);
+  }
+}
+
+function handlePattern(): void {
+  try {
+    const pattern = parsePattern(process.argv[3]);
+    const content = getContent(4);
+
+    const lines = content.split(/\r\n|\n/);
+    const output: string[] = [];
+
+    lines.forEach((line) => {
+      if (line.indexOf(pattern) >= 0) {
+        output.push(line);
+      }
+    });
+
+    stdout.write(output.join('\r\n'));
+    process.exit(0);
+  } catch (e) {
+    const err = e as Error;
+    stderr.write(err.toString());
     printUsage(true);
   }
 }
 
 // Handle -n option
 if (process.argv[2] === '-n') {
-  handleRangeOfLines();
+  // Handle when pattern option is passed
+  const regex = /^\/(.*)\/p$/;
+  const match = regex.exec(process.argv[3]);
+  if (match) {
+    handlePattern();
+  } else {
+    handleRangeOfLines();
+  }
 }
 
 // Handle character replacement
