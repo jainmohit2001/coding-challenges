@@ -164,6 +164,18 @@ function handleDoubleSpacing() {
   }
 }
 
+function handleRemoveTrailingEmptyLines() {
+  try {
+    const content = getContent(3);
+    stdout.write(content.trimEnd());
+    process.exit(0);
+  } catch (e) {
+    const err = e as Error;
+    stderr.write(err.toString());
+    printUsage(true);
+  }
+}
+
 // Check for double spacing
 if (process.argv[2] === 'G') {
   handleDoubleSpacing();
@@ -179,6 +191,11 @@ if (process.argv[2] === '-n') {
   } else {
     handleRangeOfLines();
   }
+}
+
+// Check for /^$/d
+if (process.argv[2] === '/^$/d') {
+  handleRemoveTrailingEmptyLines();
 }
 
 // Handle character replacement

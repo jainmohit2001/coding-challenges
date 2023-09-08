@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 const PATH_TO_SED_JS = './build/21/sed.js';
 const filename = path.join(__dirname, 'test.txt');
@@ -181,5 +182,23 @@ describe('Testing double spacing', () => {
       expect(output).toBe(expectedOutput);
       done();
     });
+  });
+});
+
+it('should remove trailing blank lines from a file', (done) => {
+  const content = 'content\r\nsome more content    ';
+  const tmpfile = path.join(os.tmpdir(), 'temp-file.txt');
+  fs.writeFileSync(tmpfile, content + '\r\n\r\n\r\n');
+  const sed = spawn('node', [PATH_TO_SED_JS, '/^$/d', tmpfile]);
+
+  let output = '';
+
+  sed.stdout.on('data', (data) => {
+    output += data.toString();
+  });
+
+  sed.on('close', () => {
+    expect(output).toBe(content.trimEnd());
+    done();
   });
 });
