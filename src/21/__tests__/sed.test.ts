@@ -1,15 +1,18 @@
 import { spawn } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 
 const PATH_TO_SED_JS = './build/21/sed.js';
 
-describe('Testing invalid arguments', () => {
+describe('Testing invalid arguments for character replacement', () => {
   it('should print usage', (done) => {
     const sed = spawn('node', [PATH_TO_SED_JS]);
     let output = '';
+
     sed.stdout.on('data', (data) => {
       output += data.toString();
     });
+
     sed.on('close', () => {
       expect(output).toContain('Usage');
       done();
@@ -19,9 +22,11 @@ describe('Testing invalid arguments', () => {
   it('should print invalid pattern', (done) => {
     const sed = spawn('node', [PATH_TO_SED_JS, 'invalid-pattern', '']);
     let output = '';
+
     sed.stderr.on('data', (data) => {
       output += data.toString();
     });
+
     sed.on('close', () => {
       expect(output).toContain('Invalid pattern');
       done();
@@ -34,10 +39,12 @@ describe('Testing invalid arguments', () => {
       's/this/that/',
       'invalid-file.txt'
     ]);
+
     let output = '';
     sed.stderr.on('data', (data) => {
       output += data.toString();
     });
+
     sed.on('close', () => {
       expect(output).toContain('Invalid file');
       done();
@@ -45,16 +52,88 @@ describe('Testing invalid arguments', () => {
   });
 });
 
-describe('Testing step 1', () => {
+describe('Testing invalid arguments for range of lines', () => {
+  it('should print invalid range', (done) => {
+    const sed = spawn('node', [
+      PATH_TO_SED_JS,
+      '-n',
+      '2,4',
+      'invalid-file.txt'
+    ]);
+    let output = '';
+
+    sed.stderr.on('data', (data) => {
+      output += data.toString();
+    });
+
+    sed.on('close', () => {
+      expect(output).toContain('Invalid range');
+      done();
+    });
+  });
+
+  it('should print invalid file with valid range', (done) => {
+    const sed = spawn('node', [
+      PATH_TO_SED_JS,
+      '-n',
+      '2,4p',
+      'invalid-file.txt'
+    ]);
+    let output = '';
+
+    sed.stderr.on('data', (data) => {
+      output += data.toString();
+    });
+
+    sed.on('close', () => {
+      expect(output).toContain('Invalid file');
+      done();
+    });
+  });
+});
+
+describe('Testing character replacement', () => {
   it('should replace all occurrences', (done) => {
     const pattern = 's/a/b/';
-    const filename = path.join(__dirname, 'text.txt');
+    const filename = path.join(__dirname, 'test.txt');
+    const content = fs.readFileSync(filename).toString();
+    const expectedOutput = content.replaceAll('a', 'b');
+
     const sed = spawn('node', [PATH_TO_SED_JS, pattern, filename]);
     let output = '';
+
     sed.stdout.on('data', (data) => {
       output += data.toString();
     });
-    expect(output).not.toContain('a');
-    done();
+
+    sed.on('close', () => {
+      expect(output).toBe(expectedOutput);
+      done();
+    });
+  });
+});
+
+describe('Testing range of lines', () => {
+  it('should print only lines mentioned', (done) => {
+    const [start, end] = [2, 4];
+    const range = `${start},${end}p`;
+    const filename = path.join(__dirname, 'test.txt');
+    const content = fs.readFileSync(filename).toString();
+    const expectedOutput = content
+      .split(/\r\n|\n/)
+      .slice(start, end + 1)
+      .join('\r\n');
+
+    const sed = spawn('node', [PATH_TO_SED_JS, '-n', range, filename]);
+    let output = '';
+
+    sed.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+
+    sed.on('close', () => {
+      expect(output).toBe(expectedOutput);
+      done();
+    });
   });
 });
