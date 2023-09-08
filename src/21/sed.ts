@@ -10,6 +10,12 @@ node sed.js s/<this>/<that>/g <filename>
 
 node sed.js -n "2,4p" <filename>
 \tPrint lines 2 to 4 from file <filename>
+
+node sed.js -n /pattern/p <filename>
+\tOutput only lines containing a specific pattern <pattern> from file <filename>
+
+node G <filename>
+\tAdd another line after each line, i.e. double spacing a file.
 `;
 
 function printUsage(exit: boolean): void {
@@ -144,6 +150,23 @@ function handlePattern(): void {
     stderr.write(err.toString());
     printUsage(true);
   }
+}
+
+function handleDoubleSpacing() {
+  try {
+    const content = getContent(3);
+    stdout.write(content.replaceAll(/\r\n|\n/g, '\r\n\r\n'));
+    process.exit(0);
+  } catch (e) {
+    const err = e as Error;
+    stderr.write(err.toString());
+    printUsage(true);
+  }
+}
+
+// Check for double spacing
+if (process.argv[2] === 'G') {
+  handleDoubleSpacing();
 }
 
 // Handle -n option

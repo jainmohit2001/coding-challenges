@@ -164,3 +164,22 @@ describe('Testing range of lines', () => {
     });
   });
 });
+
+describe('Testing double spacing', () => {
+  it('should double space the file correctly', (done) => {
+    const content = fs.readFileSync(filename).toString();
+    const expectedOutput = content.replaceAll(/\r\n|\n/g, '\r\n\r\n');
+    const sed = spawn('node', [PATH_TO_SED_JS, 'G', filename]);
+
+    let output = '';
+
+    sed.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+
+    sed.on('close', () => {
+      expect(output).toBe(expectedOutput);
+      done();
+    });
+  });
+});
