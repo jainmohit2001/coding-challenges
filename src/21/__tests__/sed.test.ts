@@ -131,7 +131,7 @@ describe('Testing valid args', () => {
     const pattern = 'roads';
     const content = fs.readFileSync(filename).toString();
     const expectedOutput: string[] = [];
-    content.split(/\r\n|\rn/).forEach((line) => {
+    content.split(/\r\n|\n/).forEach((line) => {
       if (line.indexOf(pattern) >= 0) {
         expectedOutput.push(line);
       }
