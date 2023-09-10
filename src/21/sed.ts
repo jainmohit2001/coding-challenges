@@ -1,4 +1,7 @@
 import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { randomBytes } from 'crypto';
 
 const stdout = process.stdout;
 const stderr = process.stderr;
@@ -14,9 +17,115 @@ node sed.js -n "2,4p" <filename>
 node sed.js -n /pattern/p <filename>
 \tOutput only lines containing a specific pattern <pattern> from file <filename>
 
-node G <filename>
+node sed.js G <filename>
 \tAdd another line after each line, i.e. double spacing a file.
+
+node sed.js -i 's/<this>/<that>/g' <filename>
+\tEdit in-place: Substitute <this> for <that> everywhere <this> appears in the file <filename>
 `;
+
+class SedInput {
+  inPlace: boolean = false;
+  filename?: string;
+  stripTrailingBlankLines: boolean = false;
+  doubleSpacing: boolean = false;
+  pattern?: string;
+  range?: {
+    start: number;
+    end: number;
+  };
+  characterReplacement?: {
+    pattern: string;
+    replacement: string;
+  };
+
+  constructor(args: string[]) {
+    if (args.length === 0) {
+      printUsage(true);
+    }
+    for (let i = 0; i < args.length; i++) {
+      switch (args[i]) {
+        case 'G':
+          if (this.doubleSpacing) {
+            printUsage(true);
+          }
+          this.doubleSpacing = true;
+          break;
+        case '/^$/d':
+          if (this.stripTrailingBlankLines) {
+            printUsage(true);
+          }
+          this.stripTrailingBlankLines = true;
+          break;
+        case '-i':
+          if (this.inPlace) {
+            printUsage(true);
+          }
+          this.inPlace = true;
+          break;
+        case '-n': {
+          if (this.pattern || this.range) {
+            printUsage(true);
+          }
+          // Increment i and get the pattern/range string input
+          i++;
+          // pattern option
+          const patternRegex = /^\/(.*)\/p$/;
+          const patternMatch = patternRegex.exec(args[i]);
+          if (patternMatch) {
+            this.pattern = patternMatch[1];
+            break;
+          }
+
+          // range option
+          const rangeRegex = /^(\d),(\d)p$/;
+          const rangeMatch = rangeRegex.exec(args[i]);
+          if (rangeMatch) {
+            this.range = {
+              start: parseInt(rangeMatch[1]),
+              end: parseInt(rangeMatch[2])
+            };
+            break;
+          }
+          console.error('Invalid pattern or range ' + args[i]);
+          printUsage(true);
+          break;
+        }
+        default: {
+          // Check if this is a character replacement info string
+          const regex = /^s\/(.*)\/(.*)\/g?$/;
+          const match = regex.exec(args[i]);
+          if (match) {
+            if (this.characterReplacement) {
+              printUsage(true);
+            }
+            this.characterReplacement = {
+              pattern: match[1],
+              replacement: match[2]
+            };
+            break;
+          }
+
+          if (this.filename) {
+            printUsage(true);
+          }
+          // Otherwise it is a file
+          this.filename = args[i];
+        }
+      }
+    }
+
+    // Character replacement cannot be provided with -n option
+    if ((this.pattern || this.range) && this.characterReplacement) {
+      printUsage(true);
+    }
+
+    // If in place option is used but no filename is provided
+    if (this.inPlace && !this.filename) {
+      printUsage(true);
+    }
+  }
+}
 
 function printUsage(exit: boolean): void {
   stdout.write(USAGE);
@@ -29,46 +138,7 @@ function readFile(path: string): string {
   if (fs.existsSync(path)) {
     return fs.readFileSync(path).toString();
   }
-  stderr.write(`Invalid file ${path}`);
-  process.exit(1);
-}
-
-function parseCharacterReplacementInfo(str: string): {
-  pattern: string;
-  replacement: string;
-} {
-  const regex = /^s\/(.*)\/(.*)\/g?$/;
-  const match = regex.exec(str);
-  if (match) {
-    return {
-      pattern: match[1],
-      replacement: match[2]
-    };
-  }
-  stderr.write(`Invalid pattern ${str}`);
-  process.exit(1);
-}
-
-function parsePattern(str: string): string {
-  const regex = /^\/(.*)\/p$/;
-  const match = regex.exec(str);
-  if (match) {
-    return match[1];
-  }
-  stderr.write(`Invalid pattern ${str}`);
-  process.exit(1);
-}
-
-function parseRange(str: string): { start: number; end: number } {
-  const regex = /^(\d),(\d)p$/;
-  const match = regex.exec(str);
-  if (match) {
-    return {
-      start: parseInt(match[1]),
-      end: parseInt(match[2])
-    };
-  }
-  stderr.write(`Invalid range ${str}`);
+  stderr.write(`Invalid file '${path}'`);
   process.exit(1);
 }
 
@@ -76,127 +146,100 @@ function readStdin(): string {
   return fs.readFileSync(process.stdin.fd).toString();
 }
 
-function getContent(index: number): string {
-  // if filename is provided
-  if (process.argv.length >= 4) {
-    return readFile(process.argv[index]);
-  }
-
-  // No filename present, read from stdin
-  return readStdin();
+function getContent(filename?: string): string {
+  return filename ? readFile(filename) : readStdin();
 }
 
-function handleCharacterReplacement(): void {
-  // Make sure a character replacement info string is present
-  if (process.argv.length < 3) {
-    printUsage(true);
+function handleCharacterReplacement(
+  pattern: string,
+  replacement: string,
+  content: string
+): string {
+  return content.replace(new RegExp(pattern, 'g'), replacement);
+}
+
+function handleRangeOfLines(
+  start: number,
+  end: number,
+  content: string
+): string {
+  const lines = content.split(/\r\n|\n/);
+  return lines.slice(start, end + 1).join('\r\n');
+}
+
+function handlePattern(pattern: string, content: string): string {
+  const lines = content.split(/\r\n|\n/);
+  const output: string[] = [];
+
+  lines.forEach((line) => {
+    if (line.indexOf(pattern) >= 0) {
+      output.push(line);
+    }
+  });
+
+  return output.join('\r\n');
+}
+
+function handleDoubleSpacing(content: string): string {
+  return content.replaceAll(/\r\n|\n/g, '\r\n\r\n');
+}
+
+function handleRemoveTrailingEmptyLines(content: string): string {
+  return content.trimEnd();
+}
+
+function handleInPlace(content: string, filepath: string) {
+  const tempPath = path.join(
+    os.tmpdir(),
+    randomBytes(8).toString('hex') + '.txt'
+  );
+  fs.writeFileSync(tempPath, content);
+  fs.copyFile(tempPath, filepath, (err) => {
+    if (err) {
+      stderr.write(err.toString());
+      process.exit(1);
+    }
+    fs.unlinkSync(tempPath);
+    process.exit(0);
+  });
+}
+
+function unixSed() {
+  const args = new SedInput(process.argv.slice(2, process.argv.length));
+  let finalContent = getContent(args.filename);
+
+  if (args.doubleSpacing) {
+    finalContent = handleDoubleSpacing(finalContent);
   }
 
-  try {
-    const { pattern, replacement } = parseCharacterReplacementInfo(
-      process.argv[2]
+  if (args.pattern) {
+    finalContent = handlePattern(args.pattern, finalContent);
+  }
+
+  if (args.range) {
+    finalContent = handleRangeOfLines(
+      args.range.start,
+      args.range.end,
+      finalContent
     );
-    const content = getContent(3);
+  }
 
-    const newContent = content.replace(new RegExp(pattern, 'g'), replacement);
-    stdout.write(newContent);
+  if (args.stripTrailingBlankLines) {
+    finalContent = handleRemoveTrailingEmptyLines(finalContent);
+  }
+
+  if (args.characterReplacement) {
+    finalContent = handleCharacterReplacement(
+      args.characterReplacement.pattern,
+      args.characterReplacement.replacement,
+      finalContent
+    );
+  }
+  if (!args.inPlace) {
+    stdout.write(finalContent);
     process.exit(0);
-  } catch (e) {
-    const err = e as Error;
-    stderr.write(err.toString());
-    printUsage(true);
   }
+  handleInPlace(finalContent, args.filename!);
 }
 
-function handleRangeOfLines(): void {
-  // Make sure a range string is present
-  if (process.argv.length < 4) {
-    printUsage(true);
-  }
-
-  try {
-    const range = process.argv[3];
-    const { start, end } = parseRange(range);
-    const content = getContent(4);
-
-    const lines = content.split(/\r\n|\n/);
-    stdout.write(lines.slice(start, end + 1).join('\r\n'));
-    process.exit(0);
-  } catch (e) {
-    const err = e as Error;
-    stdout.write(err.toString());
-    printUsage(true);
-  }
-}
-
-function handlePattern(): void {
-  try {
-    const pattern = parsePattern(process.argv[3]);
-    const content = getContent(4);
-
-    const lines = content.split(/\r\n|\n/);
-    const output: string[] = [];
-
-    lines.forEach((line) => {
-      if (line.indexOf(pattern) >= 0) {
-        output.push(line);
-      }
-    });
-
-    stdout.write(output.join('\r\n'));
-    process.exit(0);
-  } catch (e) {
-    const err = e as Error;
-    stderr.write(err.toString());
-    printUsage(true);
-  }
-}
-
-function handleDoubleSpacing() {
-  try {
-    const content = getContent(3);
-    stdout.write(content.replaceAll(/\r\n|\n/g, '\r\n\r\n'));
-    process.exit(0);
-  } catch (e) {
-    const err = e as Error;
-    stderr.write(err.toString());
-    printUsage(true);
-  }
-}
-
-function handleRemoveTrailingEmptyLines() {
-  try {
-    const content = getContent(3);
-    stdout.write(content.trimEnd());
-    process.exit(0);
-  } catch (e) {
-    const err = e as Error;
-    stderr.write(err.toString());
-    printUsage(true);
-  }
-}
-
-// Check for double spacing
-if (process.argv[2] === 'G') {
-  handleDoubleSpacing();
-}
-
-// Handle -n option
-if (process.argv[2] === '-n') {
-  // Handle when pattern option is passed
-  const regex = /^\/(.*)\/p$/;
-  const match = regex.exec(process.argv[3]);
-  if (match) {
-    handlePattern();
-  } else {
-    handleRangeOfLines();
-  }
-}
-
-// Check for /^$/d
-if (process.argv[2] === '/^$/d') {
-  handleRemoveTrailingEmptyLines();
-}
-
-// Handle character replacement
-handleCharacterReplacement();
+unixSed();

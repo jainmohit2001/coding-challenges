@@ -8,7 +8,7 @@ module.exports = {
     '^.+\\.(ts|tsx)$': 'ts-jest'
   },
   verbose: true,
-  coverageDirectory: './coverage',
+  coverageDirectory: '<rootDir>/coverage',
   collectCoverage: true,
   detectOpenHandles: true,
   silent: false

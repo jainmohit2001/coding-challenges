@@ -6,32 +6,25 @@ import os from 'os';
 const PATH_TO_SED_JS = './build/21/sed.js';
 const filename = path.join(__dirname, 'test.txt');
 
-describe('Testing invalid arguments for character replacement', () => {
-  it('should print usage', (done) => {
-    const sed = spawn('node', [PATH_TO_SED_JS]);
-    let output = '';
+describe('Testing invalid args', () => {
+  const args = [
+    [PATH_TO_SED_JS],
+    [PATH_TO_SED_JS, 'invalid-pattern', 'invalid-file.txt']
+  ];
 
-    sed.stdout.on('data', (data) => {
-      output += data.toString();
-    });
+  args.forEach((arg) => {
+    it('should print usage for args: ' + args.toString(), (done) => {
+      const sed = spawn('node', arg);
+      let output = '';
 
-    sed.on('close', () => {
-      expect(output).toContain('Usage');
-      done();
-    });
-  });
+      sed.stdout.on('data', (data) => {
+        output += data.toString();
+      });
 
-  it('should print invalid pattern', (done) => {
-    const sed = spawn('node', [PATH_TO_SED_JS, 'invalid-pattern', '']);
-    let output = '';
-
-    sed.stderr.on('data', (data) => {
-      output += data.toString();
-    });
-
-    sed.on('close', () => {
-      expect(output).toContain('Invalid pattern');
-      done();
+      sed.on('close', () => {
+        expect(output).toContain('Usage');
+        done();
+      });
     });
   });
 
@@ -52,10 +45,8 @@ describe('Testing invalid arguments for character replacement', () => {
       done();
     });
   });
-});
 
-describe('Testing invalid arguments for range of lines', () => {
-  it('should print invalid range', (done) => {
+  it('should print "Invalid pattern or range"', (done) => {
     const sed = spawn('node', [
       PATH_TO_SED_JS,
       '-n',
@@ -69,7 +60,7 @@ describe('Testing invalid arguments for range of lines', () => {
     });
 
     sed.on('close', () => {
-      expect(output).toContain('Invalid range');
+      expect(output).toContain('Invalid pattern or range');
       done();
     });
   });
@@ -94,7 +85,7 @@ describe('Testing invalid arguments for range of lines', () => {
   });
 });
 
-describe('Testing character replacement', () => {
+describe('Testing valid args', () => {
   it('should replace all occurrences', (done) => {
     const pattern = 's/a/b/';
     const content = fs.readFileSync(filename).toString();
@@ -112,9 +103,7 @@ describe('Testing character replacement', () => {
       done();
     });
   });
-});
 
-describe('Testing range of lines', () => {
   it('should print only lines mentioned', (done) => {
     const [start, end] = [2, 4];
     const range = `${start},${end}p`;
@@ -164,9 +153,7 @@ describe('Testing range of lines', () => {
       done();
     });
   });
-});
 
-describe('Testing double spacing', () => {
   it('should double space the file correctly', (done) => {
     const content = fs.readFileSync(filename).toString();
     const expectedOutput = content.replaceAll(/\r\n|\n/g, '\r\n\r\n');
@@ -183,22 +170,47 @@ describe('Testing double spacing', () => {
       done();
     });
   });
-});
 
-it('should remove trailing blank lines from a file', (done) => {
-  const content = 'content\r\nsome more content    ';
-  const tmpfile = path.join(os.tmpdir(), 'temp-file.txt');
-  fs.writeFileSync(tmpfile, content + '\r\n\r\n\r\n');
-  const sed = spawn('node', [PATH_TO_SED_JS, '/^$/d', tmpfile]);
+  it('should remove trailing blank lines from a file', (done) => {
+    const content = 'content\r\nsome more content    ';
+    const tmpfile = path.join(os.tmpdir(), 'temp-file.txt');
+    fs.writeFileSync(tmpfile, content + '\r\n\r\n\r\n');
+    const sed = spawn('node', [PATH_TO_SED_JS, '/^$/d', tmpfile]);
 
-  let output = '';
+    let output = '';
 
-  sed.stdout.on('data', (data) => {
-    output += data.toString();
+    sed.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+
+    sed.on('close', () => {
+      expect(output).toBe(content.trimEnd());
+      done();
+    });
   });
 
-  sed.on('close', () => {
-    expect(output).toBe(content.trimEnd());
-    done();
+  it('should support -i option', (done) => {
+    const stringToReplace = 'Life';
+    const stringToReplaceWith = 'Code';
+    const characterReplacementInput = `s/${stringToReplace}/${stringToReplaceWith}/g`;
+
+    const initialContent = fs.readFileSync(filename).toString();
+    const expectedContent = initialContent.replaceAll(
+      stringToReplace,
+      stringToReplaceWith
+    );
+
+    const sed = spawn('node', [
+      PATH_TO_SED_JS,
+      '-i',
+      characterReplacementInput,
+      filename
+    ]);
+
+    sed.on('close', () => {
+      const finalContent = fs.readFileSync(filename).toString();
+      expect(finalContent).toBe(expectedContent);
+      done();
+    });
   });
 });
