@@ -39,6 +39,7 @@ Checkout my [Notion](https://mohitjain.notion.site/Coding-Challenges-af9b8197a43
 18. [Write Your Own Spotify Client](https://github.com/jainmohit2001/spotify-client)
 19. [Write Your Own Discord Bot](src/19/)
 20. [Write Your Own LinkedIn Carousel Generator](https://github.com/jainmohit2001/carousel-gen)
+21. [Write Your Own Sed](src/21/)
 
 ## Installation
 
