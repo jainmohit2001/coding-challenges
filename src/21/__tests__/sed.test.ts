@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { randomBytes } from 'crypto';
 
 const PATH_TO_SED_JS = './build/21/sed.js';
 const filename = path.join(__dirname, 'test.txt');
@@ -190,11 +191,16 @@ describe('Testing valid args', () => {
   });
 
   it('should support -i option', (done) => {
+    // First create a random test file from the `test.txt`
+    const tempTextFile = path.join(__dirname, randomBytes(8).toString('hex'));
+    fs.writeFileSync(tempTextFile, fs.readFileSync(filename));
+
+    // Prepare args
     const stringToReplace = 'Life';
     const stringToReplaceWith = 'Code';
     const characterReplacementInput = `s/${stringToReplace}/${stringToReplaceWith}/g`;
 
-    const initialContent = fs.readFileSync(filename).toString();
+    const initialContent = fs.readFileSync(tempTextFile).toString();
     const expectedContent = initialContent.replaceAll(
       stringToReplace,
       stringToReplaceWith
@@ -204,11 +210,14 @@ describe('Testing valid args', () => {
       PATH_TO_SED_JS,
       '-i',
       characterReplacementInput,
-      filename
+      tempTextFile
     ]);
 
     sed.on('close', () => {
-      const finalContent = fs.readFileSync(filename).toString();
+      const finalContent = fs.readFileSync(tempTextFile).toString();
+      // Unlink random test file
+      fs.unlinkSync(tempTextFile);
+
       expect(finalContent).toBe(expectedContent);
       done();
     });
