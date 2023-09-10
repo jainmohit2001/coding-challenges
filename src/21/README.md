@@ -1,4 +1,4 @@
-# Challenge 1 - Write Your Own Sed
+# Challenge 21 - Write Your Own Sed
 
 This challenge corresponds to the 21<sup>st</sup> part of the Coding Challenges series by John Crickett https://codingchallenges.fyi/challenges/challenge-sed.
 
