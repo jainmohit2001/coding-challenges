@@ -199,12 +199,11 @@ interface IDnsMessageParser {
   parse(): IDnsMessage;
 }
 
-interface IDnsResolver {
+interface IDnsQuery {
   domain: string;
   host: string;
   port: number;
   debug: boolean;
-  close(): void;
   sendMessage(): Promise<IDnsMessage>;
 }
 
@@ -219,7 +218,7 @@ export {
   IDnsMessage,
   IDnsMessageParser,
   IQuestion,
-  IDnsResolver,
+  IDnsQuery,
   ICommandWaitingForReply,
   IResourceRecord
 };

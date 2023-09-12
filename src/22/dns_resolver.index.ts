@@ -1,4 +1,4 @@
-import DnsResolver from './dns_resolver';
+import { DnsResolver } from './dns_resolver';
 
 const USAGE = `
 Usage:
@@ -20,20 +20,18 @@ if (process.argv.length < 3) {
 
 const domain = process.argv[2];
 
-const host = '198.41.0.4';
-const port = 53;
+const rootServer = '198.41.0.4';
+const maxCount = 10;
+const debug = true;
 
-const resolver = new DnsResolver(domain, host, port, true);
-
-resolver
-  .sendMessage({ rd: 1 })
+const dnsResolver = new DnsResolver(domain, rootServer, debug, maxCount);
+dnsResolver
+  .resolve()
   .then((value) => {
     console.log(value);
-    resolver.close();
     process.exit(0);
   })
-  .catch((err) => {
-    console.error(err);
-    resolver.close();
+  .catch((e) => {
+    console.error(e);
     process.exit(1);
   });

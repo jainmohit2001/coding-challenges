@@ -1,93 +1,93 @@
-import UDP from 'dgram';
-import { DnsMessage } from './dns_message';
-import {
-  ICommandWaitingForReply,
-  IDnsHeader,
-  IDnsMessage,
-  IDnsResolver,
-  IQuestion
-} from './types';
-import { Queue } from '../utils/queue';
+import DnsQuery from './dns_query';
 import { ClassValues, TypeValues } from './enums';
-import DnsMessageParser from './parser';
+import { IDnsMessage, IResourceRecord } from './types';
 
-export default class DnsResolver implements IDnsResolver {
-  domain;
-  host;
-  port;
-  debug;
-  private client: UDP.Socket;
-  private commandsQueue: Queue<ICommandWaitingForReply>;
+export class DnsResolver {
+  private domain: string;
+  private rootServer: string;
+  private port: number = 53;
+  private maxCount: number;
+  private debug: boolean;
 
   constructor(
     domain: string,
-    host: string,
-    port: number,
-    debug: boolean = false
+    rootServer: string = '198.41.0.4',
+    debug: boolean = false,
+    maxCount: number = 10
   ) {
     this.domain = domain;
-    this.host = host;
-    this.port = port;
+    this.rootServer = rootServer;
+    this.maxCount = maxCount;
     this.debug = debug;
-    this.commandsQueue = new Queue<ICommandWaitingForReply>();
+  }
 
-    this.client = UDP.createSocket('udp4');
+  private checkForSolution(message: IDnsMessage): string | null {
+    if (message.answers.length > 0) {
+      return message.answers[0].data;
+    }
 
-    this.client.on('message', (msg) => {
-      const promise = this.commandsQueue.dequeue();
-      const dnsMessage = new DnsMessageParser(msg).parse();
-      if (promise && promise.request.header.id === dnsMessage.header.id) {
-        promise.resolve(dnsMessage);
-      } else if (promise) {
-        promise.reject(
-          new Error(
-            `Invalid id ${dnsMessage.header.id} received in response. Expected ${promise.request.header.id}`
-          )
-        );
+    if (!(message.authority.length > 0 && message.additional.length > 0)) {
+      throw new Error('No record found!');
+    }
+
+    return null;
+  }
+
+  private getValidNextServer(additional: IResourceRecord[]): string {
+    for (let i = 0; i < additional.length; i++) {
+      const rrType = additional[i].type;
+      const rrClass = additional[i].class;
+      if (
+        (rrType === TypeValues.A || rrType === TypeValues.NS) &&
+        rrClass === ClassValues.IN
+      ) {
+        return additional[i].data;
       }
+    }
 
+    throw new Error('No valid Next Server found');
+  }
+
+  private async dnsCall(server: string): Promise<IDnsMessage> {
+    const resolver = new DnsQuery(this.domain, server, this.port, false);
+    return await resolver.sendMessage({ rd: 1 });
+  }
+
+  public async resolve(): Promise<string> {
+    const resolver = new DnsQuery(
+      this.domain,
+      this.rootServer,
+      this.port,
+      false
+    );
+    if (this.debug) {
+      console.log('Querying %s for %s', this.rootServer, this.domain);
+    }
+
+    const rootResponse = await resolver.sendMessage({ rd: 1 });
+
+    let answer = this.checkForSolution(rootResponse);
+    if (answer) {
+      return answer;
+    }
+
+    let nextServer = this.getValidNextServer(rootResponse.additional);
+
+    for (let i = 0; i < this.maxCount; i++) {
       if (this.debug) {
-        console.log(`received> ${msg.toString('hex')}`);
+        console.log('Querying %s for %s', nextServer, this.domain);
       }
-    });
-  }
 
-  close(): void {
-    this.client.close();
-  }
+      const response = await this.dnsCall(nextServer);
 
-  async sendMessage(header?: Partial<IDnsHeader>): Promise<IDnsMessage> {
-    const questions: IQuestion[] = [
-      {
-        name: this.domain,
-        type: TypeValues.A,
-        class: ClassValues.IN
+      answer = this.checkForSolution(response);
+      if (answer) {
+        return answer;
       }
-    ];
-    const message = new DnsMessage({ header, questions });
-    const byteString = message.toByteString();
-    const messageBuffer = Buffer.from(byteString, 'hex');
-    const promise = new Promise<IDnsMessage>((res, rej) => {
-      this.commandsQueue.enqueue({
-        resolve: res,
-        reject: rej,
-        request: message
-      });
-    });
 
-    this.client.send(messageBuffer, this.port, this.host, (err) => {
-      if (err) {
-        this.commandsQueue.dequeue()?.reject(err);
-        if (this.debug) {
-          console.error('Some error occurred %s', err);
-        }
-      } else {
-        if (this.debug) {
-          console.log(`sent> ${byteString}`);
-        }
-      }
-    });
+      nextServer = this.getValidNextServer(response.additional);
+    }
 
-    return await promise;
+    throw new Error(`Reached maximum hop count ${this.maxCount}`);
   }
 }

@@ -1,23 +1,35 @@
 import { randomBytes } from 'crypto';
-import DnsResolver from '../dns_resolver';
+import { DnsResolver } from '../dns_resolver';
 
-describe('Testing dns resolver', () => {
-  const host = '8.8.8.8';
-  const port = 53;
-  const domain = 'dns.google.com';
-  let client: DnsResolver;
+describe('Testing DNS resolver', () => {
+  const validDomains = ['dns.google.com', 'evyenergy.com', 'facebook.com'];
+  const invalidDomains = [
+    randomBytes(16).toString('hex') + '.com',
+    'dns.google.com234567890'
+  ];
 
-  beforeAll(() => {
-    client = new DnsResolver(domain, host, port, false);
+  validDomains.forEach((domain) => {
+    it(
+      'should return valid IP string ' + domain,
+      async () => {
+        const resolver = new DnsResolver(domain);
+        const result = await resolver.resolve();
+        expect(typeof result).toBe('string');
+      },
+      10000
+    );
   });
 
-  afterAll(() => {
-    client.close();
-  });
-
-  it('should send and receive message with same id', async () => {
-    const headerId = parseInt(randomBytes(2).toString('hex'), 16);
-    const response = await client.sendMessage({ id: headerId });
-    expect(response.header.id).toBe(headerId);
+  invalidDomains.forEach((domain) => {
+    it(
+      'should throw error ' + domain,
+      () => {
+        const resolver = new DnsResolver(domain);
+        expect(() => resolver.resolve()).rejects.toThrowError(
+          'No record found!'
+        );
+      },
+      10000
+    );
   });
 });
