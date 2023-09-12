@@ -1,4 +1,3 @@
-import DnsResolver from '../dns_resolver';
 import { ClassValues, TypeValues } from '../enums';
 import { IDnsHeader, IQuestion } from '../types';
 import {
@@ -47,25 +46,5 @@ describe(`Testing ${convertQuestionsToByteString.name}`, () => {
     };
     const expectedOutput = '03646e7306676f6f676c6503636f6d0000010001';
     expect(convertQuestionsToByteString([question])).toBe(expectedOutput);
-  });
-});
-
-describe('Testing dns resolver', () => {
-  const host = '8.8.8.8';
-  const port = 53;
-  const domain = 'dns.google.com';
-  let client: DnsResolver;
-
-  beforeAll(() => {
-    client = new DnsResolver(domain, host, port, false);
-  });
-
-  afterAll(() => {
-    client.close();
-  });
-
-  it('should send and receive message with same id', async () => {
-    const response = await client.sendMessage();
-    expect(response.header.id).toBeGreaterThan(0);
   });
 });

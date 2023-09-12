@@ -89,7 +89,11 @@ export default class DnsMessageParser implements IDnsMessageParser {
       if (((0b11 << 6) & length) > 0) {
         const octetOffset =
           0x3fff & ((length << 8) + parseInt(this.consumeToken(2), 16));
-        return this.domainLabels.get(octetOffset)!;
+        const domain = this.domainLabels.get(octetOffset);
+        if (!domain) {
+          throw new Error(`Invalid offset provided at ${this.pos}`);
+        }
+        return domain;
       }
 
       let label = '';
@@ -135,6 +139,24 @@ export default class DnsMessageParser implements IDnsMessageParser {
     return questions;
   }
 
+  private parseRRData(
+    rrType: TypeValues,
+    rrClass: ClassValues,
+    dataLength: number
+  ): string {
+    // Refer to https://datatracker.ietf.org/doc/html/rfc1035#section-3.4.1
+    if (rrType === TypeValues.A && rrClass === ClassValues.IN) {
+      const data: string[] = [];
+
+      for (let i = 0; i < dataLength; i++) {
+        data.push(parseInt(this.consumeToken(2), 16).toString());
+      }
+      return data.join('.');
+    }
+
+    return this.consumeToken(dataLength * 2);
+  }
+
   private parseResourceRecords(count: number): IResourceRecord[] {
     const arr = new Array<IResourceRecord>(count);
 
@@ -144,7 +166,7 @@ export default class DnsMessageParser implements IDnsMessageParser {
       const rrClass: ClassValues = parseInt(this.consumeToken(4), 16);
       const ttl = parseInt(this.consumeToken(8), 16);
       const dataLength = parseInt(this.consumeToken(4), 16);
-      const data = this.consumeToken(dataLength * 2);
+      const data = this.parseRRData(rrType, rrClass, dataLength);
 
       const rr: IResourceRecord = {
         name: rrName,

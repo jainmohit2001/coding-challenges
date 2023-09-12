@@ -53,6 +53,7 @@ class DnsMessage implements IDnsMessage {
     this.authority = authority;
     this.additional = additional;
   }
+
   toByteString(): string {
     return (
       convertHeaderToByteString(this.header) +
