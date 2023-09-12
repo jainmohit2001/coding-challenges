@@ -20,13 +20,13 @@ if (process.argv.length < 3) {
 
 const domain = process.argv[2];
 
-const host = '8.8.8.8';
+const host = '198.41.0.4';
 const port = 53;
 
 const resolver = new DnsResolver(domain, host, port, true);
 
 resolver
-  .sendMessage()
+  .sendMessage({ rd: 1 })
   .then((value) => {
     console.log(value);
     resolver.close();

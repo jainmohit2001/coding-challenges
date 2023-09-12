@@ -2,6 +2,7 @@ import UDP from 'dgram';
 import { DnsMessage } from './dns_message';
 import {
   ICommandWaitingForReply,
+  IDnsHeader,
   IDnsMessage,
   IDnsResolver,
   IQuestion
@@ -34,8 +35,15 @@ export default class DnsResolver implements IDnsResolver {
 
     this.client.on('message', (msg) => {
       const promise = this.commandsQueue.dequeue();
-      if (promise) {
-        promise.resolve(new DnsMessageParser(msg).parse());
+      const dnsMessage = new DnsMessageParser(msg).parse();
+      if (promise && promise.request.header.id === dnsMessage.header.id) {
+        promise.resolve(dnsMessage);
+      } else if (promise) {
+        promise.reject(
+          new Error(
+            `Invalid id ${dnsMessage.header.id} received in response. Expected ${promise.request.header.id}`
+          )
+        );
       }
 
       if (this.debug) {
@@ -48,7 +56,7 @@ export default class DnsResolver implements IDnsResolver {
     this.client.close();
   }
 
-  async sendMessage(): Promise<IDnsMessage> {
+  async sendMessage(header?: Partial<IDnsHeader>): Promise<IDnsMessage> {
     const questions: IQuestion[] = [
       {
         name: this.domain,
@@ -56,11 +64,15 @@ export default class DnsResolver implements IDnsResolver {
         class: ClassValues.IN
       }
     ];
-    const message = new DnsMessage({ questions });
+    const message = new DnsMessage({ header, questions });
     const byteString = message.toByteString();
     const messageBuffer = Buffer.from(byteString, 'hex');
     const promise = new Promise<IDnsMessage>((res, rej) => {
-      this.commandsQueue.enqueue({ resolve: res, reject: rej });
+      this.commandsQueue.enqueue({
+        resolve: res,
+        reject: rej,
+        request: message
+      });
     });
 
     this.client.send(messageBuffer, this.port, this.host, (err) => {

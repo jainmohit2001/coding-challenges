@@ -83,17 +83,18 @@ export default class DnsMessageParser implements IDnsMessageParser {
       if (length === 0) {
         break;
       }
-      offsets.push(offset);
 
       // Pointer format, the first two bits are ones
       if (((0b11 << 6) & length) > 0) {
-        const octetOffset =
-          0x3fff & ((length << 8) + parseInt(this.consumeToken(2), 16));
-        const domain = this.domainLabels.get(octetOffset);
-        if (!domain) {
+        this.pos -= 2;
+        const octetOffset = 0x3fff & parseInt(this.consumeToken(4), 16);
+        const domainLabel = this.domainLabels.get(octetOffset);
+        if (domainLabel === undefined) {
           throw new Error(`Invalid offset provided at ${this.pos}`);
         }
-        return domain;
+        offsets.push(-1);
+        labels.push(domainLabel);
+        break;
       }
 
       let label = '';
@@ -102,17 +103,22 @@ export default class DnsMessageParser implements IDnsMessageParser {
         label += Buffer.from(this.consumeToken(2), 'hex').toString('utf-8');
         i++;
       }
+      offsets.push(offset);
       labels.push(label);
     }
 
     let i = offsets.length - 1;
     let label = labels[i];
-    this.domainLabels.set(offsets[i], label);
+    if (offsets[i] >= 0) {
+      this.domainLabels.set(offsets[i], label);
+    }
     i--;
 
     for (i; i >= 0; i--) {
       label = labels[i] + '.' + label;
-      this.domainLabels.set(offsets[i], label);
+      if (offsets[i] >= 0) {
+        this.domainLabels.set(offsets[i], label);
+      }
     }
 
     return label;
@@ -152,6 +158,11 @@ export default class DnsMessageParser implements IDnsMessageParser {
         data.push(parseInt(this.consumeToken(2), 16).toString());
       }
       return data.join('.');
+    }
+
+    // Refer to https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11
+    if (rrType === TypeValues.NS) {
+      return this.parseDomain();
     }
 
     return this.consumeToken(dataLength * 2);

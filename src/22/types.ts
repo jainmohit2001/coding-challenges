@@ -211,6 +211,7 @@ interface IDnsResolver {
 interface ICommandWaitingForReply {
   resolve(reply?: IDnsMessage | PromiseLike<IDnsMessage>): void;
   reject(reply?: unknown): void;
+  request: IDnsMessage;
 }
 
 export {

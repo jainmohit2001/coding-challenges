@@ -7,7 +7,7 @@ import {
 } from './utils';
 
 interface DnsMessageArgs {
-  header?: IDnsHeader;
+  header?: Partial<IDnsHeader>;
   questions?: IQuestion[];
   answers?: IResourceRecord[];
   authority?: IResourceRecord[];
@@ -21,6 +21,22 @@ class DnsMessage implements IDnsMessage {
   authority: IResourceRecord[];
   additional: IResourceRecord[];
 
+  #_defaultHeader: IDnsHeader = {
+    id: parseInt(randomBytes(2).toString('hex'), 16),
+    qr: 0b0,
+    opcode: 0b0000,
+    aa: 0b0,
+    tc: 0b0,
+    rd: 0b1,
+    ra: 0b0,
+    z: 0b000,
+    rCode: 0b0000,
+    anCount: 0x0000,
+    arCount: 0x0000,
+    nsCount: 0x0000,
+    qdCount: 0x0001
+  };
+
   constructor({
     header = undefined,
     questions = [],
@@ -29,23 +45,9 @@ class DnsMessage implements IDnsMessage {
     additional = []
   }: DnsMessageArgs) {
     if (header === undefined) {
-      this.header = {
-        id: parseInt(randomBytes(2).toString('hex'), 16),
-        qr: 0b0,
-        opcode: 0b0000,
-        aa: 0b0,
-        tc: 0b0,
-        rd: 0b1,
-        ra: 0b0,
-        z: 0b000,
-        rCode: 0b0000,
-        anCount: 0x0000,
-        arCount: 0x0000,
-        nsCount: 0x0000,
-        qdCount: 0x0001
-      };
+      this.header = this.#_defaultHeader;
     } else {
-      this.header = header;
+      this.header = { ...this.#_defaultHeader, ...header };
     }
 
     this.questions = questions;

@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import DnsResolver from '../dns_resolver';
 
 describe('Testing dns resolver', () => {
@@ -15,7 +16,8 @@ describe('Testing dns resolver', () => {
   });
 
   it('should send and receive message with same id', async () => {
-    const response = await client.sendMessage();
-    expect(response.header.id).toBeGreaterThan(0);
+    const headerId = parseInt(randomBytes(2).toString('hex'), 16);
+    const response = await client.sendMessage({ id: headerId });
+    expect(response.header.id).toBe(headerId);
   });
 });
