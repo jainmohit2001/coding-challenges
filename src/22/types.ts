@@ -186,6 +186,9 @@ interface IResourceRecord {
   data: string;
 }
 
+/**
+ * Refer to https://datatracker.ietf.org/doc/html/rfc1035#section-4
+ */
 interface IDnsMessage {
   header: IDnsHeader;
   questions: IQuestion[];
@@ -195,16 +198,59 @@ interface IDnsMessage {
   toByteString(): string;
 }
 
+/**
+ * A message parser interface that takes a Buffer as an argument.
+ */
 interface IDnsMessageParser {
+  /**
+   * Parse the Buffer into a valid IDnsMessage
+   *
+   * @returns {IDnsMessage}
+   */
   parse(): IDnsMessage;
 }
 
+/**
+ * This interface is used to find DNS records for the given domain.
+ * The server is defined using host and port.
+ */
 interface IDnsQuery {
+  /**
+   * The domain for which the DNS query is being made.
+   *
+   * @type {string}
+   */
   domain: string;
+
+  /**
+   * The host of the server.
+   *
+   * @type {string}
+   */
   host: string;
+
+  /**
+   * The port of the server.
+   *
+   * @type {number}
+   */
   port: number;
+
+  /**
+   * If true, then logs the Data packets in hex format.
+   *
+   * @type {boolean}
+   */
   debug: boolean;
-  sendMessage(): Promise<IDnsMessage>;
+
+  /**
+   * Send the DNS query message to the server.
+   * You can override the header by passing the required field in the params.
+   *
+   * @param {?Partial<IDnsHeader>} [header]
+   * @returns {Promise<IDnsMessage>}
+   */
+  sendMessage(header?: Partial<IDnsHeader>): Promise<IDnsMessage>;
 }
 
 interface ICommandWaitingForReply {

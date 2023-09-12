@@ -34,7 +34,9 @@ export default class DnsQuery implements IDnsQuery {
     this.client = UDP.createSocket('udp4');
 
     this.client.on('message', (msg) => {
+      // Close the client as the query is finished
       this.client.close();
+      // Resolve promise
       const promise = this.commandsQueue.dequeue();
       const dnsMessage = new DnsMessageParser(msg).parse();
       if (promise && promise.request.header.id === dnsMessage.header.id) {
@@ -54,6 +56,7 @@ export default class DnsQuery implements IDnsQuery {
   }
 
   async sendMessage(header?: Partial<IDnsHeader>): Promise<IDnsMessage> {
+    // Create a DNS request for fetching A records
     const questions: IQuestion[] = [
       {
         name: this.domain,
@@ -64,6 +67,8 @@ export default class DnsQuery implements IDnsQuery {
     const message = new DnsMessage({ header, questions });
     const byteString = message.toByteString();
     const messageBuffer = Buffer.from(byteString, 'hex');
+
+    // Create a promise that will be resolved when server sends message
     const promise = new Promise<IDnsMessage>((res, rej) => {
       this.commandsQueue.enqueue({
         resolve: res,
@@ -72,6 +77,7 @@ export default class DnsQuery implements IDnsQuery {
       });
     });
 
+    // Send the DNS query
     this.client.send(messageBuffer, this.port, this.host, (err) => {
       if (err) {
         this.commandsQueue.dequeue()?.reject(err);
@@ -85,6 +91,7 @@ export default class DnsQuery implements IDnsQuery {
       }
     });
 
+    // Wait for promise
     return await promise;
   }
 }

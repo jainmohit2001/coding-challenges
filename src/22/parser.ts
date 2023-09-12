@@ -12,6 +12,12 @@ export default class DnsMessageParser implements IDnsMessageParser {
   private input: string;
   private pos: number;
   private inputLength: number;
+  /**
+   * This variable stores the octet index and the corresponding label.
+   *
+   * @private
+   * @type {Map<number, string>}
+   */
   private domainLabels: Map<number, string>;
 
   constructor(buffer: Buffer) {
@@ -76,27 +82,46 @@ export default class DnsMessageParser implements IDnsMessageParser {
   private parseDomain(): string {
     const labels: string[] = [];
     const offsets: number[] = [];
+
     while (this.pos < this.inputLength) {
+      // Since we are working with hex string
+      // the octet offset will be: position / 2
       const offset = this.pos / 2;
+
+      // The first octet
       const length = parseInt(this.consumeToken(2), 16);
 
+      // End of domain, null label
       if (length === 0) {
         break;
       }
 
-      // Pointer format, the first two bits are ones
+      // If pointer format, then the first two bits are ones
       if (((0b11 << 6) & length) > 0) {
+        // Move the position 1 octet back
         this.pos -= 2;
+
+        // Retrieve the offset value
+        // +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        // | 1  1|                OFFSET                   |
+        // +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
         const octetOffset = 0x3fff & parseInt(this.consumeToken(4), 16);
+
+        // Get the corresponding label
         const domainLabel = this.domainLabels.get(octetOffset);
         if (domainLabel === undefined) {
           throw new Error(`Invalid offset provided at ${this.pos}`);
         }
+
+        // Skip setting the domainLabels map
         offsets.push(-1);
+
+        // End of this domain parsing
         labels.push(domainLabel);
         break;
       }
 
+      // Retrieve the next `length` octets
       let label = '';
       let i = 0;
       while (i < length) {
@@ -107,6 +132,9 @@ export default class DnsMessageParser implements IDnsMessageParser {
       labels.push(label);
     }
 
+    // We are using the offsets and labels array to memoize the domainLabels.
+    // We start iterating from the back (offsets.length - 1),
+    // and move towards the start (0).
     let i = offsets.length - 1;
     let label = labels[i];
     if (offsets[i] >= 0) {
@@ -145,12 +173,27 @@ export default class DnsMessageParser implements IDnsMessageParser {
     return questions;
   }
 
+  /**
+   * Convert the byte string format of the RDATA field of Resource Records
+   * into a human readable data structure.
+   *
+   * The function currently supports A record and NS record parsing.
+   * Currently the fallback mechanism is set to byte string.
+   *
+   * @private
+   * @param {TypeValues} rrType
+   * @param {ClassValues} rrClass
+   * @param {number} dataLength
+   * @returns {string}
+   */
   private parseRRData(
     rrType: TypeValues,
     rrClass: ClassValues,
     dataLength: number
   ): string {
     // Refer to https://datatracker.ietf.org/doc/html/rfc1035#section-3.4.1
+    // A record contains the domain.
+    // Example: 8.8.8.8
     if (rrType === TypeValues.A && rrClass === ClassValues.IN) {
       const data: string[] = [];
 
@@ -161,6 +204,8 @@ export default class DnsMessageParser implements IDnsMessageParser {
     }
 
     // Refer to https://datatracker.ietf.org/doc/html/rfc1035#section-3.3.11
+    // NS record contains a domain string
+    // Example: dns.google.com
     if (rrType === TypeValues.NS) {
       return this.parseDomain();
     }
@@ -194,13 +239,19 @@ export default class DnsMessageParser implements IDnsMessageParser {
     return arr;
   }
 
-  private consumeToken(length: number, char?: string): string {
+  /**
+   * Consumes tokens and increment the pointer pos.
+   *
+   * @private
+   * @param {number} length
+   * @param {?string} [str]
+   * @returns {string}
+   */
+  private consumeToken(length: number, str?: string): string {
     const token = this.getCurrentToken(length);
 
-    if (char && token !== char) {
-      throw new Error(
-        `Invalid token ${token} at ${this.pos}. Expected ${char}`
-      );
+    if (str && token !== str) {
+      throw new Error(`Invalid token ${token} at ${this.pos}. Expected ${str}`);
     }
 
     this.pos += length;

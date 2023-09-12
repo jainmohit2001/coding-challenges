@@ -6,6 +6,11 @@ import {
   convertResourceRecordToByteString
 } from './utils';
 
+/**
+ * This interface is used with the DnsMessage class to accept the args.
+ * All the arguments are optional.
+ * The header argument has Partial capabilities.
+ */
 interface DnsMessageArgs {
   header?: Partial<IDnsHeader>;
   questions?: IQuestion[];
@@ -21,6 +26,15 @@ class DnsMessage implements IDnsMessage {
   authority: IResourceRecord[];
   additional: IResourceRecord[];
 
+  /**
+   * Default header with following values
+   * - id: random integer
+   * - flags (hex): 0100
+   * - anCount, arCount, nsCount: 0
+   * - qrCount: 1
+   *
+   * @type {IDnsHeader}
+   */
   #_defaultHeader: IDnsHeader = {
     id: parseInt(randomBytes(2).toString('hex'), 16),
     qr: 0b0,

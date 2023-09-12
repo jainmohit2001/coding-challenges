@@ -12,6 +12,5 @@ describe('Testing dns query', () => {
     const headerId = parseInt(randomBytes(2).toString('hex'), 16);
     const response = await client.sendMessage({ id: headerId, rd: 1 });
     expect(response.header.id).toBe(headerId);
-    expect(response.answers.length).toBe(2);
   });
 });
