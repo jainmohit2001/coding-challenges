@@ -27,7 +27,8 @@ const resolver = new DnsResolver(domain, host, port, true);
 
 resolver
   .sendMessage()
-  .then(() => {
+  .then((value) => {
+    console.log(value);
     resolver.close();
     process.exit(0);
   })

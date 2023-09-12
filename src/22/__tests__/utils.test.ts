@@ -66,6 +66,6 @@ describe('Testing dns resolver', () => {
 
   it('should send and receive message with same id', async () => {
     const response = await client.sendMessage();
-    expect(response.length).toBeGreaterThan(0);
+    expect(response.header.id).toBeGreaterThan(0);
   });
 });

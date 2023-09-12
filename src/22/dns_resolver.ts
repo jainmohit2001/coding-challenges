@@ -1,7 +1,14 @@
 import UDP from 'dgram';
 import { DnsMessage } from './dns_message';
-import { ICommandWaitingForReply, IDnsResolver } from './types';
+import {
+  ICommandWaitingForReply,
+  IDnsMessage,
+  IDnsResolver,
+  IQuestion
+} from './types';
 import { Queue } from '../utils/queue';
+import { ClassValues, TypeValues } from './enums';
+import DnsMessageParser from './parser';
 
 export default class DnsResolver implements IDnsResolver {
   domain;
@@ -28,7 +35,7 @@ export default class DnsResolver implements IDnsResolver {
     this.client.on('message', (msg) => {
       const promise = this.commandsQueue.dequeue();
       if (promise) {
-        promise.resolve(msg);
+        promise.resolve(new DnsMessageParser(msg).parse());
       }
 
       if (this.debug) {
@@ -41,11 +48,18 @@ export default class DnsResolver implements IDnsResolver {
     this.client.close();
   }
 
-  async sendMessage(): Promise<Buffer> {
-    const message = new DnsMessage(this.domain);
+  async sendMessage(): Promise<IDnsMessage> {
+    const questions: IQuestion[] = [
+      {
+        name: this.domain,
+        type: TypeValues.A,
+        class: ClassValues.IN
+      }
+    ];
+    const message = new DnsMessage({ questions });
     const byteString = message.toByteString();
     const messageBuffer = Buffer.from(byteString, 'hex');
-    const promise = new Promise<Buffer>((res, rej) => {
+    const promise = new Promise<IDnsMessage>((res, rej) => {
       this.commandsQueue.enqueue({ resolve: res, reject: rej });
     });
 

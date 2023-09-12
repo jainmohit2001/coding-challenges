@@ -1,4 +1,4 @@
-import { IDnsHeader, IQuestion } from './types';
+import { IDnsHeader, IQuestion, IResourceRecord } from './types';
 
 function parseDomainToByteString(domain: string): string {
   let encodedDomain = '';
@@ -54,8 +54,24 @@ function convertQuestionsToByteString(questions: IQuestion[]): string {
   return output;
 }
 
+function convertResourceRecordToByteString(arr: IResourceRecord[]): string {
+  let output = '';
+
+  arr.forEach((rr) => {
+    output += parseDomainToByteString(rr.name);
+    output += rr.type.toString(16).padStart(4, '0');
+    output += rr.class.toString(16).padStart(4, '0');
+    output += rr.ttl.toString(16).padStart(8, '0');
+    output += rr.dataLength.toString(16).padStart(4, '0');
+    output += rr.data;
+  });
+
+  return output;
+}
+
 export {
   convertHeaderToByteString,
   parseDomainToByteString,
-  convertQuestionsToByteString
+  convertQuestionsToByteString,
+  convertResourceRecordToByteString
 };

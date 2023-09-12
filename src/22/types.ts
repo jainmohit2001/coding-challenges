@@ -137,14 +137,66 @@ interface IQuestion {
   class: ClassValues | QClassValues;
 }
 
+interface IResourceRecord {
+  /**
+   * Domain name.
+   *
+   * @type {string}
+   */
+  name: string;
+
+  /**
+   * Type of Resource Record.
+   * 16 bit integer.
+   *
+   * @type {TypeValues}
+   */
+  type: TypeValues;
+
+  /**
+   * Class of the data present in this RR.
+   * 16 bit integer.
+   *
+   * @type {ClassValues}
+   */
+  class: ClassValues;
+
+  /**
+   * Time interval (in seconds) that the RR may be cached,
+   * before it should be discarded.
+   * A 32 bit unsigned integer.
+   *
+   * @type {number}
+   */
+  ttl: number;
+
+  /**
+   * Length in octets of the data field.
+   * An unsigned 16 bit integer.
+   *
+   * @type {number}
+   */
+  dataLength: number;
+
+  /**
+   * Variable length string of octets that describes the record.
+   *
+   * @type {string}
+   */
+  data: string;
+}
+
 interface IDnsMessage {
   header: IDnsHeader;
   questions: IQuestion[];
+  answers: IResourceRecord[];
+  authority: IResourceRecord[];
+  additional: IResourceRecord[];
   toByteString(): string;
 }
 
 interface IDnsMessageParser {
-  parse: (input: Buffer) => IDnsMessage;
+  parse(): IDnsMessage;
 }
 
 interface IDnsResolver {
@@ -153,11 +205,11 @@ interface IDnsResolver {
   port: number;
   debug: boolean;
   close(): void;
-  sendMessage(): Promise<Buffer>;
+  sendMessage(): Promise<IDnsMessage>;
 }
 
 interface ICommandWaitingForReply {
-  resolve(reply?: unknown): void;
+  resolve(reply?: IDnsMessage | PromiseLike<IDnsMessage>): void;
   reject(reply?: unknown): void;
 }
 
@@ -167,5 +219,6 @@ export {
   IDnsMessageParser,
   IQuestion,
   IDnsResolver,
-  ICommandWaitingForReply
+  ICommandWaitingForReply,
+  IResourceRecord
 };
