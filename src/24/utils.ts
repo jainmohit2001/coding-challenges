@@ -1,7 +1,14 @@
 export interface SubArg {
   subject: Buffer;
   group?: Buffer;
-  sid: Buffer;
+  sid: number;
+}
+
+export interface PubArg {
+  subject: Buffer;
+  replyTo?: Buffer;
+  payloadSize: number;
+  payload?: Buffer;
 }
 
 export function splitArgs(arg: Buffer): Buffer[] {
@@ -40,23 +47,48 @@ export function parseSub(data: Buffer): SubArg {
   const subArg: SubArg = {
     subject: Buffer.from(''),
     group: Buffer.from(''),
-    sid: Buffer.from('')
+    sid: -1
   };
 
   switch (args.length) {
     case 2:
       subArg.subject = args[0];
       subArg.group = undefined;
-      subArg.sid = args[1];
+      subArg.sid = parseInt(args[1].toString(), 10);
       break;
     case 3:
       subArg.subject = args[0];
       subArg.group = args[1];
-      subArg.sid = args[2];
+      subArg.sid = parseInt(args[2].toString(), 10);
       break;
   }
 
   return subArg;
+}
+
+export function preparePub(data: Buffer): PubArg {
+  const args = splitArgs(data);
+
+  const pubArg: PubArg = {
+    subject: Buffer.from(''),
+    replyTo: undefined,
+    payloadSize: 0,
+    payload: undefined
+  };
+
+  switch (args.length) {
+    case 2:
+      pubArg.subject = args[0];
+      pubArg.replyTo = undefined;
+      pubArg.payloadSize = parseInt(args[1].toString(), 10);
+      break;
+    case 3:
+      pubArg.subject = args[0];
+      pubArg.replyTo = args[1];
+      pubArg.payloadSize = parseInt(args[2].toString(), 10);
+  }
+
+  return pubArg;
 }
 
 enum WhiteSpace {

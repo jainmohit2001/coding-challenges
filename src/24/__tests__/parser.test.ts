@@ -1,5 +1,5 @@
 import { Kind, Msg, Parser, State } from '../parser';
-import { SubArg, parseSub } from '../utils';
+import { PubArg, SubArg, parseSub } from '../utils';
 
 it('should throw error on invalid start character of message', () => {
   const buf = Buffer.from('1');
@@ -152,37 +152,38 @@ describe('Testing "SUB" command', () => {
   const tests = [
     {
       input: Buffer.from('SUB FOO 1\r\n'),
-      output: { subject: Buffer.from('FOO'), sid: Buffer.from('1') } as SubArg
+      output: { subject: Buffer.from('FOO'), sid: 1 } as SubArg
     },
     {
       input: Buffer.from('SUB FOO G1 44\r\n'),
       output: {
         subject: Buffer.from('FOO'),
         group: Buffer.from('G1'),
-        sid: Buffer.from('44')
+        sid: 44
       } as SubArg
     },
 
     // Should handle whitespace
     {
       input: Buffer.from('SUB\tFOO 1\r\n'),
-      output: { subject: Buffer.from('FOO'), sid: Buffer.from('1') } as SubArg
+      output: { subject: Buffer.from('FOO'), sid: 1 } as SubArg
     },
 
     // Should handle small case letters
     {
       input: Buffer.from('sUB FOO 1\r\n'),
-      output: { subject: Buffer.from('FOO'), sid: Buffer.from('1') } as SubArg
+      output: { subject: Buffer.from('FOO'), sid: 1 } as SubArg
     },
     {
       input: Buffer.from('SuB FOO 1\r\n'),
-      output: { subject: Buffer.from('FOO'), sid: Buffer.from('1') } as SubArg
+      output: { subject: Buffer.from('FOO'), sid: 1 } as SubArg
     },
     {
       input: Buffer.from('SUb FOO 1\r\n'),
-      output: { subject: Buffer.from('FOO'), sid: Buffer.from('1') } as SubArg
+      output: { subject: Buffer.from('FOO'), sid: 1 } as SubArg
     }
   ];
+
   tests.forEach(({ input, output }) => {
     it(`should parse ${JSON.stringify(input.toString())}`, (done) => {
       const cb = (msg: Msg) => {
@@ -209,7 +210,7 @@ describe('Testing "SUB" command', () => {
     const output = {
       subject: Buffer.from('FOO'),
       group: Buffer.from('G1'),
-      sid: Buffer.from('44')
+      sid: 44
     } as SubArg;
 
     const cb = (msg: Msg) => {
@@ -233,6 +234,110 @@ describe('Testing "SUB" command', () => {
 
 describe('Testing invalid "SUB"', () => {
   const bufList = [Buffer.from('qUB'), Buffer.from('SqB'), Buffer.from('SUq')];
+
+  bufList.forEach((buf) => {
+    it(`should throw error when parsing "${buf.toString()}"`, () => {
+      const parser = new Parser(() => {});
+      expect(() => parser.parse(buf)).toThrow();
+    });
+  });
+});
+
+describe('Testing "PUB" command', () => {
+  const output = {
+    subject: Buffer.from('Subject'),
+    payloadSize: 12,
+    payload: Buffer.from('Hello World!')
+  } as PubArg;
+
+  const tests: { input: Buffer; output: PubArg }[] = [
+    {
+      input: Buffer.from('PUB Subject 12\r\nHello World!\r\n'),
+      output
+    },
+
+    // Should handle small case letters,
+    {
+      input: Buffer.from('pUB Subject 12\r\nHello World!\r\n'),
+      output
+    },
+    {
+      input: Buffer.from('PuB Subject 12\r\nHello World!\r\n'),
+      output
+    },
+    {
+      input: Buffer.from('PUb Subject 12\r\nHello World!\r\n'),
+      output
+    },
+
+    // Should handle optional arg
+    {
+      input: Buffer.from('PUb Subject G1 12\r\nHello World!\r\n'),
+      output: { ...output, replyTo: Buffer.from('G1') } as PubArg
+    }
+  ];
+
+  tests.forEach(({ input, output }) => {
+    it(`should parse ${JSON.stringify(input.toString())}`, (done) => {
+      const cb = (msg: Msg) => {
+        expect(msg.kind).toBe(Kind.PUB);
+        expect(msg.pubArg).toMatchObject(output);
+        done();
+      };
+
+      const parser = new Parser(cb);
+      parser.parse(input);
+
+      expect(parser.state).toBe(State.OP_START);
+    });
+  });
+});
+
+it('It should parse "PUB" command with split args and payload', (done) => {
+  const bufList = [
+    Buffer.from('PUB Subject'),
+    Buffer.from(' 12\r'),
+    Buffer.from('\nHello '),
+    Buffer.from('World!\r'),
+    Buffer.from('\n')
+  ];
+
+  const output = {
+    subject: Buffer.from('Subject'),
+    payloadSize: 12,
+    payload: Buffer.from('Hello World!')
+  } as PubArg;
+
+  const cb = (msg: Msg) => {
+    expect(msg.kind).toBe(Kind.PUB);
+    expect(msg.pubArg).toMatchObject(output);
+    done();
+  };
+
+  const parser = new Parser(cb);
+
+  expect(parser.state).toBe(State.OP_START);
+  parser.parse(bufList[0]);
+  expect(parser.state).toBe(State.PUB_ARG);
+  parser.parse(bufList[1]);
+  expect(parser.state).toBe(State.PUB_ARG);
+  parser.parse(bufList[2]);
+  expect(parser.state).toBe(State.MSG_PAYLOAD);
+  parser.parse(bufList[3]);
+  expect(parser.state).toBe(State.MSG_END_LF);
+  parser.parse(bufList[4]);
+  expect(parser.state).toBe(State.OP_START);
+});
+
+describe('Testing invalid "PUB" commands', () => {
+  const bufList = [
+    Buffer.from('PqB'),
+    Buffer.from('PUq'),
+
+    // Should throw when unexpected characters found instead of CR/LF.
+    Buffer.from('PUB Subject 12\r\nHello World! \r \n'),
+    Buffer.from('PUB Subject 12\r\nHello World!\r \n')
+  ];
 
   bufList.forEach((buf) => {
     it(`should throw error when parsing "${buf.toString()}"`, () => {

@@ -1,6 +1,11 @@
+import { PubArg, preparePub } from './utils';
+
+const LEN_CRLF = 2;
+
 export interface Msg {
   kind: Kind;
   data?: Buffer;
+  pubArg?: PubArg;
 }
 
 export class Parser {
@@ -8,6 +13,8 @@ export class Parser {
   private argStart: number;
   private drop: number;
   private argBuf?: Buffer;
+  private pubArg?: PubArg;
+  private msgBuf?: Buffer;
 
   cb: (msg: Msg) => void;
 
@@ -156,6 +163,10 @@ export class Parser {
             case cc.o:
               this.state = State.OP_PO;
               break;
+            case cc.U:
+            case cc.u:
+              this.state = State.OP_PU;
+              break;
             default:
               throw this.fail(buf.subarray(i));
           }
@@ -279,11 +290,126 @@ export class Parser {
             default:
               continue;
           }
+          break;
+        case State.OP_PU:
+          switch (b) {
+            case cc.B:
+            case cc.b:
+              this.state = State.OP_PUB;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_PUB:
+          switch (b) {
+            case cc.SPACE:
+            case cc.TAB:
+              continue;
+            default:
+              this.state = State.PUB_ARG;
+              this.argStart = i;
+          }
+          break;
+        case State.PUB_ARG:
+          switch (b) {
+            case cc.CR:
+              this.drop = 1;
+              break;
+            case cc.LF: {
+              let arg: Buffer;
+
+              if (this.argBuf) {
+                arg = Buffer.concat([
+                  this.argBuf,
+                  buf.subarray(this.argStart, i - this.drop)
+                ]);
+              } else {
+                arg = buf.subarray(this.argStart, i - this.drop);
+              }
+
+              this.pubArg = preparePub(arg);
+              this.argStart = i + 1;
+              this.drop = 0;
+              this.state = State.MSG_PAYLOAD;
+
+              // If no msgBuf is present, then skip ahead the bytes.
+              // It this jump falls out from the loop,
+              // then we will handle split buffer case.
+              if (this.msgBuf === undefined) {
+                i = this.argStart + this.pubArg.payloadSize - LEN_CRLF;
+              }
+            }
+          }
+          break;
+        case State.MSG_PAYLOAD:
+          // msgBuf is present. It means we are still parsing Payload.
+          // Hence all bytes from index 0 to index i will be part of payload.
+          if (this.msgBuf !== undefined) {
+            // Check if we have parsed the required number of bytes.
+            // Total bytes parsed =
+            //    total bytes present in msgBuf +
+            //    total bytes parsed in this new buffer (which is i + 1)
+            if (i + this.msgBuf.length + 1 >= this.pubArg!.payloadSize) {
+              this.state = State.MSG_END_CR;
+            } else {
+              // Otherwise keep on parsing Payload
+              // This can result in exhausting the for loop,
+              // then we will handle the split buffer case.
+              continue;
+            }
+          }
+          // If we have read the number of bytes specified,
+          // then change the state to MSG_END_CR.
+          // This is only valid when the payload ends in the same message.
+          else if (i - this.argStart + 1 >= this.pubArg!.payloadSize) {
+            this.state = State.MSG_END_CR;
+          }
+          break;
+        case State.MSG_END_CR:
+          // We are expecting a CR
+          if (b !== cc.CR) {
+            throw this.fail(buf.subarray(i));
+          }
+
+          this.drop = 1;
+          this.state = State.MSG_END_LF;
+          break;
+        case State.MSG_END_LF:
+          // We are expecting a LF
+          if (b !== cc.LF) {
+            throw this.fail(buf.subarray(i));
+          }
+
+          // If the payload is not split in two buffers
+          if (this.msgBuf === undefined) {
+            this.pubArg!.payload = buf.subarray(this.argStart, i - this.drop);
+          }
+          // Otherwise concat the buffers
+          else {
+            this.pubArg!.payload = Buffer.concat([
+              this.msgBuf,
+              buf.subarray(this.argStart, i - this.drop)
+            ]);
+          }
+
+          this.cb({ kind: Kind.PUB, pubArg: this.pubArg });
+
+          // Clear argBuf and msgBuf
+          this.argBuf = undefined;
+          this.msgBuf = undefined;
+          this.argStart = i + 1;
+          this.drop = 0;
+          this.state = State.OP_START;
       }
     }
 
     // If the message is broken between two buffers for ARG state
-    if (this.state === State.CONNECT_ARG || this.state === State.SUB_ARG) {
+    if (
+      this.state === State.CONNECT_ARG ||
+      this.state === State.SUB_ARG ||
+      this.state === State.PUB_ARG
+    ) {
       // If argBuf is undefined than initialize it.
       if (this.argBuf === undefined) {
         this.argBuf = buf.subarray(this.argStart, i - this.drop);
@@ -293,6 +419,22 @@ export class Parser {
       else {
         this.argBuf = Buffer.concat([
           this.argBuf,
+          buf.subarray(this.argStart, i - this.drop)
+        ]);
+      }
+    }
+
+    // Still parsing Payload
+    if (
+      this.state === State.MSG_PAYLOAD ||
+      this.state === State.MSG_END_CR ||
+      this.state === State.MSG_END_LF
+    ) {
+      if (this.msgBuf === undefined) {
+        this.msgBuf = buf.subarray(this.argStart, i - this.drop);
+      } else {
+        this.msgBuf = Buffer.concat([
+          this.msgBuf,
           buf.subarray(this.argStart, i - this.drop)
         ]);
       }
@@ -334,7 +476,11 @@ export enum State {
   OP_SUB,
   SUB_ARG,
   OP_PU,
-  OP_PUB
+  OP_PUB,
+  PUB_ARG,
+  MSG_PAYLOAD,
+  MSG_END_CR,
+  MSG_END_LF
 }
 
 enum cc {
