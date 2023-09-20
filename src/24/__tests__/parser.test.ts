@@ -293,7 +293,38 @@ describe('Testing "PUB" command', () => {
   });
 });
 
-it('It should parse "PUB" command with split args and payload', (done) => {
+it('It should parse "PUB" command with only split payload', (done) => {
+  const bufList = [
+    Buffer.from('PUB Subject G1 12\r\n'),
+    Buffer.from('Hello World!'),
+    Buffer.from('\r\n')
+  ];
+
+  const output = {
+    subject: Buffer.from('Subject'),
+    replyTo: Buffer.from('G1'),
+    payloadSize: 12,
+    payload: Buffer.from('Hello World!')
+  } as PubArg;
+
+  const cb = (msg: Msg) => {
+    expect(msg.kind).toBe(Kind.PUB);
+    expect(msg.pubArg).toMatchObject(output);
+    done();
+  };
+
+  const parser = new Parser(cb);
+
+  expect(parser.state).toBe(State.OP_START);
+  parser.parse(bufList[0]);
+  expect(parser.state).toBe(State.MSG_PAYLOAD);
+  parser.parse(bufList[1]);
+  expect(parser.state).toBe(State.MSG_END_CR);
+  parser.parse(bufList[2]);
+  expect(parser.state).toBe(State.OP_START);
+});
+
+it('It should parse "PUB" command with both split args and payload', (done) => {
   const bufList = [
     Buffer.from('PUB Subject'),
     Buffer.from(' 12\r'),

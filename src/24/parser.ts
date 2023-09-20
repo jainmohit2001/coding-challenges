@@ -412,7 +412,9 @@ export class Parser {
     ) {
       // If argBuf is undefined than initialize it.
       if (this.argBuf === undefined) {
-        this.argBuf = buf.subarray(this.argStart, i - this.drop);
+        // We need to allocate a new Buffer otherwise
+        // if the original buffer changes, argBuf will change as well.
+        this.argBuf = Buffer.from(buf.subarray(this.argStart, i - this.drop));
       }
       // Otherwise concat the prev argBuf and the subarray
       // NOTE: This is not a full zero allocation parsing
@@ -431,13 +433,44 @@ export class Parser {
       this.state === State.MSG_END_LF
     ) {
       if (this.msgBuf === undefined) {
-        this.msgBuf = buf.subarray(this.argStart, i - this.drop);
+        this.msgBuf = Buffer.from(buf.subarray(this.argStart, i - this.drop));
       } else {
         this.msgBuf = Buffer.concat([
           this.msgBuf,
           buf.subarray(this.argStart, i - this.drop)
         ]);
       }
+
+      // The pubArg contains information that points to original buf memory.
+      // If the original buffer changes then pubArg will also change.
+      // Hence pubArg needs to be cloned.
+      if (this.argBuf === undefined) {
+        this.clonePubArg();
+      }
+    }
+  }
+
+  private clonePubArg() {
+    const subjectLength = this.pubArg!.subject.length;
+    const replyLength = this.pubArg?.replyTo?.length ?? 0;
+
+    // Allocate new memory
+    const newBuf = Buffer.alloc(subjectLength + replyLength);
+
+    // Update the memory
+    newBuf.set(this.pubArg!.subject);
+    if (this.pubArg!.replyTo) {
+      newBuf.set(this.pubArg!.replyTo, subjectLength);
+    }
+
+    // We need to keep a reference to newBuf otherwise
+    // it will be called for Garbage collection.
+    this.argBuf = newBuf;
+
+    // Update the pubArg
+    this.pubArg!.subject = newBuf.subarray(0, subjectLength);
+    if (this.pubArg!.replyTo) {
+      this.pubArg!.replyTo = newBuf.subarray(subjectLength);
     }
   }
 
