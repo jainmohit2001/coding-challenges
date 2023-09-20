@@ -1,6 +1,6 @@
 export interface Msg {
   kind: Kind;
-  data: Buffer;
+  data?: Buffer;
 }
 
 export class Parser {
@@ -26,12 +26,15 @@ export class Parser {
         case State.OP_START:
           switch (b) {
             case cc.C:
+            case cc.c:
               this.state = State.OP_C;
               break;
             case cc.P:
+            case cc.p:
               this.state = State.OP_P;
               break;
             case cc.S:
+            case cc.s:
               this.state = State.OP_S;
               break;
             default:
@@ -138,6 +141,82 @@ export class Parser {
             default:
               continue;
           }
+          break;
+        case State.OP_P:
+          switch (b) {
+            case cc.I:
+            case cc.i:
+              this.state = State.OP_PI;
+              break;
+            case cc.O:
+            case cc.o:
+              this.state = State.OP_PO;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_PI:
+          switch (b) {
+            case cc.N:
+            case cc.n:
+              this.state = State.OP_PIN;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_PIN:
+          switch (b) {
+            case cc.G:
+            case cc.g:
+              this.state = State.OP_PING;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_PING:
+          switch (b) {
+            case cc.LF: {
+              this.cb({ kind: Kind.PING });
+              this.drop = 0;
+              this.state = State.OP_START;
+              break;
+            }
+          }
+          break;
+        case State.OP_PO:
+          switch (b) {
+            case cc.N:
+            case cc.n:
+              this.state = State.OP_PON;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_PON:
+          switch (b) {
+            case cc.G:
+            case cc.g:
+              this.state = State.OP_PONG;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_PONG:
+          switch (b) {
+            case cc.LF:
+              {
+                this.cb({ kind: Kind.PONG });
+                this.drop = 0;
+                this.state = State.OP_START;
+              }
+              break;
+          }
+          break;
       }
     }
 
