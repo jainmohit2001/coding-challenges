@@ -3,6 +3,8 @@ import { Kind, Msg, Parser, State } from '../parser';
 describe('Testing "CONNECT"', () => {
   const bufList = [
     Buffer.from('CONNECT {}\r\n'),
+
+    // Should handle small case letters
     Buffer.from('cONNECT {}\r\n'),
     Buffer.from('CoNNECT {}\r\n'),
     Buffer.from('COnNECT {}\r\n'),
@@ -64,10 +66,17 @@ describe('Testing invalid "COMMAND"', () => {
 describe('Testing "PING" and "PONG"', () => {
   const pingBufList = [
     Buffer.from('PING\r\n'),
+
+    // Should handle small case letters
     Buffer.from('pING\r\n'),
     Buffer.from('PiNG\r\n'),
     Buffer.from('PInG\r\n'),
-    Buffer.from('PINg\r\n')
+    Buffer.from('PINg\r\n'),
+
+    // Should handle spaces
+    Buffer.from('PING \r\n'),
+    Buffer.from('PING\r \n'),
+    Buffer.from('PING \r \n')
   ];
 
   pingBufList.forEach((buf) => {
@@ -85,10 +94,17 @@ describe('Testing "PING" and "PONG"', () => {
 
   const pongBufList = [
     Buffer.from('PONG\r\n'),
+
+    // Should handle small case letters
     Buffer.from('pONG\r\n'),
     Buffer.from('PoNG\r\n'),
     Buffer.from('POnG\r\n'),
-    Buffer.from('POng\r\n')
+    Buffer.from('POng\r\n'),
+
+    // Should handle spaces
+    Buffer.from('PONG \r\n'),
+    Buffer.from('PONG\r \n'),
+    Buffer.from('PONG \r \n')
   ];
 
   pongBufList.forEach((buf) => {
