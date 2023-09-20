@@ -5,9 +5,9 @@ export interface Msg {
 
 export class Parser {
   state: State;
-  argStart: number;
-  drop: number;
-  argBuf?: Buffer;
+  private argStart: number;
+  private drop: number;
+  private argBuf?: Buffer;
 
   cb: (msg: Msg) => void;
 
@@ -19,6 +19,10 @@ export class Parser {
   }
 
   parse(buf: Buffer) {
+    // For every buffer, we need to reset these pointers
+    this.argStart = 0;
+    this.drop = 0;
+
     let i: number;
     for (i = 0; i < buf.length; i++) {
       const b = buf[i];
@@ -217,11 +221,69 @@ export class Parser {
               break;
           }
           break;
+        case State.OP_S:
+          switch (b) {
+            case cc.U:
+            case cc.u:
+              this.state = State.OP_SU;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_SU:
+          switch (b) {
+            case cc.B:
+            case cc.b:
+              this.state = State.OP_SUB;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_SUB: {
+          switch (b) {
+            case cc.TAB:
+            case cc.SPACE:
+              continue;
+            default:
+              this.state = State.SUB_ARG;
+              this.argStart = i;
+          }
+          break;
+        }
+        case State.SUB_ARG:
+          switch (b) {
+            case cc.CR:
+              this.drop = 1;
+              break;
+            case cc.LF: {
+              let arg: Buffer;
+
+              if (this.argBuf) {
+                arg = Buffer.concat([
+                  this.argBuf,
+                  buf.subarray(this.argStart, i - this.drop)
+                ]);
+                this.argBuf = undefined;
+              } else {
+                arg = buf.subarray(this.argStart, i - this.drop);
+              }
+
+              this.cb({ kind: Kind.SUB, data: arg });
+              this.argStart = i + 1;
+              this.drop = 0;
+              this.state = State.OP_START;
+              break;
+            }
+            default:
+              continue;
+          }
       }
     }
 
     // If the message is broken between two buffers for ARG state
-    if (this.state === State.CONNECT_ARG) {
+    if (this.state === State.CONNECT_ARG || this.state === State.SUB_ARG) {
       // If argBuf is undefined than initialize it.
       if (this.argBuf === undefined) {
         this.argBuf = buf.subarray(this.argStart, i - this.drop);
@@ -270,6 +332,7 @@ export enum State {
   OP_S,
   OP_SU,
   OP_SUB,
+  SUB_ARG,
   OP_PU,
   OP_PUB
 }
