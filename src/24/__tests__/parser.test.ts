@@ -1,5 +1,5 @@
 import { Kind, Msg, Parser, State } from '../parser';
-import { PubArg, SubArg, parseSub } from '../utils';
+import { PubArg, SubArg, UnsubArg, parseSub, parseUnsubArg } from '../utils';
 
 it('should throw error on invalid start character of message', () => {
   const buf = Buffer.from('1');
@@ -149,7 +149,7 @@ describe('Testing invalid "PING" and "PONG"', () => {
 });
 
 describe('Testing "SUB" command', () => {
-  const tests = [
+  const tests: { input: Buffer; output: SubArg }[] = [
     {
       input: Buffer.from('SUB FOO 1\r\n'),
       output: { subject: Buffer.from('FOO'), sid: 1 } as SubArg
@@ -207,11 +207,11 @@ describe('Testing "SUB" command', () => {
       Buffer.from('44\r\n')
     ];
 
-    const output = {
+    const output: SubArg = {
       subject: Buffer.from('FOO'),
       group: Buffer.from('G1'),
       sid: 44
-    } as SubArg;
+    };
 
     const cb = (msg: Msg) => {
       expect(msg.kind).toBe(Kind.SUB);
@@ -244,11 +244,11 @@ describe('Testing invalid "SUB"', () => {
 });
 
 describe('Testing "PUB" command', () => {
-  const output = {
+  const output: PubArg = {
     subject: Buffer.from('Subject'),
     payloadSize: 12,
     payload: Buffer.from('Hello World!')
-  } as PubArg;
+  };
 
   const tests: { input: Buffer; output: PubArg }[] = [
     {
@@ -300,12 +300,12 @@ it('It should parse "PUB" command with only split payload', (done) => {
     Buffer.from('\r\n')
   ];
 
-  const output = {
+  const output: PubArg = {
     subject: Buffer.from('Subject'),
     replyTo: Buffer.from('G1'),
     payloadSize: 12,
     payload: Buffer.from('Hello World!')
-  } as PubArg;
+  };
 
   const cb = (msg: Msg) => {
     expect(msg.kind).toBe(Kind.PUB);
@@ -333,11 +333,11 @@ it('It should parse "PUB" command with both split args and payload', (done) => {
     Buffer.from('\n')
   ];
 
-  const output = {
+  const output: PubArg = {
     subject: Buffer.from('Subject'),
     payloadSize: 12,
     payload: Buffer.from('Hello World!')
-  } as PubArg;
+  };
 
   const cb = (msg: Msg) => {
     expect(msg.kind).toBe(Kind.PUB);
@@ -368,6 +368,91 @@ describe('Testing invalid "PUB" commands', () => {
     // Should throw when unexpected characters found instead of CR/LF.
     Buffer.from('PUB Subject 12\r\nHello World! \r \n'),
     Buffer.from('PUB Subject 12\r\nHello World!\r \n')
+  ];
+
+  bufList.forEach((buf) => {
+    it(`should throw error when parsing "${buf.toString()}"`, () => {
+      const parser = new Parser(() => {});
+      expect(() => parser.parse(buf)).toThrow();
+    });
+  });
+});
+
+describe('Testing "UNSUB" command', () => {
+  const output: UnsubArg = {
+    sid: 11,
+    maxMsgs: undefined
+  };
+
+  const bufList: { input: Buffer; output: UnsubArg }[] = [
+    { input: Buffer.from('UNSUB 11\r\n'), output },
+
+    // Should handle small case letters
+    { input: Buffer.from('uNSUB 11\r\n'), output },
+    { input: Buffer.from('UnSUB 11\r\n'), output },
+    { input: Buffer.from('UNsUB 11\r\n'), output },
+    { input: Buffer.from('UNSuB 11\r\n'), output },
+    { input: Buffer.from('UNSUb 11\r\n'), output },
+
+    // Should handle optional args
+    { input: Buffer.from('UNSUB 11 5\r\n'), output: { ...output, maxMsgs: 5 } }
+  ];
+
+  bufList.forEach(({ input, output }) => {
+    it(`should parse ${JSON.stringify(input.toString())}`, (done) => {
+      const cb = (msg: Msg) => {
+        expect(msg.kind).toBe(Kind.UNSUB);
+
+        const unsubArg = parseUnsubArg(msg.data!);
+        expect(unsubArg).toMatchObject(output);
+
+        done();
+      };
+
+      const parser = new Parser(cb);
+      parser.parse(input);
+      expect(parser.state).toBe(State.OP_START);
+    });
+  });
+});
+
+it('Testing "UNSUB" command with split arg', (done) => {
+  const bufList = [
+    Buffer.from('UNSUB 11 '),
+    Buffer.from('5'),
+    Buffer.from('\r\n')
+  ];
+
+  const output: UnsubArg = {
+    sid: 11,
+    maxMsgs: 5
+  };
+
+  const cb = (msg: Msg) => {
+    expect(msg.kind).toBe(Kind.UNSUB);
+    const unsubArg = parseUnsubArg(msg.data!);
+    expect(unsubArg).toMatchObject(output);
+    done();
+  };
+
+  const parser = new Parser(cb);
+
+  expect(parser.state).toBe(State.OP_START);
+  parser.parse(bufList[0]);
+  expect(parser.state).toBe(State.UNSUB_ARG);
+  parser.parse(bufList[1]);
+  expect(parser.state).toBe(State.UNSUB_ARG);
+  parser.parse(bufList[2]);
+  expect(parser.state).toBe(State.OP_START);
+});
+
+describe('Testing invalid "UNSUB" commands', () => {
+  const bufList = [
+    Buffer.from('qNSUB'),
+    Buffer.from('UqSUB'),
+    Buffer.from('UNqUB'),
+    Buffer.from('UNSqB'),
+    Buffer.from('UNSUq')
   ];
 
   bufList.forEach((buf) => {

@@ -11,6 +11,11 @@ export interface PubArg {
   payload?: Buffer;
 }
 
+export interface UnsubArg {
+  sid: number;
+  maxMsgs?: number;
+}
+
 export function splitArgs(arg: Buffer): Buffer[] {
   const args: Buffer[] = [];
   let i = 0;
@@ -89,6 +94,27 @@ export function preparePub(data: Buffer): PubArg {
   }
 
   return pubArg;
+}
+
+export function parseUnsubArg(data: Buffer): UnsubArg {
+  const args = splitArgs(data);
+
+  const unsubArg: UnsubArg = {
+    sid: -1,
+    maxMsgs: undefined
+  };
+
+  switch (args.length) {
+    case 1:
+      unsubArg.sid = parseInt(args[0].toString(), 10);
+      break;
+    case 2:
+      unsubArg.sid = parseInt(args[0].toString(), 10);
+      unsubArg.maxMsgs = parseInt(args[1].toString(), 10);
+      break;
+  }
+
+  return unsubArg;
 }
 
 enum WhiteSpace {

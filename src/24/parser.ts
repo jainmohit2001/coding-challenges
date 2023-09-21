@@ -48,6 +48,10 @@ export class Parser {
             case cc.s:
               this.state = State.OP_S;
               break;
+            case cc.U:
+            case cc.u:
+              this.state = State.OP_U;
+              break;
             default:
               throw this.fail(buf.subarray(i));
           }
@@ -401,6 +405,85 @@ export class Parser {
           this.argStart = i + 1;
           this.drop = 0;
           this.state = State.OP_START;
+          break;
+        case State.OP_U:
+          switch (b) {
+            case cc.N:
+            case cc.n:
+              this.state = State.OP_UN;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_UN:
+          switch (b) {
+            case cc.S:
+            case cc.s:
+              this.state = State.OP_UNS;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_UNS:
+          switch (b) {
+            case cc.U:
+            case cc.u:
+              this.state = State.OP_UNSU;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_UNSU:
+          switch (b) {
+            case cc.B:
+            case cc.b:
+              this.state = State.OP_UNSUB;
+              break;
+            default:
+              throw this.fail(buf.subarray(i));
+          }
+          break;
+        case State.OP_UNSUB:
+          switch (b) {
+            case cc.SPACE:
+            case cc.TAB:
+              continue;
+            default:
+              this.state = State.UNSUB_ARG;
+              this.argStart = i;
+          }
+          break;
+        case State.UNSUB_ARG:
+          switch (b) {
+            case cc.CR:
+              this.drop = 1;
+              break;
+            case cc.LF: {
+              let arg: Buffer;
+
+              if (this.argBuf) {
+                arg = Buffer.concat([
+                  this.argBuf,
+                  buf.subarray(this.argStart, i - this.drop)
+                ]);
+                this.argBuf = undefined;
+              } else {
+                arg = buf.subarray(this.argStart, i - this.drop);
+              }
+
+              this.cb({ kind: Kind.UNSUB, data: arg });
+              this.argStart = i + 1;
+              this.drop = 0;
+              this.state = State.OP_START;
+              break;
+            }
+            default:
+              continue;
+          }
+          break;
       }
     }
 
@@ -408,7 +491,8 @@ export class Parser {
     if (
       this.state === State.CONNECT_ARG ||
       this.state === State.SUB_ARG ||
-      this.state === State.PUB_ARG
+      this.state === State.PUB_ARG ||
+      this.state === State.UNSUB_ARG
     ) {
       // If argBuf is undefined than initialize it.
       if (this.argBuf === undefined) {
@@ -484,7 +568,8 @@ export enum Kind {
   PING,
   PONG,
   SUB,
-  PUB
+  PUB,
+  UNSUB
 }
 
 export enum State {
@@ -513,7 +598,13 @@ export enum State {
   PUB_ARG,
   MSG_PAYLOAD,
   MSG_END_CR,
-  MSG_END_LF
+  MSG_END_LF,
+  OP_U,
+  OP_UN,
+  OP_UNS,
+  OP_UNSU,
+  OP_UNSUB,
+  UNSUB_ARG
 }
 
 enum cc {
