@@ -41,7 +41,7 @@ export class Client {
   }
 
   /**
-   * Send a +OK message if the client option has verbose set to true.
+   * Send an OK message if the client option has verbose set to true.
    */
   sendOk() {
     if (this.options.verbose) {

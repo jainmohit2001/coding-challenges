@@ -58,16 +58,37 @@ export default class Topic {
   async publish(pubArg: PubArg): Promise<void> {
     const promises: Promise<void>[] = [];
 
+    // Data before the `sid` goes in prefix
+    // This is same for all the messages during this publish call.
+    const prefix: Buffer = Buffer.concat([
+      Buffer.from('MSG '),
+      Buffer.from(this.subject + ' ')
+    ]);
+
+    // Data after `sid` goes in suffix.
+    // This is same for all the messages during this publish call.
+    let suffix: Buffer;
+    if (pubArg.payload) {
+      suffix = Buffer.concat([
+        Buffer.from(pubArg.payloadSize.toString(10) + '\r\n'),
+        pubArg.payload,
+        Buffer.from('\r\n')
+      ]);
+    } else {
+      suffix = Buffer.from('0\r\n\r\n');
+    }
+
     this.subscriptions.forEach((subscription) => {
       promises.push(
         new Promise<void>((res) => {
+          // Prepare final message
           const buffer = Buffer.concat([
-            Buffer.from('MSG '),
-            Buffer.from(this.subject + ' '),
+            prefix,
             Buffer.from(subscription.sid.toString(10) + ' '),
-            Buffer.from(pubArg.payloadSize.toString(10) + ' \r\n'),
-            Buffer.from((pubArg.payload ?? '') + '\r\n')
+            suffix
           ]);
+
+          // Send the message and complete the promise
           subscription.client.socket.write(buffer);
           res();
         })

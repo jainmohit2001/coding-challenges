@@ -41,6 +41,7 @@ Checkout my [Notion](https://mohitjain.notion.site/Coding-Challenges-af9b8197a43
 20. [Write Your Own LinkedIn Carousel Generator](https://github.com/jainmohit2001/carousel-gen)
 21. [Write Your Own Sed](src/21/)
 22. [Write Your Own DNS Resolver](src/22/)
+23. [Write Your Own NATS Message Broker](src/25/)
 
 ## Installation
 

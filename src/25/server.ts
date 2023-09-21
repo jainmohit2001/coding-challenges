@@ -192,20 +192,21 @@ export default class NATSServer {
 
   private handleUnsub(msg: Msg, client: Client) {
     const unsubArg = parseUnsubArg(msg.data!);
+
     const subscription = this.subscriptions.get(unsubArg.sid);
-
-    if (subscription) {
-      const topic = this.topics.get(subscription.subject);
-
-      if (topic) {
-        topic.unsub(subscription);
-        client.sendOk();
-      } else {
-        // TODO: handle when no topic present
-      }
-    } else {
+    if (subscription === undefined) {
       // TODO: handle when invalid sid is provided
+      return;
     }
+
+    const topic = this.topics.get(subscription.subject);
+    if (topic === undefined) {
+      // TODO: handle when no topic present
+      return;
+    }
+
+    topic.unsub(subscription);
+    client.sendOk();
   }
 
   private async handlePub(msg: Msg, client: Client): Promise<void> {
