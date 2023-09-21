@@ -43,6 +43,7 @@ Checkout my [Notion](https://mohitjain.notion.site/Coding-Challenges-af9b8197a43
 22. [Write Your Own DNS Resolver](src/22/)
 23. [Write Your Own Traceroute](src/23/)
 24. [Write Your Own Realtime Chat Client and Server - Duplicate of Write Your Own IRC Client](src/16/)
+25. [Write Your Own NATS Message Broker](src/25/)
 
 ## Installation
 
