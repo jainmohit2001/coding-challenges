@@ -25,7 +25,7 @@ export class Client {
 
   sendOk() {
     if (this.options.verbose) {
-      this.socket.write('OK\r\n');
+      this.socket.write('+OK\r\n');
     }
   }
 }

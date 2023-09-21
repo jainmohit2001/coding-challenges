@@ -1,8 +1,10 @@
 import net from 'net';
 import { Kind, Msg, Parser } from './parser';
-import { PubArg, parseSub } from './utils';
+import { parseSub, parseUnsubArg } from './utils';
 import { Client, ClientOptions } from './client';
 import { v4 as uuidv4 } from 'uuid';
+import Topic from './topic';
+import Subscription from './subscription';
 
 interface ServerInfo {
   server_id: string;
@@ -16,22 +18,13 @@ interface ServerInfo {
   proto: number;
 }
 
-interface Subscription {
-  client: Client;
-  sid: number;
-}
-
-interface Topic {
-  subject: string;
-  subscribers: Set<Subscription>;
-}
-
 export default class NATSServer {
   private port: number;
   private host: string;
   server: net.Server;
   private clients: Map<string, Client>;
   private topics: Map<string, Topic>;
+  private subscriptions: Map<number, Subscription>;
   private debug: boolean;
   private serverInfo: ServerInfo;
 
@@ -53,6 +46,7 @@ export default class NATSServer {
       max_payload: 1024 * 30,
       proto: 1
     };
+    this.subscriptions = new Map<number, Subscription>();
   }
 
   startServer(): void {
@@ -123,6 +117,8 @@ export default class NATSServer {
       case Kind.PUB:
         await this.handlePub(msg, client);
         break;
+      case Kind.UNSUB:
+        this.handleUnsub(msg, client);
     }
   }
 
@@ -141,21 +137,41 @@ export default class NATSServer {
     const topicKey = subject;
 
     let topic = this.topics.get(topicKey);
+    const subscription = new Subscription(client, subArg.sid, subject);
 
     if (topic) {
-      topic.subscribers.add({ client, sid: subArg.sid });
+      topic.sub(subscription);
     } else {
-      const subscribers = new Set<Subscription>();
-      subscribers.add({ client, sid: subArg.sid });
-      topic = { subject: subject, subscribers };
+      topic = new Topic(subject);
+      topic.sub(subscription);
       this.topics.set(topicKey, topic);
     }
+
+    this.subscriptions.set(subArg.sid, subscription);
 
     client.sendOk();
   }
 
+  private handleUnsub(msg: Msg, client: Client) {
+    const unsubArg = parseUnsubArg(msg.data!);
+    const subscription = this.subscriptions.get(unsubArg.sid);
+
+    if (subscription) {
+      const topic = this.topics.get(subscription.subject);
+
+      if (topic) {
+        topic.unsub(subscription);
+        client.sendOk();
+      } else {
+        // TODO: handle when no topic present
+      }
+    } else {
+      // TODO: handle when invalid sid is provided
+    }
+  }
+
   private async handlePub(msg: Msg, client: Client): Promise<void> {
-    const pubArg: PubArg = msg.pubArg!;
+    const pubArg = msg.pubArg!;
     const subject = pubArg.subject.toString();
     const topic = this.topics.get(subject);
 
@@ -164,25 +180,7 @@ export default class NATSServer {
       return;
     }
     client.sendOk();
-
-    const promises: Promise<void>[] = [];
-    topic.subscribers.forEach((subscription) => {
-      promises.push(
-        new Promise<void>((res) => {
-          const buffer = Buffer.concat([
-            Buffer.from('MSG '),
-            Buffer.from(subject + ' '),
-            Buffer.from(subscription.sid.toString(10) + ' '),
-            Buffer.from(pubArg.payloadSize.toString(10) + ' \r\n'),
-            Buffer.from((pubArg.payload ?? '') + '\r\n')
-          ]);
-          subscription.client.socket.write(buffer);
-          res();
-        })
-      );
-    });
-
-    await Promise.all(promises);
+    await topic.publish(pubArg);
   }
 
   private sendInfo(client: Client) {
