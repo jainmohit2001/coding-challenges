@@ -8,14 +8,60 @@ export interface Msg {
   pubArg?: PubArg;
 }
 
+/**
+ * This is a zero allocation byte parser. (Not Fully).
+ *
+ * @export
+ * @class Parser
+ */
 export class Parser {
   state: State;
+
+  /**
+   * This variable may store an index corresponding to the start of an arg.
+   *
+   * @private
+   * @type {number}
+   */
   private argStart: number;
+
+  /**
+   * Signifies the number of index to move back while calling the subarray func.
+   *
+   * @private
+   * @type {number}
+   */
   private drop: number;
+
+  /**
+   * Stores the buffer corresponding to args.
+   *
+   * @private
+   * @type {?Buffer}
+   */
   private argBuf?: Buffer;
+
+  /**
+   * Stores the information about args when parsing PUB command.
+   *
+   * @private
+   * @type {?PubArg}
+   */
   private pubArg?: PubArg;
+
+  /**
+   * Stores the buffer corresponding to message payload.
+   *
+   * @private
+   * @type {?Buffer}
+   */
   private msgBuf?: Buffer;
 
+  /**
+   * This callback is called when the parser completes parsing a command.
+   *
+   * @type {(msg: Msg) => void}
+   */
   cb: (msg: Msg) => void;
 
   constructor(cb: (msg: Msg) => void) {
@@ -534,12 +580,17 @@ export class Parser {
     }
   }
 
+  /**
+   * This function allocates a new buffer to store the subject and replyTo args.
+   *
+   * @private
+   */
   private clonePubArg() {
     const subjectLength = this.pubArg!.subject.length;
-    const replyLength = this.pubArg?.replyTo?.length ?? 0;
+    const replyToLength = this.pubArg?.replyTo?.length ?? 0;
 
     // Allocate new memory
-    const newBuf = Buffer.alloc(subjectLength + replyLength);
+    const newBuf = Buffer.alloc(subjectLength + replyToLength);
 
     // Update the memory
     newBuf.set(this.pubArg!.subject);

@@ -1,7 +1,24 @@
 import net from 'net';
 
+/**
+ * This class stores the information regarding a connected Client.
+ *
+ * @export
+ * @class Client
+ */
 export class Client {
+  /**
+   * This key is used to uniquely identify the client inside the server.
+   *
+   * @type {string}
+   */
   key: string;
+
+  /**
+   * The socket instance corresponding to the connection.
+   *
+   * @type {net.Socket}
+   */
   socket: net.Socket;
   private options: ClientOptions;
 
@@ -23,6 +40,9 @@ export class Client {
     this.socket.write('PONG\r\n');
   }
 
+  /**
+   * Send a +OK message if the client option has verbose set to true.
+   */
   sendOk() {
     if (this.options.verbose) {
       this.socket.write('+OK\r\n');
@@ -30,6 +50,12 @@ export class Client {
   }
 }
 
+/**
+ * Refer to https://docs.nats.io/reference/reference-protocols/nats-protocol#connect
+ *
+ * @export
+ * @interface ClientOptions
+ */
 export interface ClientOptions {
   verbose: boolean;
   pedantic: boolean;

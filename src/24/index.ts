@@ -1,3 +1,5 @@
+// This is the entry point to start NATS server.
+
 import NATSServer from './server';
 
 const PORT = 4222;

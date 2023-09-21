@@ -1,9 +1,21 @@
+/**
+ * This interface corresponds to the args passed with SUB command.
+ *
+ * @export
+ * @interface SubArg
+ */
 export interface SubArg {
   subject: Buffer;
   group?: Buffer;
   sid: number;
 }
 
+/**
+ * This interface corresponds to the args passed with PUB command.
+ *
+ * @export
+ * @interface PubArg
+ */
 export interface PubArg {
   subject: Buffer;
   replyTo?: Buffer;
@@ -11,15 +23,32 @@ export interface PubArg {
   payload?: Buffer;
 }
 
+/**
+ * This interface corresponds to the args passed with UNSUB command.
+ *
+ * @export
+ * @interface UnsubArg
+ */
 export interface UnsubArg {
   sid: number;
   maxMsgs?: number;
 }
 
+/**
+ * Returns a list of Buffer after performing the split operation.
+ * The Whitespace characters include SPACE, CR, NL and TAB.
+ *
+ * @export
+ * @param {Buffer} arg
+ * @returns {Buffer[]}
+ */
 export function splitArgs(arg: Buffer): Buffer[] {
   const args: Buffer[] = [];
   let i = 0;
+
+  // Start corresponds to the start index of an arg
   let start = -1;
+
   for (i; i < arg.length; i++) {
     const b = arg[i];
     switch (b) {
@@ -28,6 +57,7 @@ export function splitArgs(arg: Buffer): Buffer[] {
       case WhiteSpace.TAB:
       case WhiteSpace.CR:
         if (start >= 0) {
+          // A new arg found between start and i
           args.push(arg.subarray(start, i));
           start = -1;
         }
@@ -39,6 +69,7 @@ export function splitArgs(arg: Buffer): Buffer[] {
     }
   }
 
+  // When the arg is at the end of the input Buffer
   if (start >= 0) {
     args.push(arg.subarray(start));
   }
@@ -46,6 +77,13 @@ export function splitArgs(arg: Buffer): Buffer[] {
   return args;
 }
 
+/**
+ * Parses the args for SUB command.
+ *
+ * @export
+ * @param {Buffer} data
+ * @returns {SubArg}
+ */
 export function parseSub(data: Buffer): SubArg {
   const args = splitArgs(data);
 
@@ -71,6 +109,13 @@ export function parseSub(data: Buffer): SubArg {
   return subArg;
 }
 
+/**
+ * Parses the args for PUB command.
+ *
+ * @export
+ * @param {Buffer} data
+ * @returns {PubArg}
+ */
 export function preparePub(data: Buffer): PubArg {
   const args = splitArgs(data);
 
@@ -96,6 +141,13 @@ export function preparePub(data: Buffer): PubArg {
   return pubArg;
 }
 
+/**
+ * Parses the args for UNSUB command.
+ *
+ * @export
+ * @param {Buffer} data
+ * @returns {UnsubArg}
+ */
 export function parseUnsubArg(data: Buffer): UnsubArg {
   const args = splitArgs(data);
 

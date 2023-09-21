@@ -6,6 +6,12 @@ import { v4 as uuidv4 } from 'uuid';
 import Topic from './topic';
 import Subscription from './subscription';
 
+/**
+ * The required information corresponding to a NATS server.
+ * Refer to https://docs.nats.io/reference/reference-protocols/nats-protocol#info
+ *
+ * @interface ServerInfo
+ */
 interface ServerInfo {
   server_id: string;
   server_name: string;
@@ -19,18 +25,46 @@ interface ServerInfo {
 }
 
 export default class NATSServer {
-  private port: number;
-  private host: string;
+  /**
+   * The net.Server instance on which the NATS server will start listening to
+   * connections.
+   * @date 9/21/2023 - 11:48:59 AM
+   *
+   * @type {net.Server}
+   */
   server: net.Server;
+
+  /**
+   * A map of clients where the key is created using the remoteAddress and
+   * remotePort of the net.Socket instance.
+   * @date 9/21/2023 - 11:48:02 AM
+   *
+   * @private
+   * @type {Map<string, Client>}
+   */
   private clients: Map<string, Client>;
+
+  /**
+   * A map of topics where the key is the subject.
+   *
+   * @private
+   * @type {Map<string, Topic>}
+   */
   private topics: Map<string, Topic>;
+
+  /**
+   * A map of subscriptions where the key is the sid param.
+   *
+   * @private
+   * @type {Map<number, Subscription>}
+   */
   private subscriptions: Map<number, Subscription>;
+
   private debug: boolean;
+
   private serverInfo: ServerInfo;
 
   constructor(port: number, host: string = '0.0.0.0', debug: boolean = false) {
-    this.port = port;
-    this.host = host;
     this.server = new net.Server();
     this.clients = new Map<string, Client>();
     this.topics = new Map<string, Topic>();
@@ -50,9 +84,9 @@ export default class NATSServer {
   }
 
   startServer(): void {
-    this.server.listen(this.port, this.host, () => {
+    this.server.listen(this.serverInfo.port, this.serverInfo.host, () => {
       if (this.debug) {
-        console.log(`Started listening on port ${this.port}`);
+        console.log(`Started listening on port ${this.serverInfo.port}`);
       }
     });
 
@@ -67,6 +101,7 @@ export default class NATSServer {
         console.log('Client connect %s', key);
       }
 
+      // Create a new client instance
       const client: Client = new Client(key, socket);
 
       const cb = (msg: Msg) => {
@@ -139,9 +174,12 @@ export default class NATSServer {
     let topic = this.topics.get(topicKey);
     const subscription = new Subscription(client, subArg.sid, subject);
 
+    // If the topic is already present
     if (topic) {
       topic.sub(subscription);
-    } else {
+    }
+    // otherwise create a new topic
+    else {
       topic = new Topic(subject);
       topic.sub(subscription);
       this.topics.set(topicKey, topic);
@@ -183,6 +221,12 @@ export default class NATSServer {
     await topic.publish(pubArg);
   }
 
+  /**
+   * Send an INFO command to the client.
+   *
+   * @private
+   * @param {Client} client
+   */
   private sendInfo(client: Client) {
     client.socket.write(`INFO ${JSON.stringify(this.serverInfo)}\r\n`);
   }
