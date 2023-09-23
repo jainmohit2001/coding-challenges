@@ -6,9 +6,10 @@
     "lint": "eslint --ext .ts .",
     "prettier-format": "prettier --config .prettierrc **/*.ts --write",
     "test": "jest",
-    "build": "tsc -p .",
+    "build": "tsc -p . && npm run cp:26",
     "watch": "tsc -p . --watch",
-    "run": "node ./build/index.js"
+    "run": "node ./build/index.js",
+    "cp:26": "mkdir build/26/default-files/ && cp -n src/26/default-files/* build/26/default-files/"
   },
   "keywords": [],
   "author": "",

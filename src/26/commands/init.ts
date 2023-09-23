@@ -1,3 +1,5 @@
+// https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain
+
 import fs from 'fs';
 import path from 'path';
 import { stdout } from 'process';
@@ -28,7 +30,7 @@ function init(directory?: string): void {
   }
 
   if (fs.existsSync(gitDir)) {
-    stdout.write(reinitializeText + gitDir + '\n');
+    stdout.write(reinitializeText + gitDir + '\r\n');
     return;
   }
 
@@ -45,7 +47,7 @@ function init(directory?: string): void {
   fs.mkdirSync(path.join(gitDir, 'objects', 'pack'));
   fs.mkdirSync(path.join(gitDir, 'refs'));
 
-  stdout.write(`Initialized empty repository in ${gitDir}\n`);
+  stdout.write(`Initialized empty repository in ${gitDir}\r\n`);
 }
 
 export default init;
