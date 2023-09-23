@@ -31,6 +31,12 @@ describe('Testing init command', () => {
       fs.existsSync(path.join(tempPath, '.git', 'info', 'exclude'))
     ).toBeTruthy();
     expect(fs.existsSync(path.join(tempPath, '.git', 'objects'))).toBeTruthy();
+    expect(
+      fs.existsSync(path.join(tempPath, '.git', 'objects', 'info'))
+    ).toBeTruthy();
+    expect(
+      fs.existsSync(path.join(tempPath, '.git', 'objects', 'pack'))
+    ).toBeTruthy();
     expect(fs.existsSync(path.join(tempPath, '.git', 'refs'))).toBeTruthy();
   });
 });

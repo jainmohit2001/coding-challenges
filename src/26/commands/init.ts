@@ -41,6 +41,8 @@ function init(directory?: string): void {
   fs.mkdirSync(path.join(gitDir, 'info'));
   fs.writeFileSync(path.join(gitDir, 'info', 'exclude'), DEFAULT_EXCLUDE);
   fs.mkdirSync(path.join(gitDir, 'objects'));
+  fs.mkdirSync(path.join(gitDir, 'objects', 'info'));
+  fs.mkdirSync(path.join(gitDir, 'objects', 'pack'));
   fs.mkdirSync(path.join(gitDir, 'refs'));
 
   stdout.write(`Initialized empty repository in ${gitDir}\n`);
