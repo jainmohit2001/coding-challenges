@@ -1,6 +1,17 @@
 import { program } from 'commander';
 import init from './commands/init';
-import { HashObjectArgs, hashObject } from './commands/hashObject';
+import hashObject from './commands/hashObject';
+import catFile from './commands/catFile';
+import fs from 'fs';
+
+function ensureGitRepo() {
+  if (!fs.existsSync('./.git')) {
+    process.stderr.write(
+      'fatal: not a git repository (or any of the parent directories): .git\n'
+    );
+    process.exit(1);
+  }
+}
 
 program
   .command('init [directory]')
@@ -20,13 +31,22 @@ program
   )
   .argument('[file]', 'File path in case stdin is not provided')
   .action((file, { w, stdin, type }) => {
-    const args: HashObjectArgs = {
-      type: type,
-      write: w,
-      readFromStdin: stdin,
-      file: file
-    };
-    hashObject(args);
+    ensureGitRepo();
+    hashObject({ type, write: w, readFromStdin: stdin, file });
+  });
+
+program
+  .command('cat-file')
+  .description('Provide content or type information for repository objects')
+  .argument('<object>', 'The name of the object to show.')
+  .option(
+    '-t',
+    'Instead of the content, show the object type identified by <object>'
+  )
+  .option('-p', 'Pretty-print the contents of <object> based on its type')
+  .action((object, { t, p }) => {
+    ensureGitRepo();
+    catFile({ object, t, p });
   });
 
 program.parse(process.argv);
