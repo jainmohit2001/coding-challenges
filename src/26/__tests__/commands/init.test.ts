@@ -4,7 +4,6 @@ import path from 'path';
 import fs from 'fs';
 
 import init from '../../commands/init';
-import stream from 'stream';
 
 describe('Testing init command', () => {
   let tempPath: string;
@@ -18,15 +17,7 @@ describe('Testing init command', () => {
   });
 
   it('should initialize empty repository successfully', (done) => {
-    const stdoutStream = new stream.Writable();
-
-    let finalData = '';
-    stdoutStream._write = function (chunk, encoding, next) {
-      finalData += chunk.toString();
-      next();
-    };
-
-    init({ directory: tempPath, stdout: stdoutStream });
+    const output = init(tempPath);
 
     expect(fs.existsSync(path.join(tempPath, '.git'))).toBeTruthy();
     expect(fs.existsSync(path.join(tempPath, '.git', 'HEAD'))).toBeTruthy();
@@ -48,11 +39,7 @@ describe('Testing init command', () => {
     ).toBeTruthy();
     expect(fs.existsSync(path.join(tempPath, '.git', 'refs'))).toBeTruthy();
 
-    stdoutStream.on('close', () => {
-      expect(finalData).toContain('Initialized');
-      done();
-    });
-
-    stdoutStream.destroy();
+    expect(output).toContain('Initialized');
+    done();
   });
 });

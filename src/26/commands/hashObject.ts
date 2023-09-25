@@ -4,13 +4,15 @@ import zlib from 'zlib';
 import { createHash } from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { BaseCommandArgs, GitObjectType } from './types';
+import { GitObjectType } from './types';
+import stream from 'stream';
 
-interface HashObjectArgs extends BaseCommandArgs {
+interface HashObjectArgs {
   type?: GitObjectType;
   write?: boolean;
   readFromStdin?: boolean;
   file?: string;
+  stdin?: stream.Readable;
 }
 
 function hashObject({
@@ -18,26 +20,16 @@ function hashObject({
   write = false,
   readFromStdin = false,
   file = undefined,
-  stdin = process.stdin,
-  stdout = process.stdout,
-  stderr = process.stderr
-}: HashObjectArgs): void {
+  stdin = process.stdin
+}: HashObjectArgs): string {
   let content: Buffer;
 
-  try {
-    if (readFromStdin) {
-      content = stdin.read() as Buffer;
-    } else if (file) {
-      content = fs.readFileSync(file);
-    } else {
-      stderr.write('Invalid args. No file provided\n');
-
-      return;
-    }
-  } catch (e) {
-    const err = e as Error;
-    stderr.write(`${err.message}\n`);
-    return;
+  if (readFromStdin) {
+    content = stdin.read() as Buffer;
+  } else if (file) {
+    content = fs.readFileSync(file);
+  } else {
+    throw new Error('Invalid args. No file provided');
   }
 
   const header = `${type} ${content.byteLength}\0`;
@@ -55,7 +47,7 @@ function hashObject({
     fs.writeFileSync(pathToBlob, zlibContent);
   }
 
-  stdout.write(hash + '\r\n');
+  return hash;
 }
 
 export default hashObject;

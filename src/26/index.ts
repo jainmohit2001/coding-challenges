@@ -3,13 +3,7 @@ import init from './commands/init';
 import hashObject from './commands/hashObject';
 import catFile from './commands/catFile';
 import fs from 'fs';
-import { BaseCommandArgs } from './commands/types';
-
-const DEFAULT_COMMAND_ARGS: BaseCommandArgs = {
-  stdin: process.stdin,
-  stdout: process.stdout,
-  stderr: process.stderr
-};
+import updateIndex from './commands/updateIndex';
 
 function ensureGitRepo() {
   if (!fs.existsSync('./.git')) {
@@ -20,11 +14,23 @@ function ensureGitRepo() {
   }
 }
 
+function wrapper(cb: () => string, newLine: boolean = true) {
+  try {
+    const output = cb();
+    process.stdout.write(output + (newLine ? '\r\n' : ''));
+    process.exit(0);
+  } catch (e) {
+    const err = e as Error;
+    console.error(err);
+    process.exit(1);
+  }
+}
+
 program
   .command('init [directory]')
   .description('Create an empty Git repository or reinitialize an existing one')
   .action((directory: string) => {
-    init({ ...DEFAULT_COMMAND_ARGS, directory });
+    wrapper(() => init(directory));
   });
 
 program
@@ -39,13 +45,17 @@ program
   .argument('[file]', 'File path in case stdin is not provided')
   .action((file, { w, stdin, type }) => {
     ensureGitRepo();
-    hashObject({
-      ...DEFAULT_COMMAND_ARGS,
-      type,
-      write: w,
-      readFromStdin: stdin,
-      file
-    });
+    wrapper(
+      () =>
+        hashObject({
+          type,
+          write: w,
+          readFromStdin: stdin,
+          file,
+          stdin: process.stdin
+        }),
+      true
+    );
   });
 
 program
@@ -59,7 +69,21 @@ program
   .option('-p', 'Pretty-print the contents of <object> based on its type')
   .action((object, { t, p }) => {
     ensureGitRepo();
-    catFile({ object, t, p });
+    wrapper(() => catFile({ object, t, p }), t);
+  });
+
+program
+  .command('update-index')
+  .description('Register file contents in the working tree to the index')
+  .argument('<files...>', 'Files to act on')
+  .option(
+    '--add',
+    "If a specified file isn't in the index already then it's added. Default behaviour is to ignore new files.",
+    false
+  )
+  .action((files, { add }) => {
+    ensureGitRepo();
+    wrapper(() => updateIndex({ add, files: files }));
   });
 
 program.parse(process.argv);

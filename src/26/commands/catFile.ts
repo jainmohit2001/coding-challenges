@@ -1,9 +1,9 @@
 import fs from 'fs';
-import { BaseCommandArgs, GitObjectType } from './types';
+import { GitObjectType } from './types';
 import zlib from 'zlib';
 import path from 'path';
 
-interface CatFileArgs extends BaseCommandArgs {
+interface CatFileArgs {
   object: string;
   t?: boolean;
   p?: boolean;
@@ -35,16 +35,9 @@ function parseHeader(buffer: Buffer): Header {
   return { type: headerType, length: headerLength };
 }
 
-function catFile({
-  object,
-  t = false,
-  p = false,
-  stdout = process.stdout,
-  stderr = process.stderr
-}: CatFileArgs) {
+function catFile({ object, t = false, p = false }: CatFileArgs) {
   if ((t && p) || (!t && !p)) {
-    stderr.write('Invalid usage\r\n');
-    return;
+    throw new Error('Invalid usage');
   }
 
   const pathToFile = path.join(
@@ -54,8 +47,7 @@ function catFile({
   );
 
   if (!isValidSHA1(object) || !fs.existsSync(pathToFile)) {
-    stderr.write('Invalid object\r\n');
-    return;
+    throw new Error('Invalid object');
   }
 
   const fileContents = zlib.unzipSync(fs.readFileSync(pathToFile));
@@ -69,11 +61,10 @@ function catFile({
   const header = parseHeader(fileContents.subarray(0, i));
 
   if (t) {
-    stdout.write(`${header.type.toString()}\r\n`);
-    return;
+    return header.type.toString();
   }
 
-  stdout.write(fileContents.subarray(i + 1));
+  return fileContents.subarray(i + 1).toString();
 }
 
 export default catFile;

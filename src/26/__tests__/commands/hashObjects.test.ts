@@ -3,90 +3,36 @@ import path from 'path';
 import fs from 'fs';
 import { createDummyFile, createTempGitRepo } from '../../jestHelpers';
 import hashObject from '../../commands/hashObject';
-import stream, { Readable } from 'stream';
+import { Readable } from 'stream';
 
 describe('Testing hashObject command', () => {
-  let stdinStream: stream.Readable;
-  let stdoutStream: stream.Writable;
-  let stderrStream: stream.Writable;
-
-  beforeEach(() => {
-    stdinStream = new stream.Readable();
-    stdoutStream = new stream.Writable();
-    stderrStream = new stream.Writable();
-  });
-
-  afterEach(() => {
-    stdinStream.destroy();
-    stdoutStream.destroy();
-    stderrStream.destroy();
-  });
-
   createTempGitRepo();
 
-  it('should output error on invalid args', (done) => {
-    let finalData = '';
-
-    stderrStream._write = function (chunk, encoding, next) {
-      finalData += chunk.toString();
-      next();
-    };
-
-    stderrStream.on('close', () => {
-      expect(finalData).toContain('Invalid');
-      done();
-    });
-
-    hashObject({ stderr: stderrStream });
-    stderrStream.end();
+  it('should output error on invalid args', () => {
+    expect(() => hashObject({})).toThrow();
   });
 
-  it('should create hash for file', (done) => {
+  it('should create hash for file', () => {
     const { filePath, expectedHash } = createDummyFile();
 
-    let finalData = '';
-
-    stdoutStream._write = function (chunk, encoding, next) {
-      finalData = chunk.toString();
-      next();
-    };
-
-    stdoutStream.on('close', () => {
-      expect(finalData.trim()).toBe(expectedHash);
-      done();
-      fs.rmSync(filePath);
-    });
-
-    hashObject({ stdout: stdoutStream, file: filePath });
-    stdoutStream.end();
+    const hash = hashObject({ file: filePath });
+    expect(hash.trim()).toBe(expectedHash);
   });
 
-  it('should handle stdin option', (done) => {
-    let finalData = '';
+  it('should handle stdin option', () => {
     const text = 'what is up, doc?';
     const expectedHash = 'bd9dbf5aae1a3862dd1526723246b20206e5fc37';
-    stdinStream = Readable.from(Buffer.from(text));
+    const stdinStream = Readable.from(Buffer.from(text));
 
-    stdoutStream._write = function (chunk, encoding, next) {
-      finalData = chunk.toString();
-      next();
-    };
-
-    stdoutStream.on('close', () => {
-      expect(finalData.trim()).toBe(expectedHash);
-      done();
-    });
-
-    hashObject({
+    const hash = hashObject({
       stdin: stdinStream,
-      stdout: stdoutStream,
       readFromStdin: true
     });
-
-    stdoutStream.end();
+    expect(hash.trim()).toBe(expectedHash);
+    stdinStream.destroy();
   });
 
-  it('should handle write option', (done) => {
+  it('should handle write option', () => {
     const { filePath, expectedHash } = createDummyFile();
     const pathToBlob = path.join(
       './.git/objects',
@@ -94,25 +40,12 @@ describe('Testing hashObject command', () => {
       expectedHash.substring(2, expectedHash.length)
     );
 
-    let finalData = '';
-
-    stdoutStream._write = function (chunk, encoding, next) {
-      finalData = chunk.toString();
-      next();
-    };
-
-    stdoutStream.on('close', () => {
-      expect(finalData.trim()).toBe(expectedHash);
-      expect(fs.existsSync(pathToBlob)).toBeTruthy();
-      done();
-      fs.rmSync(filePath);
-    });
-
-    hashObject({
+    const hash = hashObject({
       file: filePath,
-      write: true,
-      stdout: stdoutStream
+      write: true
     });
-    stdoutStream.end();
+
+    expect(hash.trim()).toBe(expectedHash);
+    expect(fs.existsSync(pathToBlob)).toBeTruthy();
   });
 });

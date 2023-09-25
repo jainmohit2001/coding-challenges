@@ -2,7 +2,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { BaseCommandArgs } from './types';
 
 const reinitializeText = 'Reinitialized existing Git repository in ';
 const DEFAULT_CONFIG = fs.readFileSync(
@@ -18,11 +17,7 @@ const DEFAULT_HEAD = fs.readFileSync(
   path.join(__dirname, '..', 'default-files', 'default-HEAD')
 );
 
-interface InitCommandArgs extends BaseCommandArgs {
-  directory?: string;
-}
-
-function init({ directory, stdout = process.stdout }: InitCommandArgs): void {
+function init(directory?: string): string {
   let gitDir = path.join(process.cwd(), '.git');
 
   if (directory) {
@@ -34,8 +29,7 @@ function init({ directory, stdout = process.stdout }: InitCommandArgs): void {
   }
 
   if (fs.existsSync(gitDir)) {
-    stdout.write(reinitializeText + gitDir + '\r\n');
-    return;
+    throw new Error(reinitializeText + gitDir);
   }
 
   fs.mkdirSync(gitDir, { recursive: true });
@@ -51,7 +45,7 @@ function init({ directory, stdout = process.stdout }: InitCommandArgs): void {
   fs.mkdirSync(path.join(gitDir, 'objects', 'pack'));
   fs.mkdirSync(path.join(gitDir, 'refs'));
 
-  stdout.write(`Initialized empty repository in ${gitDir}\r\n`);
+  return `Initialized empty repository in ${gitDir}`;
 }
 
 export default init;
