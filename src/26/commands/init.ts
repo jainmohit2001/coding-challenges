@@ -2,7 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { stdout } from 'process';
+import { BaseCommandArgs } from './types';
 
 const reinitializeText = 'Reinitialized existing Git repository in ';
 const DEFAULT_CONFIG = fs.readFileSync(
@@ -18,7 +18,11 @@ const DEFAULT_HEAD = fs.readFileSync(
   path.join(__dirname, '..', 'default-files', 'default-HEAD')
 );
 
-function init(directory?: string): void {
+interface InitCommandArgs extends BaseCommandArgs {
+  directory?: string;
+}
+
+function init({ directory, stdout = process.stdout }: InitCommandArgs): void {
   let gitDir = path.join(process.cwd(), '.git');
 
   if (directory) {

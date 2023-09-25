@@ -1,83 +1,127 @@
-import path from 'path';
-import {
-  ChildProcessWithoutNullStreams,
-  spawn,
-  spawnSync
-} from 'child_process';
 import { createDummyFile, createTempGitRepo } from '../../jestHelpers';
+import catFile from '../../commands/catFile';
+import hashObject from '../../commands/hashObject';
+import stream from 'stream';
 
-const pathToIndex = path.join(process.cwd(), './build/26/index.js');
-
-function handleDummyFile() {
+async function hashDummyFile(): Promise<{
+  text: string;
+  filePath: string;
+  objectHash: string;
+}> {
   const { text, filePath, expectedHash } = createDummyFile();
-  const spawnSyncReturn = spawnSync('node', [
-    pathToIndex,
-    'hash-object',
-    '-w',
-    filePath
-  ]);
+  const stdoutStream = new stream.Writable();
+  let objectHash = '';
 
-  const objectHash = spawnSyncReturn.stdout.toString().trim();
-  expect(objectHash).toBe(expectedHash);
-  return { text, filePath, objectHash };
+  stdoutStream._write = function (chunk, encoding, next) {
+    objectHash += chunk.toString();
+    next();
+  };
+
+  return new Promise((res) => {
+    stdoutStream.on('close', () => {
+      objectHash = objectHash.trim();
+      expect(objectHash).toBe(expectedHash);
+      res({ text, filePath, objectHash: objectHash });
+    });
+
+    hashObject({ write: true, file: filePath, stdout: stdoutStream });
+    stdoutStream.end();
+  });
 }
 
 describe('Testing catFile command', () => {
-  let gitProcess: ChildProcessWithoutNullStreams;
+  let stdinStream: stream.Readable;
+  let stdoutStream: stream.Writable;
+  let stderrStream: stream.Writable;
+
+  beforeEach(() => {
+    stdinStream = new stream.Readable();
+    stdoutStream = new stream.Writable();
+    stderrStream = new stream.Writable();
+  });
+
+  afterEach(() => {
+    stdinStream.destroy();
+    stdoutStream.destroy();
+    stderrStream.destroy();
+  });
 
   createTempGitRepo();
 
-  afterEach(() => {
-    gitProcess.kill('SIGINT');
-  });
-
   it('should output error for invalid args', (done) => {
-    gitProcess = spawn('node', [pathToIndex, 'cat-file', 'object']);
+    let finalData = '';
 
-    gitProcess.stderr.on('data', (data) => {
-      expect(data.toString()).toContain('Invalid');
+    stderrStream._write = function (chunk, encoding, next) {
+      finalData += chunk.toString();
+      next();
+    };
+
+    stderrStream.on('close', () => {
+      expect(finalData).toContain('Invalid');
       done();
     });
+
+    catFile({ object: 'object', stderr: stderrStream });
+    stderrStream.end();
   });
 
   it('should output error for invalid object', (done) => {
-    gitProcess = spawn('node', [pathToIndex, 'cat-file', '-t', 'object']);
+    let finalData = '';
 
-    gitProcess.stderr.on('data', (data) => {
-      expect(data.toString()).toContain('Invalid');
+    stderrStream._write = function (chunk, encoding, next) {
+      finalData += chunk.toString();
+      next();
+    };
+
+    stderrStream.on('close', () => {
+      expect(finalData).toContain('Invalid');
       done();
     });
+
+    catFile({
+      object: 'object',
+      t: true,
+      stderr: stderrStream
+    });
+
+    stderrStream.end();
   });
 
   it('should output correct content', (done) => {
-    const { text, objectHash } = handleDummyFile();
+    hashDummyFile().then(({ text, objectHash }) => {
+      let finalData = '';
 
-    gitProcess = spawn('node', [pathToIndex, 'cat-file', '-p', objectHash]);
-    let finalData = '';
+      stdoutStream._write = function (chunk, encoding, next) {
+        finalData += chunk.toString();
+        next();
+      };
 
-    gitProcess.stdout.on('data', (data) => {
-      finalData += data.toString();
-    });
+      stdoutStream.on('close', () => {
+        expect(finalData).toBe(text);
+        done();
+      });
 
-    gitProcess.on('close', () => {
-      expect(finalData).toBe(text);
-      done();
+      catFile({ p: true, object: objectHash, stdout: stdoutStream });
+      stdoutStream.end();
     });
   });
 
   it('should output correct type', (done) => {
-    const { objectHash } = handleDummyFile();
+    hashDummyFile().then(({ objectHash }) => {
+      let finalData = '';
 
-    gitProcess = spawn('node', [pathToIndex, 'cat-file', '-t', objectHash]);
-    let finalData = '';
+      stdoutStream._write = function (chunk, encoding, next) {
+        finalData += chunk.toString();
+        next();
+      };
 
-    gitProcess.stdout.on('data', (data) => {
-      finalData += data.toString();
-    });
+      stdoutStream.on('close', () => {
+        expect(finalData.trim()).toBe('blob');
+        done();
+      });
 
-    gitProcess.on('close', () => {
-      expect(finalData.trim()).toBe('blob');
-      done();
+      catFile({ t: true, object: objectHash, stdout: stdoutStream });
+      stdoutStream.end();
     });
   });
 });

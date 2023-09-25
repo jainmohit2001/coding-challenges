@@ -3,41 +3,42 @@ import zlib from 'zlib';
 
 import { createHash } from 'crypto';
 import fs from 'fs';
-import { stderr, stdin, stdout } from 'process';
 import path from 'path';
-import { GitObjectType } from './types';
+import { BaseCommandArgs, GitObjectType } from './types';
 
-interface HashObjectArgs {
+interface HashObjectArgs extends BaseCommandArgs {
   type?: GitObjectType;
   write?: boolean;
   readFromStdin?: boolean;
   file?: string;
 }
 
-function readContent(readFromStdin: boolean, file?: string): Buffer {
-  try {
-    if (readFromStdin) {
-      return fs.readFileSync(stdin.fd);
-    } else if (file) {
-      return fs.readFileSync(file);
-    }
-
-    stderr.write('Invalid args. No file provided\n');
-    process.exit(1);
-  } catch (e) {
-    const err = e as Error;
-    stderr.write(`${err.message}\n`);
-    process.exit(1);
-  }
-}
-
 function hashObject({
   type = 'blob',
   write = false,
   readFromStdin = false,
-  file = undefined
+  file = undefined,
+  stdin = process.stdin,
+  stdout = process.stdout,
+  stderr = process.stderr
 }: HashObjectArgs): void {
-  const content = readContent(readFromStdin, file);
+  let content: Buffer;
+
+  try {
+    if (readFromStdin) {
+      content = stdin.read() as Buffer;
+    } else if (file) {
+      content = fs.readFileSync(file);
+    } else {
+      stderr.write('Invalid args. No file provided\n');
+
+      return;
+    }
+  } catch (e) {
+    const err = e as Error;
+    stderr.write(`${err.message}\n`);
+    return;
+  }
 
   const header = `${type} ${content.byteLength}\0`;
   const store = header + content.toString();

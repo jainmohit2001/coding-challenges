@@ -1,63 +1,89 @@
 // https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
 import path from 'path';
 import fs from 'fs';
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { createDummyFile, createTempGitRepo } from '../../jestHelpers';
-
-const pathToIndex = path.join(process.cwd(), './build/26/index.js');
+import hashObject from '../../commands/hashObject';
+import stream, { Readable } from 'stream';
 
 describe('Testing hashObject command', () => {
-  let gitProcess: ChildProcessWithoutNullStreams;
+  let stdinStream: stream.Readable;
+  let stdoutStream: stream.Writable;
+  let stderrStream: stream.Writable;
+
+  beforeEach(() => {
+    stdinStream = new stream.Readable();
+    stdoutStream = new stream.Writable();
+    stderrStream = new stream.Writable();
+  });
+
+  afterEach(() => {
+    stdinStream.destroy();
+    stdoutStream.destroy();
+    stderrStream.destroy();
+  });
 
   createTempGitRepo();
 
-  afterEach(() => {
-    gitProcess.kill('SIGINT');
-  });
-
   it('should output error on invalid args', (done) => {
-    gitProcess = spawn('node', [pathToIndex, 'hash-object']);
+    let finalData = '';
 
-    gitProcess.stderr.on('data', (data) => {
-      expect(data.toString()).toContain('Invalid');
+    stderrStream._write = function (chunk, encoding, next) {
+      finalData += chunk.toString();
+      next();
+    };
+
+    stderrStream.on('close', () => {
+      expect(finalData).toContain('Invalid');
       done();
     });
+
+    hashObject({ stderr: stderrStream });
+    stderrStream.end();
   });
 
   it('should create hash for file', (done) => {
     const { filePath, expectedHash } = createDummyFile();
 
-    gitProcess = spawn('node', [pathToIndex, 'hash-object', filePath]);
     let finalData = '';
 
-    gitProcess.stdout.on('data', (data) => {
-      finalData = data.toString();
-    });
+    stdoutStream._write = function (chunk, encoding, next) {
+      finalData = chunk.toString();
+      next();
+    };
 
-    gitProcess.on('close', () => {
+    stdoutStream.on('close', () => {
       expect(finalData.trim()).toBe(expectedHash);
       done();
       fs.rmSync(filePath);
     });
+
+    hashObject({ stdout: stdoutStream, file: filePath });
+    stdoutStream.end();
   });
 
   it('should handle stdin option', (done) => {
+    let finalData = '';
     const text = 'what is up, doc?';
     const expectedHash = 'bd9dbf5aae1a3862dd1526723246b20206e5fc37';
-    gitProcess = spawn('node', [pathToIndex, 'hash-object', '--stdin']);
-    let finalData = '';
+    stdinStream = Readable.from(Buffer.from(text));
 
-    gitProcess.stdout.on('data', (data) => {
-      finalData += data.toString();
-    });
+    stdoutStream._write = function (chunk, encoding, next) {
+      finalData = chunk.toString();
+      next();
+    };
 
-    gitProcess.on('close', () => {
+    stdoutStream.on('close', () => {
       expect(finalData.trim()).toBe(expectedHash);
       done();
     });
 
-    gitProcess.stdin.write(Buffer.from(text));
-    gitProcess.stdin.end();
+    hashObject({
+      stdin: stdinStream,
+      stdout: stdoutStream,
+      readFromStdin: true
+    });
+
+    stdoutStream.end();
   });
 
   it('should handle write option', (done) => {
@@ -68,18 +94,25 @@ describe('Testing hashObject command', () => {
       expectedHash.substring(2, expectedHash.length)
     );
 
-    gitProcess = spawn('node', [pathToIndex, 'hash-object', '-w', filePath]);
     let finalData = '';
 
-    gitProcess.stdout.on('data', (data) => {
-      finalData = data.toString();
-    });
+    stdoutStream._write = function (chunk, encoding, next) {
+      finalData = chunk.toString();
+      next();
+    };
 
-    gitProcess.on('close', () => {
+    stdoutStream.on('close', () => {
       expect(finalData.trim()).toBe(expectedHash);
       expect(fs.existsSync(pathToBlob)).toBeTruthy();
       done();
       fs.rmSync(filePath);
     });
+
+    hashObject({
+      file: filePath,
+      write: true,
+      stdout: stdoutStream
+    });
+    stdoutStream.end();
   });
 });

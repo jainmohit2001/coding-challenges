@@ -13,7 +13,7 @@ export function createTempGitRepo(): string {
     // Create a new temp dir and change the cwd of the process.
     fs.mkdirSync(tempPath);
     process.chdir(tempPath);
-    init();
+    init({});
   });
 
   afterAll(() => {

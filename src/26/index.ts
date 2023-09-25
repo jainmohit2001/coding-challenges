@@ -3,6 +3,13 @@ import init from './commands/init';
 import hashObject from './commands/hashObject';
 import catFile from './commands/catFile';
 import fs from 'fs';
+import { BaseCommandArgs } from './commands/types';
+
+const DEFAULT_COMMAND_ARGS: BaseCommandArgs = {
+  stdin: process.stdin,
+  stdout: process.stdout,
+  stderr: process.stderr
+};
 
 function ensureGitRepo() {
   if (!fs.existsSync('./.git')) {
@@ -17,7 +24,7 @@ program
   .command('init [directory]')
   .description('Create an empty Git repository or reinitialize an existing one')
   .action((directory: string) => {
-    init(directory);
+    init({ ...DEFAULT_COMMAND_ARGS, directory });
   });
 
 program
@@ -32,7 +39,13 @@ program
   .argument('[file]', 'File path in case stdin is not provided')
   .action((file, { w, stdin, type }) => {
     ensureGitRepo();
-    hashObject({ type, write: w, readFromStdin: stdin, file });
+    hashObject({
+      ...DEFAULT_COMMAND_ARGS,
+      type,
+      write: w,
+      readFromStdin: stdin,
+      file
+    });
   });
 
 program

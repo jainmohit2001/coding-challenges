@@ -1,3 +1,10 @@
+import stream from 'stream';
+
 type GitObjectType = 'blob' | 'commit' | 'tree' | 'tag';
 
-export { GitObjectType };
+interface BaseCommandArgs {
+  stdin?: stream.Readable;
+  stdout?: stream.Writable;
+  stderr?: stream.Writable;
+}
+export { GitObjectType, BaseCommandArgs };
