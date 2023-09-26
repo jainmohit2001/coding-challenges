@@ -86,4 +86,13 @@ program
     wrapper(() => updateIndex({ add, files: files }));
   });
 
+program
+  .command('add')
+  .description('Add file contents to the index')
+  .argument('<files...>', 'File to add content from')
+  .action((files) => {
+    ensureGitRepo();
+    wrapper(() => updateIndex({ add: true, files: files }));
+  });
+
 program.parse(process.argv);
