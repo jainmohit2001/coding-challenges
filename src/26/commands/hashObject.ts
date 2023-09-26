@@ -32,8 +32,8 @@ function hashObject({
     throw new Error('Invalid args. No file provided');
   }
 
-  const header = `${type} ${content.byteLength}\0`;
-  const store = header + content.toString();
+  const header = Buffer.from(`${type} ${content.byteLength}\0`);
+  const store = Buffer.concat([header, content]);
   const hash = createHash('sha1').update(store).digest('hex');
 
   if (write) {

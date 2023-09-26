@@ -4,6 +4,7 @@ import hashObject from './commands/hashObject';
 import catFile from './commands/catFile';
 import fs from 'fs';
 import updateIndex from './commands/updateIndex';
+import status from './commands/status';
 
 function ensureGitRepo() {
   if (!fs.existsSync('./.git')) {
@@ -93,6 +94,13 @@ program
   .action((files) => {
     ensureGitRepo();
     wrapper(() => updateIndex({ add: true, files: files }));
+  });
+
+program
+  .command('status')
+  .description('Show the working tree status')
+  .action(() => {
+    wrapper(() => status(), true);
   });
 
 program.parse(process.argv);

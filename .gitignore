@@ -1,7 +1,7 @@
-.idea/
-**/node_modules/
-**/build/
-.vscode/
-coverage/
-logs/
+.idea/**
+**/node_modules/**
+**/build/**
+.vscode/**
+coverage/**
+logs/**
 **/*.env

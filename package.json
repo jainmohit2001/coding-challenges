@@ -9,7 +9,7 @@
     "build": "tsc -p . && npm run cp:26",
     "watch": "tsc -p . --watch",
     "run": "node ./build/index.js",
-    "cp:26": "mkdir build/26/default-files/ && cp -n src/26/default-files/* build/26/default-files/"
+    "cp:26": "mkdir -p build/26/default-files/ && cp -n src/26/default-files/* build/26/default-files/"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +22,7 @@
     "discord.js": "^14.13.0",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "glob": "^10.3.9",
     "helmet": "^7.0.0",
     "jsdom": "^22.1.0",
     "memcached": "^2.2.2",
@@ -36,6 +37,7 @@
     "@babel/preset-env": "^7.22.9",
     "@babel/preset-typescript": "^7.22.5",
     "@types/express": "^4.17.17",
+    "@types/glob": "^8.1.0",
     "@types/jest": "^29.5.3",
     "@types/jsdom": "^21.1.2",
     "@types/memcached": "^2.2.7",

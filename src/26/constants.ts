@@ -4,6 +4,7 @@ export const SPACE = Buffer.from(' ')[0];
 export const SHA1Regex = /^[a-fA-F0-9]{40}$/;
 
 export const PATH_TO_INDEX_FILE = './.git/index';
+export const PATH_TO_HEAD_FILE = './.git/HEAD';
 
 export const PREFIX_SIZE = 62;
 export const CTIME_OFFSET = 0;
