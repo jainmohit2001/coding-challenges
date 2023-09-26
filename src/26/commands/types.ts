@@ -1,4 +1,4 @@
-import { EntryType, Stage } from './enums';
+import { EntryType, Stage } from '../enums';
 
 export type GitObjectType = 'blob' | 'commit' | 'tree' | 'tag';
 

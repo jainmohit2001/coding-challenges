@@ -1,31 +1,32 @@
 // https://github.com/git/git/blob/867b1c1bf68363bcfd17667d6d4b9031fa6a1300/Documentation/technical/index-format.txt#L38
 
-import { EntryType, Stage } from './enums';
+import { EntryType, Stage } from '../enums';
 import hashObject from './hashObject';
 import { IndexEntry } from './types';
 import fs from 'fs';
 import { createHash } from 'crypto';
+import {
+  CTIME_NANO_OFFSET,
+  CTIME_OFFSET,
+  DEV_OFFSET,
+  FILES_SIZE_OFFSET,
+  FLAGS_OFFSET,
+  GID_OFFSET,
+  HASH_OFFSET,
+  INO_OFFSET,
+  MODE_OFFSET,
+  MTIME_NANO_OFFSET,
+  MTIME_OFFSET,
+  PATH_TO_INDEX_FILE,
+  PREFIX_SIZE,
+  UID_OFFSET
+} from '../constants';
+import path from 'path';
 
 interface UpdateIndexArgs {
   add?: boolean;
   files?: string[];
 }
-
-const PATH_TO_INDEX_FILE = './.git/index';
-
-const PREFIX_SIZE = 62;
-const CTIME_OFFSET = 0;
-const CTIME_NANO_OFFSET = 4;
-const MTIME_OFFSET = 8;
-const MTIME_NANO_OFFSET = 12;
-const DEV_OFFSET = 16;
-const INO_OFFSET = 20;
-const MODE_OFFSET = 24;
-const UID_OFFSET = 28;
-const GID_OFFSET = 32;
-const FILES_SIZE_OFFSET = 36;
-const HASH_OFFSET = 40;
-const FLAGS_OFFSET = 60;
 
 function createIndexHeader(size: number, version: 2 | 3 | 4 = 2): Buffer {
   const buf = Buffer.alloc(12, 0);
@@ -46,6 +47,8 @@ function createIndexEntry(file: string): IndexEntry {
 
   const mtimeNanoFrac = Math.floor((stat.mtimeMs - mtimeSec * 1000) * 1000_000);
 
+  const filePath = path.relative(process.cwd(), file);
+
   return {
     ctimeSec,
     ctimeNanoFrac,
@@ -57,8 +60,8 @@ function createIndexEntry(file: string): IndexEntry {
     uid: stat.uid,
     gid: stat.gid,
     size: stat.size,
-    hash: hashObject({ file: file }),
-    name: file,
+    hash: hashObject({ file: file, write: true }),
+    name: filePath,
     stage: Stage.ZERO,
     skipWorkTree: false,
     intentToAdd: false

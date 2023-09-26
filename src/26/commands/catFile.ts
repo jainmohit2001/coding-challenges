@@ -2,6 +2,7 @@ import fs from 'fs';
 import { GitObjectType } from './types';
 import zlib from 'zlib';
 import path from 'path';
+import { SHA1Regex, SPACE, NULL } from '../constants';
 
 interface CatFileArgs {
   object: string;
@@ -13,11 +14,6 @@ interface Header {
   type: GitObjectType;
   length: number;
 }
-
-const NULL = Buffer.from('\0')[0];
-const SPACE = Buffer.from(' ')[0];
-
-const SHA1Regex = /^[a-fA-F0-9]{40}$/;
 
 function isValidSHA1(s: string): boolean {
   return !!SHA1Regex.exec(s);
