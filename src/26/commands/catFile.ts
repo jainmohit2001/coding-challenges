@@ -2,8 +2,8 @@ import fs from 'fs';
 import zlib from 'zlib';
 import path from 'path';
 import { SHA1Regex, SPACE, NULL } from '../constants';
-import { fileModeString, fileType } from '../enums';
 import { GitObjectType } from '../types';
+import { fileModeString, fileType } from '../utils';
 
 interface CatFileArgs {
   object: string;
