@@ -2,7 +2,7 @@ import fs from 'fs';
 import { randomBytes } from 'crypto';
 import updateIndex from '../../commands/updateIndex';
 import { createTempGitRepo } from '../../jestHelpers';
-import IndexParser from '../../indexDecoder';
+import IndexParser from '../../indexParser';
 
 describe('Testing update-index command', () => {
   createTempGitRepo();
@@ -22,7 +22,7 @@ describe('Testing update-index command', () => {
 
     const index = new IndexParser().parse();
 
-    expect(index.header.entriesCount).toBe(1);
+    expect(index.entries.length).toBe(1);
 
     const entry = index.entries[0];
     expect(entry.name).toBe(filename);

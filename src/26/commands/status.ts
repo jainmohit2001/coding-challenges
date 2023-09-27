@@ -1,6 +1,6 @@
 import fs from 'fs';
-import { PATH_TO_HEAD_FILE } from '../constants';
-import IndexParser from '../indexDecoder';
+import { PATH_TO_HEAD_FILE, PATH_TO_INDEX_FILE } from '../constants';
+import IndexParser from '../indexParser';
 import path from 'path';
 import hashObject from './hashObject';
 import { globSync } from 'glob';
@@ -15,6 +15,9 @@ function getCurrentBranchName(): string {
 }
 
 function getIgnoredGlobPatterns(): string[] {
+  if (!fs.existsSync('.gitignore')) {
+    return ['.git/**'];
+  }
   const content = fs.readFileSync('.gitignore').toString();
   const ignore = content.split(/\r\n|\n/);
   ignore.push('.git/**');
@@ -90,15 +93,25 @@ function prepareOutput(
 
 function status() {
   const currentBranch = getCurrentBranchName();
-  const index = new IndexParser().parse();
 
   // Assuming the function is being called from the root of git repo.
+  // TODO: add support for calling this function from a subdirectory.
   const root = process.cwd();
   const fileStats = getFileStats(root);
 
   const untracked: string[] = [];
   const deleteFile: string[] = [];
   const changedFile: string[] = [];
+
+  // No index file is present. All the files will be set as untracked.
+  if (!fs.existsSync(PATH_TO_INDEX_FILE)) {
+    fileStats.forEach((file) => {
+      untracked.push(file.name);
+    });
+    return prepareOutput(untracked, deleteFile, changedFile, currentBranch);
+  }
+
+  const index = new IndexParser().parse();
 
   index.entries.forEach((entry) => {
     if (!fileStats.has(entry.name)) {

@@ -1,5 +1,6 @@
 export const NULL = Buffer.from('\0')[0];
 export const SPACE = Buffer.from(' ')[0];
+export const LF = Buffer.from('\n')[0];
 
 export const SHA1Regex = /^[a-fA-F0-9]{40}$/;
 

@@ -1,5 +1,4 @@
 import fs from 'fs';
-import { IndexEntry } from './commands/types';
 import {
   CTIME_NANO_OFFSET,
   CTIME_OFFSET,
@@ -9,25 +8,18 @@ import {
   GID_OFFSET,
   HASH_OFFSET,
   INO_OFFSET,
+  LF,
   MODE_OFFSET,
   MTIME_NANO_OFFSET,
   MTIME_OFFSET,
   NAME_OFFSET,
   NULL,
   PATH_TO_INDEX_FILE,
+  SPACE,
   UID_OFFSET
 } from './constants';
-
-interface IndexHeader {
-  signature: string;
-  version: number;
-  entriesCount: number;
-}
-
-interface Index {
-  header: IndexHeader;
-  entries: IndexEntry[];
-}
+import { Index, IndexEntry, IndexHeader } from './objects';
+import { Tree, TreeEntry } from './objects/tree';
 
 export default class IndexParser {
   private pos: number;
@@ -42,11 +34,10 @@ export default class IndexParser {
   }
 
   private parseHeader(): IndexHeader {
-    this.pos += 12;
+    this.pos += 8;
     return {
       signature: this.buf.subarray(0, 4).toString(),
-      version: this.buf.readInt32BE(4),
-      entriesCount: this.buf.readInt32BE(8)
+      version: this.buf.readInt32BE(4)
     };
   }
 
@@ -92,14 +83,83 @@ export default class IndexParser {
     return entry;
   }
 
+  parseTreeEntry(): TreeEntry {
+    const entry = {} as TreeEntry;
+
+    const nameStartPos = this.pos;
+    while (this.pos < this.buf.length && this.buf[this.pos] !== NULL) {
+      this.pos++;
+    }
+    entry.name = this.buf.subarray(nameStartPos, this.pos).toString('ascii');
+    this.pos++;
+
+    const entryCountStartPos = this.pos;
+    while (this.pos < this.buf.length && this.buf[this.pos] !== SPACE) {
+      this.pos++;
+    }
+    entry.entryCount = parseInt(
+      this.buf.subarray(entryCountStartPos, this.pos).toString('ascii')
+    );
+    this.pos++;
+
+    const subTreeCountStartPos = this.pos;
+    while (this.pos < this.buf.length && this.buf[this.pos] !== LF) {
+      this.pos++;
+    }
+    entry.subTreeCount = parseInt(
+      this.buf.subarray(subTreeCountStartPos, this.pos).toString('ascii')
+    );
+    this.pos++;
+
+    if (entry.entryCount >= 0) {
+      entry.hash = this.buf.subarray(this.pos, this.pos + 20).toString('hex');
+      this.pos += 20;
+    }
+
+    return entry;
+  }
+
+  parseTreeExtension(size: number): Tree {
+    const entries: TreeEntry[] = [];
+    const endPos = this.pos + size;
+
+    while (this.pos < endPos) {
+      const entry = this.parseTreeEntry();
+      entries.push(entry);
+    }
+
+    return new Tree(entries);
+  }
+
+  parseExtension(): Tree | undefined {
+    const signature = this.buf.subarray(this.pos, this.pos + 4).toString();
+    this.pos += 4;
+
+    const size = this.buf.readInt32BE(this.pos);
+    this.pos += 4;
+
+    if (signature !== 'TREE') {
+      return undefined;
+    }
+
+    return this.parseTreeExtension(size);
+  }
+
   parse(): Index {
     const header = this.parseHeader();
+    const entriesCount = this.buf.readInt32BE(this.pos);
+    this.pos += 4;
     const entries: IndexEntry[] = [];
 
-    for (let i = 0; i < header.entriesCount; i++) {
+    for (let i = 0; i < entriesCount; i++) {
       const entry = this.parseEntry();
       entries.push(entry);
     }
-    return { header, entries };
+
+    if (this.pos === this.buf.length) {
+      return new Index(header, entries);
+    }
+
+    return new Index(header, entries, this.parseExtension());
   }
 }

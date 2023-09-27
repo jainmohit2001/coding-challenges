@@ -7,6 +7,7 @@ import updateIndex from './commands/updateIndex';
 import status from './commands/status';
 
 function ensureGitRepo() {
+  // TODO: Detect if the cwd is inside a parent git repo
   if (!fs.existsSync('./.git')) {
     process.stderr.write(
       'fatal: not a git repository (or any of the parent directories): .git\n'
@@ -84,7 +85,7 @@ program
   )
   .action((files, { add }) => {
     ensureGitRepo();
-    wrapper(() => updateIndex({ add, files: files }));
+    wrapper(() => updateIndex({ add, files: files }), false);
   });
 
 program
@@ -93,14 +94,14 @@ program
   .argument('<files...>', 'File to add content from')
   .action((files) => {
     ensureGitRepo();
-    wrapper(() => updateIndex({ add: true, files: files }));
+    wrapper(() => updateIndex({ add: true, files: files }), false);
   });
 
 program
   .command('status')
   .description('Show the working tree status')
   .action(() => {
-    wrapper(() => status(), true);
+    wrapper(() => status());
   });
 
 program.parse(process.argv);
