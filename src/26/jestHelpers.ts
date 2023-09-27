@@ -7,22 +7,22 @@ import init from './commands/init';
 const root = process.cwd();
 
 export function createTempGitRepo(): string {
-  const tempPath = path.join(os.tmpdir(), randomBytes(2).toString('hex'));
+  const gitRoot = path.join(os.tmpdir(), randomBytes(2).toString('hex'));
 
   beforeAll(() => {
     // Create a new temp dir and change the cwd of the process.
-    fs.mkdirSync(tempPath);
-    process.chdir(tempPath);
+    fs.mkdirSync(gitRoot);
+    process.chdir(gitRoot);
     init();
   });
 
   afterAll(() => {
     // Move the process back to root before cleanup to prevent ENOENT error.
     process.chdir(root);
-    fs.rmSync(tempPath, { recursive: true, force: true });
+    fs.rmSync(gitRoot, { recursive: true, force: true });
   });
 
-  return tempPath;
+  return gitRoot;
 }
 
 export function createDummyFile(): {

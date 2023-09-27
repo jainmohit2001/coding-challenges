@@ -19,7 +19,7 @@ import {
   FILES_SIZE_OFFSET,
   HASH_OFFSET,
   FLAGS_OFFSET,
-  PATH_TO_INDEX_FILE
+  RELATIVE_PATH_TO_INDEX_FILE
 } from '../constants';
 import { createHash } from 'crypto';
 
@@ -41,7 +41,7 @@ export interface IndexEntry {
   intentToAdd: boolean;
 }
 
-export function createIndexEntry(file: string): IndexEntry {
+export function createIndexEntry(gitRoot: string, file: string): IndexEntry {
   const stat = fs.lstatSync(file);
 
   const ctimeSec = Math.floor(stat.ctimeMs / 1000);
@@ -65,7 +65,7 @@ export function createIndexEntry(file: string): IndexEntry {
     uid: stat.uid,
     gid: stat.gid,
     size: stat.size,
-    hash: hashObject({ file: file, write: true }),
+    hash: hashObject({ gitRoot, file: path.join(gitRoot, file), write: true }),
     name: filePath,
     stage: Stage.ZERO,
     skipWorkTree: false,
@@ -181,7 +181,7 @@ export class Index {
     );
 
     fs.writeFileSync(
-      PATH_TO_INDEX_FILE,
+      RELATIVE_PATH_TO_INDEX_FILE,
       Buffer.concat([indexContent, checksum]),
       'hex'
     );

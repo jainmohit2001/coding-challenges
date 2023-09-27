@@ -4,8 +4,10 @@ export const LF = Buffer.from('\n')[0];
 
 export const SHA1Regex = /^[a-fA-F0-9]{40}$/;
 
-export const PATH_TO_INDEX_FILE = './.git/index';
-export const PATH_TO_HEAD_FILE = './.git/HEAD';
+export const RELATIVE_PATH_TO_INDEX_FILE = '.git/index';
+export const RELATIVE_PATH_TO_HEAD_FILE = '.git/HEAD';
+export const RELATIVE_PATH_TO_OBJECT_DIR = '.git/objects';
+export const DEFAULT_IGNORE_PATTERNS = ['.git/**'];
 
 export const PREFIX_SIZE = 62;
 export const CTIME_OFFSET = 0;

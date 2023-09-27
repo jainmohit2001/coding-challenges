@@ -6,8 +6,10 @@ import fs from 'fs';
 import path from 'path';
 import { GitObjectType } from '../types';
 import stream from 'stream';
+import { RELATIVE_PATH_TO_OBJECT_DIR } from '../constants';
 
 interface HashObjectArgs {
+  gitRoot: string;
   type?: GitObjectType;
   write?: boolean;
   readFromStdin?: boolean;
@@ -16,6 +18,7 @@ interface HashObjectArgs {
 }
 
 function hashObject({
+  gitRoot,
   type = 'blob',
   write = false,
   readFromStdin = false,
@@ -39,7 +42,8 @@ function hashObject({
   if (write) {
     const zlibContent = zlib.deflateSync(store);
     const pathToBlob = path.join(
-      './.git/objects',
+      gitRoot,
+      RELATIVE_PATH_TO_OBJECT_DIR,
       hash.substring(0, 2),
       hash.substring(2, hash.length)
     );

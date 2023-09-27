@@ -14,23 +14,24 @@ import {
   MTIME_OFFSET,
   NAME_OFFSET,
   NULL,
-  PATH_TO_INDEX_FILE,
+  RELATIVE_PATH_TO_INDEX_FILE,
   SPACE,
   UID_OFFSET
 } from './constants';
 import { Index, IndexEntry, IndexHeader } from './objects';
 import { CachedTree, CachedTreeEntry } from './objects/cachedTree';
+import path from 'path';
 
 export default class IndexParser {
   private pos: number;
   private buf: Buffer;
 
-  constructor() {
+  constructor(gitRoot: string) {
     this.pos = 0;
-    if (!fs.existsSync(PATH_TO_INDEX_FILE)) {
+    if (!fs.existsSync(path.join(gitRoot, RELATIVE_PATH_TO_INDEX_FILE))) {
       throw new Error('Not a git repo');
     }
-    this.buf = fs.readFileSync(PATH_TO_INDEX_FILE);
+    this.buf = fs.readFileSync(path.join(gitRoot, RELATIVE_PATH_TO_INDEX_FILE));
   }
 
   private parseHeader(): IndexHeader {

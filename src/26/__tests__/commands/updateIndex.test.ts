@@ -5,12 +5,14 @@ import { createTempGitRepo } from '../../jestHelpers';
 import IndexParser from '../../indexParser';
 
 describe('Testing update-index command', () => {
-  createTempGitRepo();
+  const gitRoot = createTempGitRepo();
 
   it('should throw error on invalid args', () => {
-    expect(() => updateIndex({ files: undefined })).toThrow();
-    expect(() => updateIndex({ files: [] })).toThrow();
-    expect(() => updateIndex({ files: [randomBytes(2).toString()] })).toThrow();
+    expect(() => updateIndex({ gitRoot, files: undefined })).toThrow();
+    expect(() => updateIndex({ gitRoot, files: [] })).toThrow();
+    expect(() =>
+      updateIndex({ gitRoot, files: [randomBytes(2).toString()] })
+    ).toThrow();
   });
 
   it('should add file to index successfully', () => {
@@ -18,9 +20,9 @@ describe('Testing update-index command', () => {
     fs.closeSync(fs.openSync(filename, 'w'));
     const expectedStat = fs.statSync(filename);
 
-    updateIndex({ files: [filename] });
+    updateIndex({ gitRoot, files: [filename] });
 
-    const index = new IndexParser().parse();
+    const index = new IndexParser(gitRoot).parse();
 
     expect(index.entries.length).toBe(1);
 

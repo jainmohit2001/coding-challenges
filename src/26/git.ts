@@ -6,15 +6,23 @@ import fs from 'fs';
 import updateIndex from './commands/updateIndex';
 import status from './commands/status';
 import writeTree from './commands/writeTree';
+import path from 'path';
 
-function ensureGitRepo() {
-  // TODO: Detect if the cwd is inside a parent git repo
-  if (!fs.existsSync('./.git')) {
-    process.stderr.write(
-      'fatal: not a git repository (or any of the parent directories): .git\n'
-    );
-    process.exit(1);
+function ensureGitRepo(): string {
+  let root = process.cwd();
+
+  while (path.dirname(root) !== '/' || root !== '/') {
+    const pathToGit = path.join(root, '.git');
+    if (fs.existsSync(pathToGit)) {
+      return root;
+    }
+    root = path.dirname(root);
   }
+
+  process.stderr.write(
+    'fatal: not a git repository (or any of the parent directories): .git\n'
+  );
+  process.exit(1);
 }
 
 function wrapper(cb: () => string, newLine: boolean = true) {
@@ -47,10 +55,11 @@ program
   )
   .argument('[file]', 'File path in case stdin is not provided')
   .action((file, { w, stdin, type }) => {
-    ensureGitRepo();
+    const gitRoot = ensureGitRepo();
     wrapper(
       () =>
         hashObject({
+          gitRoot,
           type,
           write: w,
           readFromStdin: stdin,
@@ -71,8 +80,8 @@ program
   )
   .option('-p', 'Pretty-print the contents of <object> based on its type')
   .action((object, { t, p }) => {
-    ensureGitRepo();
-    wrapper(() => catFile({ object, t, p }), t);
+    const gitRoot = ensureGitRepo();
+    wrapper(() => catFile({ gitRoot, object, t, p }), t);
   });
 
 program
@@ -85,8 +94,8 @@ program
     false
   )
   .action((files, { add }) => {
-    ensureGitRepo();
-    wrapper(() => updateIndex({ add, files: files }), false);
+    const gitRoot = ensureGitRepo();
+    wrapper(() => updateIndex({ gitRoot, add, files: files }), false);
   });
 
 program
@@ -94,23 +103,24 @@ program
   .description('Add file contents to the index')
   .argument('<files...>', 'File to add content from')
   .action((files) => {
-    ensureGitRepo();
-    wrapper(() => updateIndex({ add: true, files: files }), false);
+    const gitRoot = ensureGitRepo();
+    wrapper(() => updateIndex({ gitRoot, add: true, files: files }), false);
   });
 
 program
   .command('status')
   .description('Show the working tree status')
   .action(() => {
-    wrapper(() => status());
+    const gitRoot = ensureGitRepo();
+    wrapper(() => status(gitRoot));
   });
 
 program
   .command('write-tree')
   .description(' Create a tree object from the current index')
   .action(() => {
-    ensureGitRepo();
-    wrapper(() => writeTree());
+    const gitRoot = ensureGitRepo();
+    wrapper(() => writeTree(gitRoot));
   });
 
 program.parse(process.argv);

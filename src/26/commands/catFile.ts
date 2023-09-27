@@ -1,11 +1,17 @@
 import fs from 'fs';
 import zlib from 'zlib';
 import path from 'path';
-import { SHA1Regex, SPACE, NULL } from '../constants';
+import {
+  SHA1Regex,
+  SPACE,
+  NULL,
+  RELATIVE_PATH_TO_OBJECT_DIR
+} from '../constants';
 import { GitObjectType } from '../types';
 import { fileModeString, fileType } from '../utils';
 
 interface CatFileArgs {
+  gitRoot: string;
   object: string;
   t?: boolean;
   p?: boolean;
@@ -60,13 +66,14 @@ function parseHeader(buffer: Buffer): Header {
   return { type: headerType, length: headerLength };
 }
 
-function catFile({ object, t = false, p = false }: CatFileArgs) {
+function catFile({ gitRoot, object, t = false, p = false }: CatFileArgs) {
   if ((t && p) || (!t && !p)) {
     throw new Error('Invalid usage');
   }
 
   const pathToFile = path.join(
-    './.git/objects',
+    gitRoot,
+    RELATIVE_PATH_TO_OBJECT_DIR,
     object.substring(0, 2),
     object.substring(2, object.length)
   );

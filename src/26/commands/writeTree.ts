@@ -5,9 +5,10 @@ import { createHash } from 'crypto';
 import fs from 'fs';
 import { CachedTree, CachedTreeEntry } from '../objects/cachedTree';
 import IndexParser from '../indexParser';
+import { RELATIVE_PATH_TO_OBJECT_DIR } from '../constants';
 
-function writeTree(): string {
-  const index = new IndexParser().parse();
+function writeTree(gitRoot: string): string {
+  const index = new IndexParser(gitRoot).parse();
 
   const objectType: GitObjectType = 'tree';
   const entryBuffers: Buffer[] = [];
@@ -32,7 +33,8 @@ function writeTree(): string {
 
   const zlibContent = zlib.deflateSync(store);
   const pathToBlob = path.join(
-    './.git/objects',
+    gitRoot,
+    RELATIVE_PATH_TO_OBJECT_DIR,
     hash.substring(0, 2),
     hash.substring(2, hash.length)
   );

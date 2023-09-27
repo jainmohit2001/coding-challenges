@@ -6,16 +6,16 @@ import hashObject from '../../commands/hashObject';
 import { Readable } from 'stream';
 
 describe('Testing hashObject command', () => {
-  createTempGitRepo();
+  const gitRoot = createTempGitRepo();
 
   it('should output error on invalid args', () => {
-    expect(() => hashObject({})).toThrow();
+    expect(() => hashObject({ gitRoot })).toThrow();
   });
 
   it('should create hash for file', () => {
     const { filePath, expectedHash } = createDummyFile();
 
-    const hash = hashObject({ file: filePath });
+    const hash = hashObject({ gitRoot, file: filePath });
     expect(hash.trim()).toBe(expectedHash);
   });
 
@@ -25,6 +25,7 @@ describe('Testing hashObject command', () => {
     const stdinStream = Readable.from(Buffer.from(text));
 
     const hash = hashObject({
+      gitRoot,
       stdin: stdinStream,
       readFromStdin: true
     });
@@ -41,6 +42,7 @@ describe('Testing hashObject command', () => {
     );
 
     const hash = hashObject({
+      gitRoot,
       file: filePath,
       write: true
     });
