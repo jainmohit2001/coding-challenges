@@ -112,7 +112,6 @@ function status() {
   }
 
   const index = new IndexParser().parse();
-  console.log(index);
 
   index.entries.forEach((entry) => {
     if (!fileStats.has(entry.name)) {
