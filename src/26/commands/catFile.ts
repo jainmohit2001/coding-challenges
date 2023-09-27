@@ -3,6 +3,7 @@ import { GitObjectType } from './types';
 import zlib from 'zlib';
 import path from 'path';
 import { SHA1Regex, SPACE, NULL } from '../constants';
+import { fileModeString, fileType } from '../enums';
 
 interface CatFileArgs {
   object: string;
@@ -17,6 +18,34 @@ interface Header {
 
 function isValidSHA1(s: string): boolean {
   return !!SHA1Regex.exec(s);
+}
+
+function parseTreeFile(data: Buffer): string {
+  const output: string[] = [];
+
+  for (let i = 0; i < data.length; ) {
+    const modeStartPos = i;
+    while (data[i] !== SPACE) {
+      i++;
+    }
+    const mode = parseInt(data.subarray(modeStartPos, i).toString(), 8);
+    i++;
+
+    const filenameStartPos = i;
+    while (data[i] !== NULL) {
+      i++;
+    }
+    const filename = data.subarray(filenameStartPos, i).toString();
+    i++;
+
+    const hash = data.subarray(i, i + 20).toString('hex');
+    i += 20;
+    output.push(
+      `${fileModeString.get(mode)} ${fileType.get(mode)} ${hash} ${filename}`
+    );
+  }
+
+  return output.join('\r\n');
 }
 
 function parseHeader(buffer: Buffer): Header {
@@ -58,6 +87,13 @@ function catFile({ object, t = false, p = false }: CatFileArgs) {
 
   if (t) {
     return header.type.toString();
+  }
+
+  switch (header.type) {
+    case 'blob':
+      return fileContents.subarray(i + 1).toString();
+    case 'tree':
+      return parseTreeFile(fileContents.subarray(i + 1));
   }
 
   return fileContents.subarray(i + 1).toString();

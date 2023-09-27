@@ -19,7 +19,7 @@ import {
   UID_OFFSET
 } from './constants';
 import { Index, IndexEntry, IndexHeader } from './objects';
-import { Tree, TreeEntry } from './objects/tree';
+import { CachedTree, CachedTreeEntry } from './objects/cachedTree';
 
 export default class IndexParser {
   private pos: number;
@@ -54,8 +54,7 @@ export default class IndexParser {
 
     entry.ino = this.buf.readInt32BE(this.pos + INO_OFFSET);
 
-    entry.type =
-      ((0b1111 << 12) & this.buf.readInt32BE(this.pos + MODE_OFFSET)) >> 12;
+    entry.mode = this.buf.readInt32BE(this.pos + MODE_OFFSET);
 
     entry.uid = this.buf.readInt32BE(this.pos + UID_OFFSET);
 
@@ -83,8 +82,8 @@ export default class IndexParser {
     return entry;
   }
 
-  parseTreeEntry(): TreeEntry {
-    const entry = {} as TreeEntry;
+  parseTreeEntry(): CachedTreeEntry {
+    const entry = {} as CachedTreeEntry;
 
     const nameStartPos = this.pos;
     while (this.pos < this.buf.length && this.buf[this.pos] !== NULL) {
@@ -119,8 +118,8 @@ export default class IndexParser {
     return entry;
   }
 
-  parseTreeExtension(size: number): Tree {
-    const entries: TreeEntry[] = [];
+  parseTreeExtension(size: number): CachedTree {
+    const entries: CachedTreeEntry[] = [];
     const endPos = this.pos + size;
 
     while (this.pos < endPos) {
@@ -128,10 +127,10 @@ export default class IndexParser {
       entries.push(entry);
     }
 
-    return new Tree(entries);
+    return new CachedTree(entries);
   }
 
-  parseExtension(): Tree | undefined {
+  parseExtension(): CachedTree | undefined {
     const signature = this.buf.subarray(this.pos, this.pos + 4).toString();
     this.pos += 4;
 

@@ -5,6 +5,7 @@ import catFile from './commands/catFile';
 import fs from 'fs';
 import updateIndex from './commands/updateIndex';
 import status from './commands/status';
+import writeTree from './commands/writeTree';
 
 function ensureGitRepo() {
   // TODO: Detect if the cwd is inside a parent git repo
@@ -102,6 +103,14 @@ program
   .description('Show the working tree status')
   .action(() => {
     wrapper(() => status());
+  });
+
+program
+  .command('write-tree')
+  .description(' Create a tree object from the current index')
+  .action(() => {
+    ensureGitRepo();
+    wrapper(() => writeTree());
   });
 
 program.parse(process.argv);

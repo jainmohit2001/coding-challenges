@@ -1,8 +1,8 @@
 // https://github.com/git/git/blob/867b1c1bf68363bcfd17667d6d4b9031fa6a1300/Documentation/technical/index-format.txt#L38
 
 import path from 'path';
-import { EntryType, Stage } from '../enums';
-import { Tree } from './tree';
+import { FileMode, Stage } from '../enums';
+import { CachedTree } from './cachedTree';
 import fs from 'fs';
 import hashObject from '../commands/hashObject';
 import {
@@ -30,7 +30,7 @@ export interface IndexEntry {
   mtimeNanoFrac: number;
   dev: number;
   ino: number;
-  type: EntryType;
+  mode: FileMode;
   uid: number;
   gid: number;
   size: number;
@@ -61,7 +61,7 @@ export function createIndexEntry(file: string): IndexEntry {
     mtimeNanoFrac,
     dev: stat.dev,
     ino: stat.ino,
-    type: EntryType.REGULAR,
+    mode: FileMode.REGULAR,
     uid: stat.uid,
     gid: stat.gid,
     size: stat.size,
@@ -86,7 +86,7 @@ export function encodeIndexEntry(e: IndexEntry): Buffer {
 
   prefix.writeUInt32BE(e.ino, INO_OFFSET);
 
-  prefix.writeUInt32BE((e.type << 12) | 0o0644, MODE_OFFSET);
+  prefix.writeUInt32BE(e.mode, MODE_OFFSET);
 
   prefix.writeUInt32BE(e.uid, UID_OFFSET);
 
@@ -122,9 +122,9 @@ export interface IndexHeader {
 export class Index {
   header: IndexHeader;
   entries: IndexEntry[];
-  cache?: Tree;
+  cache?: CachedTree;
 
-  constructor(header: IndexHeader, entries: IndexEntry[], cache?: Tree) {
+  constructor(header: IndexHeader, entries: IndexEntry[], cache?: CachedTree) {
     this.header = header;
     this.entries = entries;
     this.cache = cache;
