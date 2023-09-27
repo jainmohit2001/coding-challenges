@@ -1,4 +1,4 @@
-import { GitObjectType } from './commands/types';
+import { GitObjectType } from './types';
 
 export enum Stage {
   ZERO = 0,

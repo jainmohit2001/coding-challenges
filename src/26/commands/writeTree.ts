@@ -1,5 +1,5 @@
 import path from 'path';
-import { GitObjectType } from './types';
+import { GitObjectType } from '../types';
 import zlib from 'zlib';
 import { createHash } from 'crypto';
 import fs from 'fs';

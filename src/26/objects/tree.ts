@@ -1,4 +1,4 @@
-import { GitObjectType } from '../commands/types';
+import { GitObjectType } from '../types';
 import { FileMode } from '../enums';
 
 export class Tree {
