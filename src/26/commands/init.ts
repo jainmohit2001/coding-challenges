@@ -17,6 +17,12 @@ const DEFAULT_HEAD = fs.readFileSync(
   path.join(__dirname, '..', 'default-files', 'default-HEAD')
 );
 
+/**
+ * Main function that performs the initialization of a git repo.
+ *
+ * @param {?string} [directory] path where the git repo should be initialized
+ * @returns {string}
+ */
 function init(directory?: string): string {
   let gitDir = path.join(process.cwd(), '.git');
 
@@ -29,7 +35,7 @@ function init(directory?: string): string {
   }
 
   if (fs.existsSync(gitDir)) {
-    throw new Error(reinitializeText + gitDir);
+    return reinitializeText + gitDir;
   }
 
   fs.mkdirSync(gitDir, { recursive: true });

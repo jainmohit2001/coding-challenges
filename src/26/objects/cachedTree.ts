@@ -1,10 +1,8 @@
 export function encodeCachedTreeEntry(e: CachedTreeEntry): Buffer {
-  const name = Buffer.from(e.name + '\0');
-  const entryCount = Buffer.from(e.entryCount.toString() + ' ');
-  const subTreeCount = Buffer.from(e.subTreeCount.toString() + '\n');
+  const prefix = Buffer.from(`${e.name}\0${e.entryCount}} ${e.subTreeCount}\n`);
   const hash = Buffer.from(e.hash, 'hex');
 
-  return Buffer.concat([name, entryCount, subTreeCount, hash]);
+  return Buffer.concat([prefix, hash]);
 }
 
 export class CachedTree {

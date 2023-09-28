@@ -13,6 +13,7 @@ interface UpdateIndexArgs {
 }
 
 function updateIndex({ gitRoot, add = false, files }: UpdateIndexArgs): string {
+  // TODO: Ensure all the file paths are relative to gitRoot.
   if (files === undefined || files.length === 0) {
     throw new Error('Invalid args');
   }

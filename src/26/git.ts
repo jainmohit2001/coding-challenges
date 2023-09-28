@@ -8,6 +8,11 @@ import status from './commands/status';
 import writeTree from './commands/writeTree';
 import path from 'path';
 
+/**
+ * Finds the path to root of current git repo if exists.
+ *
+ * @returns {string}
+ */
 function ensureGitRepo(): string {
   let root = process.cwd();
 

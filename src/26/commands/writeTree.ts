@@ -30,6 +30,8 @@ function writeTree(gitRoot: string): string {
   const store = Buffer.concat([header, content]);
 
   const hash = createHash('sha1').update(store).digest('hex');
+  // TODO: Compare hash from previous CachedTree entry.
+  //       Perform the operation only if they are different.
 
   const zlibContent = zlib.deflateSync(store);
   const pathToBlob = path.join(

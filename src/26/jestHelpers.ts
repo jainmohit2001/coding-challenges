@@ -6,6 +6,12 @@ import init from './commands/init';
 
 const root = process.cwd();
 
+/**
+ * Creates a temp directory to be used as git repo.
+ *
+ * @export
+ * @returns {string}
+ */
 export function createTempGitRepo(): string {
   const gitRoot = path.join(os.tmpdir(), randomBytes(2).toString('hex'));
 

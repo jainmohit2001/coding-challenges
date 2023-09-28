@@ -42,4 +42,9 @@ describe('Testing init command', () => {
     expect(output).toContain('Initialized');
     done();
   });
+
+  it('should output reinitialized text when git repo is already initialized', () => {
+    const output = init(tempPath);
+    expect(output).toContain('Reinitialized');
+  });
 });

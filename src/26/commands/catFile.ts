@@ -30,6 +30,8 @@ function parseTreeFile(data: Buffer): string {
   const output: string[] = [];
 
   for (let i = 0; i < data.length; ) {
+    // Format of each entry:
+    // <mode><SPACE><filename><NULL><hash>
     const modeStartPos = i;
     while (data[i] !== SPACE) {
       i++;
@@ -55,6 +57,8 @@ function parseTreeFile(data: Buffer): string {
 }
 
 function parseHeader(buffer: Buffer): Header {
+  // Format of header:
+  // <type><SPACE><length-in-bytes><NULL>
   let i = 0;
   while (buffer[i] !== SPACE && i < buffer.byteLength) {
     i++;
@@ -66,7 +70,21 @@ function parseHeader(buffer: Buffer): Header {
   return { type: headerType, length: headerLength };
 }
 
-function catFile({ gitRoot, object, t = false, p = false }: CatFileArgs) {
+/**
+ * Main function to perform the cat-file command.
+ * Supported file types:
+ * - blob
+ * - tree
+ *
+ * @param {CatFileArgs} { gitRoot, object, t = false, p = false }
+ * @returns {string}
+ */
+function catFile({
+  gitRoot,
+  object,
+  t = false,
+  p = false
+}: CatFileArgs): string {
   if ((t && p) || (!t && !p)) {
     throw new Error('Invalid usage');
   }
@@ -82,8 +100,10 @@ function catFile({ gitRoot, object, t = false, p = false }: CatFileArgs) {
     throw new Error('Invalid object');
   }
 
+  // Unzip the content
   const fileContents = zlib.unzipSync(fs.readFileSync(pathToFile));
 
+  // The header is present till we found a NULL character
   let i = 0;
   for (i; i < fileContents.length; i++) {
     if (fileContents[i] === NULL) {
@@ -92,10 +112,12 @@ function catFile({ gitRoot, object, t = false, p = false }: CatFileArgs) {
   }
   const header = parseHeader(fileContents.subarray(0, i));
 
+  // The user asked for `type` only
   if (t) {
     return header.type.toString();
   }
 
+  // The user asked for contents of the file
   switch (header.type) {
     case 'blob':
       return fileContents.subarray(i + 1).toString();
@@ -103,7 +125,7 @@ function catFile({ gitRoot, object, t = false, p = false }: CatFileArgs) {
       return parseTreeFile(fileContents.subarray(i + 1));
   }
 
-  return fileContents.subarray(i + 1).toString();
+  throw new Error(`File ${header.type} not supported`);
 }
 
 export default catFile;

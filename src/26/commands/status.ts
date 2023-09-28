@@ -9,6 +9,12 @@ import path from 'path';
 import hashObject from './hashObject';
 import { globSync } from 'glob';
 
+/**
+ * Finds the current branch from the `HEAD` file.
+ *
+ * @param {string} gitRoot
+ * @returns {string}
+ */
 function getCurrentBranchName(gitRoot: string): string {
   if (!fs.existsSync(path.join(gitRoot, RELATIVE_PATH_TO_HEAD_FILE))) {
     throw new Error('Invalid git repo: HEAD file is missing');
@@ -20,6 +26,13 @@ function getCurrentBranchName(gitRoot: string): string {
   return contentSplit[contentSplit.length - 1];
 }
 
+/**
+ * Finds the .gitignore file from the gitRoot (if present).
+ * Returns an array of glob patterns that needs to be ignored.
+ *
+ * @param {string} gitRoot
+ * @returns {string[]}
+ */
 function getIgnoredGlobPatterns(gitRoot: string): string[] {
   const pathToGitIgnore = path.join(gitRoot, '.gitignore');
   if (!fs.existsSync(pathToGitIgnore)) {
@@ -32,10 +45,27 @@ function getIgnoredGlobPatterns(gitRoot: string): string[] {
 }
 
 interface FileStats {
+  /**
+   * Information about a file.
+   *
+   * @type {fs.Stats}
+   */
   stat: fs.Stats;
+
+  /**
+   * Path from the root of the current git repo.
+   *
+   * @type {string}
+   */
   pathFromGitRoot: string;
 }
 
+/**
+ * Get stat for all the files (ignore files included in .gitignore).
+ *
+ * @param {string} gitRoot
+ * @returns {Map<string, FileStats>}
+ */
 function getFileStats(gitRoot: string): Map<string, FileStats> {
   const ignore = getIgnoredGlobPatterns(gitRoot);
   const files = globSync('**/*', {
@@ -56,6 +86,16 @@ function getFileStats(gitRoot: string): Map<string, FileStats> {
   return info;
 }
 
+/**
+ * Creates a human readable output for the status command
+ *
+ * @param {string} gitRoot
+ * @param {string[]} untracked
+ * @param {string[]} deletedFile
+ * @param {string[]} changedFile
+ * @param {string} branch
+ * @returns {string}
+ */
 function prepareOutput(
   gitRoot: string,
   untracked: string[],
@@ -103,7 +143,13 @@ function prepareOutput(
   return str;
 }
 
-function status(gitRoot: string) {
+/**
+ * Main function that handles the `status` command.
+ *
+ * @param {string} gitRoot
+ * @returns {string}
+ */
+function status(gitRoot: string): string {
   const currentBranch = getCurrentBranchName(gitRoot);
 
   const fileStats = getFileStats(gitRoot);
@@ -128,19 +174,25 @@ function status(gitRoot: string) {
 
   const index = new IndexParser(gitRoot).parse();
 
+  // Finding diff between current working tree (file system) and staging area.
   index.entries.forEach((entry) => {
+    // File present in index but not in working tree => `deleted`
     if (!fileStats.has(entry.name)) {
       deleteFile.push(entry.name);
       return;
     }
 
     const hash = hashObject({ gitRoot, file: path.join(gitRoot, entry.name) });
+    // File present in index and working tree but hash if changed => `modified`
     if (entry.hash !== hash) {
       changedFile.push(entry.name);
     }
+    // TODO: Handle when hash is same but file is not committed => 'new file`
+
     fileStats.delete(entry.name);
   });
 
+  // Files present in working tree but not in index => `untracked`
   fileStats.forEach((value) => {
     untracked.push(value.pathFromGitRoot);
   });

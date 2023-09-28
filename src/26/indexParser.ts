@@ -1,3 +1,4 @@
+// https://github.com/git/git/blob/867b1c1bf68363bcfd17667d6d4b9031fa6a1300/Documentation/technical/index-format.txt#L38
 import fs from 'fs';
 import {
   CTIME_NANO_OFFSET,
@@ -28,6 +29,7 @@ export default class IndexParser {
 
   constructor(gitRoot: string) {
     this.pos = 0;
+    // Make sure the index file is present
     if (!fs.existsSync(path.join(gitRoot, RELATIVE_PATH_TO_INDEX_FILE))) {
       throw new Error('Not a git repo');
     }
@@ -83,7 +85,7 @@ export default class IndexParser {
     return entry;
   }
 
-  parseTreeEntry(): CachedTreeEntry {
+  private parseTreeEntry(): CachedTreeEntry {
     const entry = {} as CachedTreeEntry;
 
     const nameStartPos = this.pos;
@@ -119,7 +121,7 @@ export default class IndexParser {
     return entry;
   }
 
-  parseTreeExtension(size: number): CachedTree {
+  private parseTreeExtension(size: number): CachedTree {
     const entries: CachedTreeEntry[] = [];
     const endPos = this.pos + size;
 
@@ -131,7 +133,7 @@ export default class IndexParser {
     return new CachedTree(entries);
   }
 
-  parseExtension(): CachedTree | undefined {
+  private parseExtension(): CachedTree | undefined {
     const signature = this.buf.subarray(this.pos, this.pos + 4).toString();
     this.pos += 4;
 
@@ -139,6 +141,7 @@ export default class IndexParser {
     this.pos += 4;
 
     if (signature !== 'TREE') {
+      this.pos += size;
       return undefined;
     }
 
@@ -147,15 +150,18 @@ export default class IndexParser {
 
   parse(): Index {
     const header = this.parseHeader();
+
     const entriesCount = this.buf.readInt32BE(this.pos);
     this.pos += 4;
-    const entries: IndexEntry[] = [];
+
+    const entries = new Array<IndexEntry>(entriesCount);
 
     for (let i = 0; i < entriesCount; i++) {
       const entry = this.parseEntry();
-      entries.push(entry);
+      entries[i] = entry;
     }
 
+    // If no extensions present
     if (this.pos === this.buf.length) {
       return new Index(header, entries);
     }
