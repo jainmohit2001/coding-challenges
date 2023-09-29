@@ -161,8 +161,9 @@ export default class IndexParser {
       entries[i] = entry;
     }
 
-    // If no extensions present
-    if (this.pos === this.buf.length) {
+    // If no extensions present.
+    // The minus twenty is to check if we have reached the starting the hash.
+    if (this.pos === this.buf.byteLength - 20) {
       return new Index(header, entries);
     }
 

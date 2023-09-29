@@ -8,6 +8,7 @@ const root = process.cwd();
 
 /**
  * Creates a temp directory to be used as git repo.
+ * The cwd of the process is also changed to the temp directory.
  *
  * @export
  * @returns {string}
