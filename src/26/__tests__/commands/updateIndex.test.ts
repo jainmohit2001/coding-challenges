@@ -63,7 +63,7 @@ describe('Testing update-index command', () => {
       return name;
     });
 
-    updateIndex({ gitRoot, add: true, files: fileNames });
+    updateIndex({ gitRoot, files: fileNames });
 
     const index = new IndexParser(gitRoot).parse();
 

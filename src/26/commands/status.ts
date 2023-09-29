@@ -105,7 +105,6 @@ function prepareOutput(
 ): string {
   let str = `On branch ${branch}\r\n\r\n`;
   const cwd = path.relative(gitRoot, process.cwd());
-  console.log(path.relative(cwd, changedFile[0]));
 
   if (
     untracked.length === 0 &&

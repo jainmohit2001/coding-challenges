@@ -52,7 +52,7 @@ export function createIndexEntry(gitRoot: string, file: string): IndexEntry {
 
   const mtimeNanoFrac = Math.floor((stat.mtimeMs - mtimeSec * 1000) * 1000_000);
 
-  const filePath = path.relative(process.cwd(), file);
+  const filePath = path.relative(gitRoot, file);
 
   return {
     ctimeSec,

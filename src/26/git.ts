@@ -93,14 +93,9 @@ program
   .command('update-index')
   .description('Register file contents in the working tree to the index')
   .argument('<files...>', 'Files to act on')
-  .option(
-    '--add',
-    "If a specified file isn't in the index already then it's added. Default behaviour is to ignore new files.",
-    false
-  )
-  .action((files, { add }) => {
+  .action((files) => {
     const gitRoot = ensureGitRepo();
-    wrapper(() => updateIndex({ gitRoot, add, files: files }), false);
+    wrapper(() => updateIndex({ gitRoot, files: files }), false);
   });
 
 program
@@ -109,7 +104,7 @@ program
   .argument('<files...>', 'File to add content from')
   .action((files) => {
     const gitRoot = ensureGitRepo();
-    wrapper(() => updateIndex({ gitRoot, add: true, files: files }), false);
+    wrapper(() => updateIndex({ gitRoot, files: files }), false);
   });
 
 program
