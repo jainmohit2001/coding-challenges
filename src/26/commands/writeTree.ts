@@ -1,5 +1,5 @@
 import path from 'path';
-import { CachedTree, CachedTreeEntry } from '../objects/cachedTree';
+import { CachedTree } from '../objects/cachedTree';
 import IndexParser from '../indexParser';
 import { Tree, TreeNode } from '../objects/tree';
 import { FileMode } from '../enums';
@@ -20,16 +20,11 @@ function writeTree(gitRoot: string): string {
   });
 
   const writeToDisk = true;
-  const hash = tree.root.calculateHash(gitRoot, writeToDisk);
+  const cachedTree = new CachedTree();
 
-  const cachedTreeEntry: CachedTreeEntry = {
-    name: '',
-    hash: hash,
-    subTreeCount: tree.root.children.size,
-    entryCount: tree.root.entryCount
-  };
-
-  index.cache = new CachedTree([cachedTreeEntry]);
+  const hash = tree.root.calculateHash(gitRoot, writeToDisk, cachedTree);
+  cachedTree.entries.sort((a, b) => a.name.localeCompare(b.name));
+  index.cache = cachedTree;
   index.saveToDisk();
   return hash;
 }

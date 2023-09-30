@@ -102,12 +102,7 @@ export function encodeIndexEntry(e: IndexEntry): Buffer {
   const pathName = Buffer.from(e.name, 'ascii'); // variable
 
   // Ensure padding size is in between 1 - 8
-  let paddingSize = (PREFIX_SIZE + pathName.byteLength) % 8;
-  if (paddingSize === 0) {
-    paddingSize = 8;
-  } else if (paddingSize > 4) {
-    paddingSize = 8 - paddingSize;
-  }
+  const paddingSize = 8 - ((PREFIX_SIZE + pathName.byteLength) % 8);
 
   const padding = Buffer.alloc(paddingSize, '\0');
 

@@ -5,6 +5,7 @@ import zlib from 'zlib';
 import fs from 'fs';
 import path from 'path';
 import { RELATIVE_PATH_TO_OBJECT_DIR } from '../constants';
+import { CachedTree, CachedTreeEntry } from './cachedTree';
 
 export class Tree {
   root: TreeNode;
@@ -34,16 +35,16 @@ export class Tree {
         // We are adding a new tree under the tempRoot
         tempRoot.subTreeCount++;
       }
+      // We are adding a file under this tempRoot
+      tempRoot.entryCount++;
 
       // Move down the DIR towards the leaf.
       tempRoot = tempRoot.children.get(name)!;
-
-      // We are adding a file under this tempRoot
-      tempRoot.entryCount++;
     }
 
     // Finally add the file
     tempRoot.children.set(names[i], node);
+    tempRoot.entryCount++;
   }
 }
 
@@ -70,7 +71,11 @@ export class TreeNode {
     }
   }
 
-  calculateHash(gitRoot: string, writeToDisk: boolean = false): string {
+  calculateHash(
+    gitRoot: string,
+    writeToDisk: boolean = false,
+    cachedTree: CachedTree
+  ): string {
     // If this is a file
     if (this.mode === FileMode.REGULAR) {
       return this.hash!;
@@ -81,7 +86,7 @@ export class TreeNode {
     // Add entry for each children.
     // If the child is a DIR, calculate the hash by recursive function call.
     this.children.forEach((node) => {
-      const hash = node.calculateHash(gitRoot, writeToDisk);
+      const hash = node.calculateHash(gitRoot, writeToDisk, cachedTree);
       buffers.push(
         Buffer.concat([
           Buffer.from(`${node.mode.toString(8)} ${node.name}\0`),
@@ -98,6 +103,14 @@ export class TreeNode {
     const store = Buffer.concat([header, content]);
 
     const hash = createHash('sha1').update(store).digest('hex');
+
+    const cachedTreeEntry: CachedTreeEntry = {
+      name: this.name,
+      hash: hash,
+      subTreeCount: this.subTreeCount,
+      entryCount: this.entryCount
+    };
+    cachedTree.add(cachedTreeEntry);
 
     if (writeToDisk) {
       const zlibContent = zlib.deflateSync(store);
