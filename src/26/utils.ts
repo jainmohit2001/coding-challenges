@@ -136,7 +136,7 @@ export function getSignature(): Signature {
 export function getTimeAndTimeZone(date: Date): string {
   const seconds = Math.floor(date.getTime() / 1000);
   const timezoneOffsetInMin = date.getTimezoneOffset();
-  const sign = timezoneOffsetInMin >= 0 ? '' : '-';
+  const sign = timezoneOffsetInMin >= 0 ? '+' : '-';
   const hours = Math.floor(Math.abs(timezoneOffsetInMin) / 60);
   const minutes = Math.abs(timezoneOffsetInMin) - 60 * hours;
   return `${seconds} ${sign}${hours.toString().padStart(2, '0')}${minutes
