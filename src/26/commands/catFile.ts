@@ -120,6 +120,7 @@ function catFile({
   // The user asked for contents of the file
   switch (header.type) {
     case 'blob':
+    case 'commit':
       return fileContents.subarray(i + 1).toString();
     case 'tree':
       return parseTreeFile(fileContents.subarray(i + 1));

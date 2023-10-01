@@ -7,6 +7,7 @@ import updateIndex from './commands/updateIndex';
 import status from './commands/status';
 import writeTree from './commands/writeTree';
 import path from 'path';
+import commitTree from './commands/commitTree';
 
 /**
  * Finds the path to root of current git repo if exists.
@@ -121,6 +122,25 @@ program
   .action(() => {
     const gitRoot = ensureGitRepo();
     wrapper(() => writeTree(gitRoot));
+  });
+
+program
+  .command('commit-tree')
+  .description('Create a new commit object')
+  .argument('<tree>', 'An existing tree object.')
+  .option('-m <message>', 'A paragraph in the commit log message')
+  .option('-p <parents...>', 'List of parent objects')
+  .action((tree, { m, p }) => {
+    const gitRoot = ensureGitRepo();
+    wrapper(() =>
+      commitTree({
+        gitRoot,
+        treeHash: tree,
+        message: m,
+        parents: p,
+        stdin: process.stdin
+      })
+    );
   });
 
 program.parse(process.argv);

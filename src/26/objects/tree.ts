@@ -6,12 +6,25 @@ import fs from 'fs';
 import path from 'path';
 import { RELATIVE_PATH_TO_OBJECT_DIR } from '../constants';
 import { CachedTree, CachedTreeEntry } from './cachedTree';
+import { Index } from './index';
 
 export class Tree {
   root: TreeNode;
 
   constructor() {
     this.root = new TreeNode('', '', FileMode.DIR);
+  }
+
+  build(index: Index) {
+    index.entries.forEach((e) => {
+      const newNode = new TreeNode(
+        e.name,
+        path.basename(e.name),
+        FileMode.REGULAR,
+        e.hash
+      );
+      this.insert(newNode);
+    });
   }
 
   insert(node: TreeNode) {
