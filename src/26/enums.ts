@@ -22,3 +22,11 @@ export enum FileMode {
   SYMLINK = 0o0120000,
   SUBMODULE = 0o0160000
 }
+
+export enum FileStatusCode {
+  UNTRACKED = 'U',
+  MODIFIED = 'M',
+  DELETED = 'D',
+  ADDED = 'A',
+  UNMODIFIED = ' '
+}

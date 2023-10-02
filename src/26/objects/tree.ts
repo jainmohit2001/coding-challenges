@@ -7,12 +7,22 @@ import path from 'path';
 import { NULL, RELATIVE_PATH_TO_OBJECT_DIR, SPACE } from '../constants';
 import { CachedTree, CachedTreeEntry } from './cachedTree';
 import { Index } from './index';
+import { Stack } from '../../utils/stack';
 
 export class Tree {
   root: TreeNode;
 
+  /**
+   * A map with key = path to file and value = TreeNode object of a file.
+   * This is used to iterate over the files present in tree and to fetch nodes.
+   *
+   * @type {Map<string, TreeNode>}
+   */
+  map: Map<string, TreeNode>;
+
   constructor() {
     this.root = new TreeNode('', '', FileMode.DIR);
+    this.map = new Map<string, TreeNode>();
   }
 
   build(index: Index) {
@@ -39,7 +49,7 @@ export class Tree {
     for (i = 0; i < names.length - 1; i++) {
       const name = names[i];
 
-      pathTillNow += name;
+      pathTillNow = path.join(pathTillNow, name);
 
       if (tempRoot.children.get(name) === undefined) {
         const newNode = new TreeNode(pathTillNow, name, FileMode.DIR);
@@ -48,16 +58,37 @@ export class Tree {
         // We are adding a new tree under the tempRoot
         tempRoot.subTreeCount++;
       }
-      // We are adding a file under this tempRoot
-      tempRoot.entryCount++;
+      if (node.mode === FileMode.REGULAR) {
+        // When we are adding a file under this tempRoot
+        tempRoot.entryCount++;
+      } else {
+        // When we are adding a DIR under this tempRoot
+        tempRoot.entryCount += node.entryCount;
+      }
 
-      // Move down the DIR towards the leaf.
+      // Move down towards the leaf.
       tempRoot = tempRoot.children.get(name)!;
     }
 
-    // Finally add the file
+    // If the new node is the root itself, then reassign the root.
+    if (node.path === this.root.path) {
+      this.root = node;
+      return;
+    }
+
+    // Finally add the file or dir
     tempRoot.children.set(names[i], node);
-    tempRoot.entryCount++;
+
+    if (node.mode === FileMode.REGULAR) {
+      tempRoot.entryCount++;
+      this.map.set(node.path, node);
+    } else {
+      tempRoot.entryCount += node.entryCount;
+    }
+  }
+
+  getNode(pathToFile: string): TreeNode | undefined {
+    return this.map.get(pathToFile);
   }
 }
 
@@ -197,68 +228,67 @@ export class TreeNode {
  * @export
  * @param {string} gitRoot
  * @param {string} treeHash
- * @param {string} [pathPrefix='']
  * @returns {Tree}
  */
-export function decodeTree(
-  gitRoot: string,
-  treeHash: string,
-  pathPrefix: string = ''
-): Tree {
+export function decodeTree(gitRoot: string, treeHash: string): Tree {
+  // Check if the given hash is a valid tree object
   const gitObject = parseObject(gitRoot, treeHash);
-
   if (gitObject.type !== 'tree') {
     throw new Error('The given object is not a tree object');
   }
-  const data = gitObject.data;
 
   const tree = new Tree();
-  tree.root.path = path.join(pathPrefix, tree.root.path);
-  tree.root.hash = treeHash;
+  const stack: Stack<TreeNode> = new Stack<TreeNode>();
+  const newRoot = new TreeNode('', '', FileMode.DIR, treeHash);
+  stack.push(newRoot);
 
-  let i = 0;
+  while (stack.size() > 0) {
+    const node = stack.pop()!;
+    const gitObject = parseObject(gitRoot, node.hash!);
+    const data = gitObject.data;
+    let i = 0;
 
-  for (i = 0; i < data.length; ) {
-    // Format of each entry:
-    // <mode><SPACE><filename><NULL><hash>
-    const modeStartPos = i;
-    while (data[i] !== SPACE) {
+    for (i = 0; i < data.length; ) {
+      // Format of each entry:
+      // <mode><SPACE><filename><NULL><hash>
+      const modeStartPos = i;
+      while (data[i] !== SPACE) {
+        i++;
+      }
+      const mode = parseInt(data.subarray(modeStartPos, i).toString(), 8);
       i++;
-    }
-    const mode = parseInt(data.subarray(modeStartPos, i).toString(), 8);
-    i++;
 
-    const nameStartPos = i;
-    while (data[i] !== NULL) {
+      const nameStartPos = i;
+      while (data[i] !== NULL) {
+        i++;
+      }
+      const name = data.subarray(nameStartPos, i).toString();
       i++;
+
+      const hash = data.subarray(i, i + 20).toString('hex');
+      i += 20;
+
+      if (mode === FileMode.DIR) {
+        // If a DIR is found, create a new Node and push into the stack.
+        // It will be processed later on.
+        const newNode = new TreeNode(
+          path.join(node.path, name),
+          name,
+          mode,
+          hash
+        );
+        stack.push(newNode);
+      } else {
+        // Found a file. Push to the tree.
+        const newNode = new TreeNode(
+          path.join(node.path, name),
+          name,
+          mode,
+          hash
+        );
+        tree.insert(newNode);
+      }
     }
-    const name = data.subarray(nameStartPos, i).toString();
-    i++;
-
-    const hash = data.subarray(i, i + 20).toString('hex');
-    i += 20;
-
-    let node: TreeNode;
-
-    if (mode === FileMode.DIR) {
-      // Recursively decode subtree.
-      // The prefixPath will be "<tree.root.path>/<name>"
-      const subTree = decodeTree(
-        gitRoot,
-        hash,
-        path.join(tree.root.path, name)
-      );
-
-      node = subTree.root;
-      // Update the name for this node
-      node.name = name;
-    } else {
-      // The path to this new file is relative to the root of the tree.
-      node = new TreeNode(path.join(tree.root.path, name), name, mode, hash);
-      // console.log(node);
-    }
-
-    tree.insert(node);
   }
   return tree;
 }

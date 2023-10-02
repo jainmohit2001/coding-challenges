@@ -107,7 +107,8 @@ export function getCurrentBranchName(gitRoot: string): string {
   }
   const content = fs
     .readFileSync(path.join(gitRoot, RELATIVE_PATH_TO_HEAD_FILE))
-    .toString();
+    .toString()
+    .trim();
   const contentSplit = content.split('/');
   return contentSplit[contentSplit.length - 1];
 }
