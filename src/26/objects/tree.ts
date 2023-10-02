@@ -1,10 +1,10 @@
 import { createHash } from 'crypto';
 import { FileMode } from '../enums';
-import { fileType } from '../utils';
+import { fileType, parseObject } from '../utils';
 import zlib from 'zlib';
 import fs from 'fs';
 import path from 'path';
-import { RELATIVE_PATH_TO_OBJECT_DIR } from '../constants';
+import { NULL, RELATIVE_PATH_TO_OBJECT_DIR, SPACE } from '../constants';
 import { CachedTree, CachedTreeEntry } from './cachedTree';
 import { Index } from './index';
 
@@ -62,12 +62,63 @@ export class Tree {
 }
 
 export class TreeNode {
+  /**
+   * The relative path to this file or dir in the working tree from the gitRoot.
+   *
+   * @type {string}
+   */
   path: string;
+
+  /**
+   * The name of the TreeNode.
+   * For files it is the filename.
+   * For directories it is the name of the directory.
+   *
+   * @type {string}
+   */
   name: string;
+
+  /**
+   * For regular files it is FileMode.REGULAR.
+   * For directories it is FileMode.DIR.
+   *
+   * @type {FileMode}
+   */
   mode: FileMode;
+
+  /**
+   * The map of children that this Node has.
+   * The key is the name (NOT path) of the Node.
+   *
+   * @type {Map<string, TreeNode>}
+   */
   children: Map<string, TreeNode>;
+
+  /**
+   * Hash of the tree.
+   * For file it is passed while creating a node.
+   * For directories it is undefined at first,
+   * and then calculated later using the calculateHash function
+   *
+   * @type {?string}
+   */
   hash?: string;
+
+  /**
+   * Number of entries in the index that is covered by the
+   * tree this node represents.
+   * For a file (leaf node) it is always zero.
+   *
+   * @type {number}
+   */
   entryCount: number;
+
+  /**
+   * Number of subtrees this tree has.
+   * For a file (leaf node) it is always zero.
+   *
+   * @type {number}
+   */
   subTreeCount: number;
 
   constructor(path: string, name: string, mode: FileMode, hash?: string) {
@@ -138,4 +189,76 @@ export class TreeNode {
     }
     return hash;
   }
+}
+
+/**
+ * This function decodes a tree referenced by a hash.
+ *
+ * @export
+ * @param {string} gitRoot
+ * @param {string} treeHash
+ * @param {string} [pathPrefix='']
+ * @returns {Tree}
+ */
+export function decodeTree(
+  gitRoot: string,
+  treeHash: string,
+  pathPrefix: string = ''
+): Tree {
+  const gitObject = parseObject(gitRoot, treeHash);
+
+  if (gitObject.type !== 'tree') {
+    throw new Error('The given object is not a tree object');
+  }
+  const data = gitObject.data;
+
+  const tree = new Tree();
+  tree.root.path = path.join(pathPrefix, tree.root.path);
+  tree.root.hash = treeHash;
+
+  let i = 0;
+
+  for (i = 0; i < data.length; ) {
+    // Format of each entry:
+    // <mode><SPACE><filename><NULL><hash>
+    const modeStartPos = i;
+    while (data[i] !== SPACE) {
+      i++;
+    }
+    const mode = parseInt(data.subarray(modeStartPos, i).toString(), 8);
+    i++;
+
+    const nameStartPos = i;
+    while (data[i] !== NULL) {
+      i++;
+    }
+    const name = data.subarray(nameStartPos, i).toString();
+    i++;
+
+    const hash = data.subarray(i, i + 20).toString('hex');
+    i += 20;
+
+    let node: TreeNode;
+
+    if (mode === FileMode.DIR) {
+      // Recursively decode subtree.
+      // The prefixPath will be "<tree.root.path>/<name>"
+      const subTree = decodeTree(
+        gitRoot,
+        hash,
+        path.join(tree.root.path, name)
+      );
+
+      node = subTree.root;
+      // Update the name for this node
+      node.name = name;
+    } else {
+      // The path to this new file is relative to the root of the tree.
+      node = new TreeNode(path.join(tree.root.path, name), name, mode, hash);
+      // console.log(node);
+    }
+
+    tree.insert(node);
+  }
+  return tree;
 }

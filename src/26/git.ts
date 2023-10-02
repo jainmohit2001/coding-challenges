@@ -16,17 +16,23 @@ import commitTree from './commands/commitTree';
  */
 function ensureGitRepo(): string {
   let root = process.cwd();
+  let pathToGit: string;
 
-  while (path.dirname(root) !== '/' || root !== '/') {
-    const pathToGit = path.join(root, '.git');
+  while (root !== '/') {
+    pathToGit = path.join(root, '.git');
     if (fs.existsSync(pathToGit)) {
       return root;
     }
     root = path.dirname(root);
   }
 
+  pathToGit = path.join(root, '.git');
+  if (fs.existsSync(pathToGit)) {
+    return root;
+  }
+
   process.stderr.write(
-    'fatal: not a git repository (or any of the parent directories): .git\n'
+    'fatal: not a git repository (or any of the parent directories): .git\r\n'
   );
   process.exit(1);
 }
