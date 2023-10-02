@@ -75,7 +75,7 @@ describe('Testing utils', () => {
 
     expect(parseInt(sec)).toBe(seconds);
     const timezoneInMin =
-      (timezone[0] === '+' ? 1 : -1) *
+      (timezone[0] === '+' ? -1 : 1) *
       (parseInt(timezone.substring(1, 3)) * 60 +
         parseInt(timezone.substring(3, 5)));
     expect(timezoneInMin).toBe(date.getTimezoneOffset());

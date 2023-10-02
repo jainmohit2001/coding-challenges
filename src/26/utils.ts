@@ -127,8 +127,8 @@ export function getSignature(): Signature {
 }
 
 /**
- * Converts a given Date object's timezone to `(-)hhmm` format.
- *
+ * Converts a given Date object's timezone to `(+/-)hhmm` format.
+ * View this to for the sign calculation: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset#negative_values_and_positive_values
  * @export
  * @param {Date} date
  * @returns {string}
@@ -136,7 +136,7 @@ export function getSignature(): Signature {
 export function getTimeAndTimeZone(date: Date): string {
   const seconds = Math.floor(date.getTime() / 1000);
   const timezoneOffsetInMin = date.getTimezoneOffset();
-  const sign = timezoneOffsetInMin >= 0 ? '+' : '-';
+  const sign = timezoneOffsetInMin <= 0 ? '+' : '-';
   const hours = Math.floor(Math.abs(timezoneOffsetInMin) / 60);
   const minutes = Math.abs(timezoneOffsetInMin) - 60 * hours;
   return `${seconds} ${sign}${hours.toString().padStart(2, '0')}${minutes

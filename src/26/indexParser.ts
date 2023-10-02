@@ -127,6 +127,7 @@ export default class IndexParser {
 
     while (this.pos < endPos) {
       const entry = this.parseTreeEntry();
+      // console.log(entry);
       entries.push(entry);
     }
 
@@ -158,6 +159,7 @@ export default class IndexParser {
 
     for (let i = 0; i < entriesCount; i++) {
       const entry = this.parseEntry();
+      // console.log(entry);
       entries[i] = entry;
     }
 

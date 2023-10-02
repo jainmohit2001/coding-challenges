@@ -34,6 +34,18 @@ function updateIndex({ gitRoot, files }: UpdateIndexArgs): string {
   if (fs.existsSync(path.join(gitRoot, RELATIVE_PATH_TO_INDEX_FILE))) {
     const index = new IndexParser(gitRoot).parse();
 
+    // Handle deleted files
+    const paths = index.entries.map((e) => {
+      return e.name;
+    });
+
+    paths.forEach((value) => {
+      if (!fs.existsSync(path.join(gitRoot, value))) {
+        index.remove(value);
+      }
+    });
+
+    // Handle files that are present in working tree
     filesToAdd.forEach((file) => {
       const pathRelativeToGitRoot = path.relative(gitRoot, file);
       const entry = createIndexEntry(gitRoot, pathRelativeToGitRoot);
