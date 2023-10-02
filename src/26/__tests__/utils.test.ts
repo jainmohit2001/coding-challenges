@@ -7,9 +7,9 @@ import {
   getFileStats,
   getFiles,
   getIgnoredGlobPatterns,
-  getSignature,
-  getTimeAndTimeZone
+  getSignature
 } from '../utils';
+import { getTimeAndTimeZone } from '../objects/signature';
 
 describe('Testing utils', () => {
   const gitRoot = createTempGitRepo();

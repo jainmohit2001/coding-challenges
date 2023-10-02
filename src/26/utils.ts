@@ -1,6 +1,6 @@
 import { globSync } from 'glob';
 import { FileMode } from './enums';
-import { FileStats, GitObject, GitObjectType, Signature } from './types';
+import { FileStats, GitObject, GitObjectType } from './types';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -9,11 +9,13 @@ import {
   PATH_TO_GIT_CONFIG,
   RELATIVE_PATH_TO_HEAD_FILE,
   RELATIVE_PATH_TO_OBJECT_DIR,
+  RELATIVE_PATH_TO_REF_HEADS_DIR,
   SHA1Regex,
   SPACE
 } from './constants';
 import zlib from 'zlib';
 import ini from 'ini';
+import { Signature } from './objects/signature';
 
 export const fileModeString = new Map<FileMode, string>([
   [FileMode.EMPTY, '0'],
@@ -111,6 +113,28 @@ export function getCurrentBranchName(gitRoot: string): string {
 }
 
 /**
+ * Looks up the reference to the head of the given branch name.
+ * Returns the contents of the reference, i.e., the hash of the commit object.
+ *
+ * @export
+ * @param {string} gitRoot
+ * @param {string} branch
+ * @returns {(string | undefined)}
+ */
+export function getBranchHeadReference(
+  gitRoot: string,
+  branch: string
+): string | undefined {
+  const pathToRef = path.join(gitRoot, RELATIVE_PATH_TO_REF_HEADS_DIR, branch);
+
+  if (!fs.existsSync(pathToRef)) {
+    return undefined;
+  }
+
+  return fs.readFileSync(pathToRef).toString().trim();
+}
+
+/**
  * Extracts user information from .gitconfig file
  *
  * @export
@@ -121,29 +145,7 @@ export function getSignature(): Signature {
   if (!config.user.name || !config.user.email) {
     throw new Error('No valid name or email found!');
   }
-  return {
-    name: config.user.name,
-    email: config.user.email,
-    timestamp: new Date()
-  };
-}
-
-/**
- * Converts a given Date object's timezone to `(+/-)hhmm` format.
- * View this to for the sign calculation: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset#negative_values_and_positive_values
- * @export
- * @param {Date} date
- * @returns {string}
- */
-export function getTimeAndTimeZone(date: Date): string {
-  const seconds = Math.floor(date.getTime() / 1000);
-  const timezoneOffsetInMin = date.getTimezoneOffset();
-  const sign = timezoneOffsetInMin <= 0 ? '+' : '-';
-  const hours = Math.floor(Math.abs(timezoneOffsetInMin) / 60);
-  const minutes = Math.abs(timezoneOffsetInMin) - 60 * hours;
-  return `${seconds} ${sign}${hours.toString().padStart(2, '0')}${minutes
-    .toString()
-    .padStart(2, '0')}`;
+  return new Signature(config.user.name, config.user.email, new Date());
 }
 
 /**

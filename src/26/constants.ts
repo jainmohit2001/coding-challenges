@@ -9,6 +9,7 @@ export const SHA1Regex = /^[a-fA-F0-9]{40}$/;
 export const RELATIVE_PATH_TO_INDEX_FILE = '.git/index';
 export const RELATIVE_PATH_TO_HEAD_FILE = '.git/HEAD';
 export const RELATIVE_PATH_TO_OBJECT_DIR = '.git/objects';
+export const RELATIVE_PATH_TO_REF_HEADS_DIR = '.git/refs/heads';
 export const PATH_TO_GIT_CONFIG = path.join(
   (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) ?? '',
   '.gitconfig'

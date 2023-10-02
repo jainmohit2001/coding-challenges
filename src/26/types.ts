@@ -28,9 +28,3 @@ export interface FileStats {
    */
   pathFromGitRoot: string;
 }
-
-export interface Signature {
-  name: string;
-  email: string;
-  timestamp: Date;
-}
