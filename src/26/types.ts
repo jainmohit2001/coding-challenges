@@ -7,6 +7,12 @@ import fs from 'fs';
  */
 export type GitObjectType = 'blob' | 'commit' | 'tree' | 'tag';
 
+export interface GitObject {
+  type: GitObjectType;
+  length: number;
+  data: Buffer;
+}
+
 export interface FileStats {
   /**
    * Information about a file.

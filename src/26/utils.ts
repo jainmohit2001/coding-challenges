@@ -1,6 +1,6 @@
 import { globSync } from 'glob';
 import { FileMode } from './enums';
-import { FileStats, GitObjectType, Signature } from './types';
+import { FileStats, GitObject, GitObjectType, Signature } from './types';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -8,7 +8,9 @@ import {
   NULL,
   PATH_TO_GIT_CONFIG,
   RELATIVE_PATH_TO_HEAD_FILE,
-  RELATIVE_PATH_TO_OBJECT_DIR
+  RELATIVE_PATH_TO_OBJECT_DIR,
+  SHA1Regex,
+  SPACE
 } from './constants';
 import zlib from 'zlib';
 import ini from 'ini';
@@ -189,4 +191,72 @@ export function verifyObject(
   }
 
   throw new Error(`fatal: ${hash} is not a valid object`);
+}
+
+export function isValidSHA1(s: string): boolean {
+  return !!SHA1Regex.exec(s);
+}
+
+/**
+ * This function parses header buffer from an object file returns:
+ * - the type of object
+ * - byte length of the data
+ *
+ * @param {Buffer} buffer
+ * @returns {{
+  type: GitObjectType;
+  length: number;
+}}
+ */
+function parseObjectHeader(buffer: Buffer): {
+  type: GitObjectType;
+  length: number;
+} {
+  // Format of header:
+  // <type><SPACE><length-in-bytes><NULL>
+  let i = 0;
+  while (buffer[i] !== SPACE && i < buffer.byteLength) {
+    i++;
+  }
+
+  const headerType = buffer.subarray(0, i).toString() as GitObjectType;
+  i++;
+  const headerLength = parseInt(buffer.subarray(i).toString());
+
+  return { type: headerType, length: headerLength };
+}
+
+/**
+ * Given a path to an object, this function parses it and returns:
+ * - the object type,
+ * - the byte length of the data,
+ * - the data
+ *
+ * @export
+ * @param {string} gitRoot
+ * @param {string} hash
+ * @returns {GitObject}
+ */
+export function parseObject(gitRoot: string, hash: string): GitObject {
+  const pathToFile = path.join(
+    gitRoot,
+    RELATIVE_PATH_TO_OBJECT_DIR,
+    hash.substring(0, 2),
+    hash.substring(2, hash.length)
+  );
+
+  if (!isValidSHA1(hash) || !fs.existsSync(pathToFile)) {
+    throw new Error(`fatal: ${hash} no such object exists`);
+  }
+
+  // Unzip the content
+  const fileContents = zlib.unzipSync(fs.readFileSync(pathToFile));
+
+  // The header is present till we found a NULL character
+  let i = 0;
+  while (i < fileContents.length && fileContents[i] !== NULL) {
+    i++;
+  }
+  const header = parseObjectHeader(fileContents.subarray(0, i));
+  return { ...header, data: fileContents.subarray(i + 1) };
 }

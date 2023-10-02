@@ -1,29 +1,11 @@
-import fs from 'fs';
-import zlib from 'zlib';
-import path from 'path';
-import {
-  SHA1Regex,
-  SPACE,
-  NULL,
-  RELATIVE_PATH_TO_OBJECT_DIR
-} from '../constants';
-import { GitObjectType } from '../types';
-import { fileModeString, fileType } from '../utils';
+import { SPACE, NULL } from '../constants';
+import { fileModeString, fileType, parseObject } from '../utils';
 
 interface CatFileArgs {
   gitRoot: string;
   object: string;
   t?: boolean;
   p?: boolean;
-}
-
-interface Header {
-  type: GitObjectType;
-  length: number;
-}
-
-function isValidSHA1(s: string): boolean {
-  return !!SHA1Regex.exec(s);
 }
 
 function parseTreeFile(data: Buffer): string {
@@ -56,20 +38,6 @@ function parseTreeFile(data: Buffer): string {
   return output.join('\r\n');
 }
 
-function parseHeader(buffer: Buffer): Header {
-  // Format of header:
-  // <type><SPACE><length-in-bytes><NULL>
-  let i = 0;
-  while (buffer[i] !== SPACE && i < buffer.byteLength) {
-    i++;
-  }
-
-  const headerType = buffer.subarray(0, i).toString() as GitObjectType;
-  const headerLength = parseInt(buffer.subarray(0, i).toString());
-
-  return { type: headerType, length: headerLength };
-}
-
 /**
  * Main function to perform the cat-file command.
  * Supported file types:
@@ -89,44 +57,23 @@ function catFile({
     throw new Error('Invalid usage');
   }
 
-  const pathToFile = path.join(
-    gitRoot,
-    RELATIVE_PATH_TO_OBJECT_DIR,
-    object.substring(0, 2),
-    object.substring(2, object.length)
-  );
-
-  if (!isValidSHA1(object) || !fs.existsSync(pathToFile)) {
-    throw new Error('Invalid object');
-  }
-
-  // Unzip the content
-  const fileContents = zlib.unzipSync(fs.readFileSync(pathToFile));
-
-  // The header is present till we found a NULL character
-  let i = 0;
-  for (i; i < fileContents.length; i++) {
-    if (fileContents[i] === NULL) {
-      break;
-    }
-  }
-  const header = parseHeader(fileContents.subarray(0, i));
+  const gitObject = parseObject(gitRoot, object);
 
   // The user asked for `type` only
   if (t) {
-    return header.type.toString();
+    return gitObject.type;
   }
 
   // The user asked for contents of the file
-  switch (header.type) {
+  switch (gitObject.type) {
     case 'blob':
     case 'commit':
-      return fileContents.subarray(i + 1).toString();
+      return gitObject.data.toString();
     case 'tree':
-      return parseTreeFile(fileContents.subarray(i + 1));
+      return parseTreeFile(gitObject.data);
   }
 
-  throw new Error(`File ${header.type} not supported`);
+  throw new Error(`File ${gitObject.type} not supported`);
 }
 
 export default catFile;
