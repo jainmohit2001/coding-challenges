@@ -8,6 +8,7 @@ import status from './commands/status';
 import writeTree from './commands/writeTree';
 import path from 'path';
 import commitTree from './commands/commitTree';
+import commit from './commands/commit';
 
 /**
  * Finds the path to root of current git repo if exists.
@@ -147,6 +148,15 @@ program
         stdin: process.stdin
       })
     );
+  });
+
+program
+  .command('commit')
+  .description('Record changes to the repository')
+  .argument('<message>', 'Use the given <msg> as the commit message.')
+  .action((message) => {
+    const gitRoot = ensureGitRepo();
+    wrapper(() => commit(gitRoot, message));
   });
 
 program.parse(process.argv);

@@ -193,6 +193,13 @@ function prepareOutput(
     str += `\r\nUntracked files:\r\n${FgRed}${untrackedFiles}${ColorReset}`;
   }
 
+  if (changesToBeCommitted.length === 0) {
+    if (untrackedFiles.length === 0 && changesNotStaged.length === 0) {
+      str += '\r\nnothing to commit, working tree clean';
+    } else {
+      str += '\r\nno changes added to commit';
+    }
+  }
   return str;
 }
 
