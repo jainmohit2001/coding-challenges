@@ -236,6 +236,14 @@ export function parseObjectHeader(buffer: Buffer): {
  * - the byte length of the data,
  * - the data
  *
+ * Note: This function only looks up the objects stored inside .git/objects.
+ * Pack files are excluded from the lookup.
+ *
+ * This could cause issues since GIT performs Garbage collection (GC)
+ * to reduce the size of the data stored under the .git/objects dir which
+ * results in removal of original objects directly referenced via hash values.
+ * (https://git-scm.com/book/en/v2/Git-Internals-Packfiles)
+ *
  * @export
  * @param {string} gitRoot
  * @param {string} hash
@@ -250,7 +258,9 @@ export function parseObject(gitRoot: string, hash: string): GitObject {
   );
 
   if (!isValidSHA1(hash) || !fs.existsSync(pathToFile)) {
-    throw new Error(`fatal: ${hash} no such object exists`);
+    throw new Error(
+      `fatal: ${hash} no such object exists.\nThe object might be present in packfile present under .git/objects/pack. This is currently not supported.`
+    );
   }
 
   // Unzip the content
