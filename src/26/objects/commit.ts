@@ -71,10 +71,11 @@ export function decodeCommit(gitRoot: string, commitHash: string): Commit {
     }
 
     const line = data.subarray(lineStartPos, i).toString().trim();
+    i++; // Skip the New line Char
+
     const split = line.split(' ');
     if (line.length === 0) {
-      // Message reached. Skipping the new line
-      i += 1;
+      // Message reached
       break;
     }
 
@@ -86,16 +87,16 @@ export function decodeCommit(gitRoot: string, commitHash: string): Commit {
         parents.push(split[1]);
         break;
       case 'author':
-        commit.author = decodeSignature(split);
+        commit.author = decodeSignature(line);
         break;
       case 'committer':
-        commit.committer = decodeSignature(split);
+        commit.committer = decodeSignature(line);
         break;
     }
   }
 
   commit.parentHashes = parents;
-  commit.message = data.subarray(i).toString();
+  commit.message = data.subarray(i).toString().trim();
 
   return commit;
 }

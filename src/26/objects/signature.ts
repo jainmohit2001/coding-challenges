@@ -21,27 +21,36 @@ export class Signature {
 }
 
 /**
- * Given a line from the commit object in splitted form,
- * this function returns the signature corresponding to the line.
- * The split is array is of the following format:
- * - split[0] = 'author' | 'committer'
- * - split[1] = name
- * - split[2] = "<email>"
- * - split[3] = time in seconds since midnight, January 1, 1970 GMT
- * - split[4] = timezone offset
+ * Parses a line from commit object into a Signature instance .
  *
  * @export
- * @param {string[]} split
+ * @param {string} line
  * @returns {Signature}
  */
-export function decodeSignature(split: string[]): Signature {
-  const name = split[1];
+export function decodeSignature(line: string): Signature {
+  let i = 0;
 
-  // Ignore the opening and closing brackets
-  const email = split[2].substring(1, split[2].length - 1);
-  const ms = parseInt(split[3]) * 1000;
+  while (line[i] !== '<') {
+    i++;
+  }
+  const name = line.substring(0, i).trim();
+
+  i++; // Skip the opening bracket
+
+  const emailStartPos = i;
+  while (line[i] !== '>') {
+    i++;
+  }
+  const email = line.substring(emailStartPos, i);
+
+  i += 2; // Skip the closing bracket and a space
+
+  // This split is of following the format: "<seconds> <offset>"
+  const split = line.substring(i, line.length).trim().split(' ');
+  const ms = parseInt(split[0]) * 1000;
   const timestamp = new Date();
   timestamp.setTime(ms);
+
   // TODO: Check if we need to handle the offset.
 
   return new Signature(name, email, timestamp);
