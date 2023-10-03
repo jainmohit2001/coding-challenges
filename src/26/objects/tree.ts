@@ -84,6 +84,7 @@ export class Tree {
       this.map.set(node.path, node);
     } else {
       tempRoot.entryCount += node.entryCount;
+      tempRoot.subTreeCount += 1;
     }
   }
 
@@ -240,6 +241,7 @@ export function decodeTree(gitRoot: string, treeHash: string): Tree {
   const tree = new Tree();
   const stack: Stack<TreeNode> = new Stack<TreeNode>();
   const newRoot = new TreeNode('', '', FileMode.DIR, treeHash);
+  tree.root = newRoot;
   stack.push(newRoot);
 
   while (stack.size() > 0) {
@@ -278,8 +280,11 @@ export function decodeTree(gitRoot: string, treeHash: string): Tree {
           hash
         );
         stack.push(newNode);
+
+        // Insert the dir into tree
+        tree.insert(newNode);
       } else {
-        // Found a file. Push to the tree.
+        // Found a file. Insert into the tree.
         const newNode = new TreeNode(
           path.join(node.path, name),
           name,

@@ -1,15 +1,18 @@
 import path from 'path';
 import { createTempGitRepo } from '../jestHelpers';
 import fs from 'fs';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomInt } from 'crypto';
 import {
   getCurrentBranchName,
   getFileStats,
   getFiles,
   getIgnoredGlobPatterns,
-  getSignature
+  getSignature,
+  isValidSHA1,
+  parseObjectHeader
 } from '../utils';
 import { getTimeAndTimeZone } from '../objects/signature';
+import { GitObjectType } from '../types';
 
 describe('Testing utils', () => {
   const gitRoot = createTempGitRepo();
@@ -85,5 +88,22 @@ describe('Testing utils', () => {
     const signature = getSignature();
     expect(signature.email).not.toBe(undefined);
     expect(signature.name).not.toBe(undefined);
+  });
+
+  it('should parse object header successfully', () => {
+    const objectType: GitObjectType = 'commit';
+    const byteLength = randomInt(100, 10000);
+    const buffer = Buffer.from(`${objectType} ${byteLength}`);
+    const header = parseObjectHeader(buffer);
+
+    expect(header.type).toBe(objectType);
+    expect(header.length).toBe(byteLength);
+  });
+
+  const invalidHashes = ['', '12', '12 ', '12~', 'h'];
+  invalidHashes.forEach((hash) => {
+    it(`should return false for invalid hash ${hash}`, () => {
+      expect(isValidSHA1(hash)).toBeFalsy();
+    });
   });
 });

@@ -12,7 +12,11 @@ function writeTree(gitRoot: string): string {
   const cachedTree = new CachedTree();
 
   const hash = tree.root.calculateHash(gitRoot, writeToDisk, cachedTree);
+
+  // Ensure entries in cachedTree are sorted by their names.
   cachedTree.entries.sort((a, b) => a.name.localeCompare(b.name));
+
+  // Invalidate the previous cachedTree and update the index.
   index.cache = cachedTree;
   index.saveToDisk();
   return hash;

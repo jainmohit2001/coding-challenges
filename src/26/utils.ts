@@ -204,19 +204,20 @@ export function isValidSHA1(s: string): boolean {
  * This function parses header buffer from an object file returns:
  * - the type of object
  * - byte length of the data
- *
+ * 
+ * @export
  * @param {Buffer} buffer
  * @returns {{
   type: GitObjectType;
   length: number;
 }}
  */
-function parseObjectHeader(buffer: Buffer): {
+export function parseObjectHeader(buffer: Buffer): {
   type: GitObjectType;
   length: number;
 } {
   // Format of header:
-  // <type><SPACE><length-in-bytes><NULL>
+  // <type><SPACE><length-in-bytes>
   let i = 0;
   while (buffer[i] !== SPACE && i < buffer.byteLength) {
     i++;

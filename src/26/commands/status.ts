@@ -178,9 +178,8 @@ function prepareOutput(
         changesToBeCommitted += `\tmodified:   ${name}\r\n`;
         break;
       case FileStatusCode.UNMODIFIED:
+      case FileStatusCode.UNTRACKED:
         break;
-      default:
-        throw new Error(`Invalid staging status ${e}`);
     }
   });
 
