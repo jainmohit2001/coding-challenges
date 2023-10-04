@@ -1,18 +1,24 @@
+## Command: `init`
+
 ## Usage
 
 ```bash
 # Using ts-node
-npx ts-node <path-to-git.ts> init [directory]
+npx ts-node <path/to/git.ts> init [directory]
 
 # Using node
-node <path-to-git.js> init [directory]
+node <path/to/git.js> init [directory]
 ```
+
+### Options
+
+- `directory`
+
+  The directory where the init command will be executed. If this directory does not exist, it will be created.
 
 ## Description
 
 This command created an empty Git repository or reinitialize an existing one.
-
-The optional `directory` argument specifies the directory where the init command will be executed. If this directory does not exist, it will be created.
 
 Refer to [this](https://git-scm.com/book/en/v2/Git-Internals-Plumbing-and-Porcelain) official doc for more information about the `.git` directory.
 

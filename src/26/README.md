@@ -5,11 +5,14 @@ This challenge corresponds to the 26<sup>th</sup> part of the Coding Challenges 
 ## Description
 
 This is a Node.js implementation for the Git protocol.
+
+The code is somewhat inspired from the Go implementation of the Git Client. https://github.com/go-git/go-git
+
 The client currently supports the following commands. More information provided in [docs](docs/) folder.
 
 - [init](docs/init.md)
-- hash-object
-- cat-file
+- [hash-object](docs/hash-object.md)
+- [cat-file](docs/cat-file.md)
 - update-index
 - add
 - status
@@ -35,6 +38,8 @@ Here is a brief description about some of the files/folders in this project:
 - [jestHelpers.ts](jestHelpers.ts): Some functions used across the testing.
 
 - [utils.ts](utils.ts): This file contains some helper functions and miscellaneous functions used in different commands and functionalities.
+
+_**Note**: The refactoring that you can see is not achieved from the start. As I kept on developing and incorporating more commands, the refactoring automatically came into place. Most of the times, the code that got refactored was already being used somewhere and the new command/functionality needed the same code._
 
 ## Usage
 
