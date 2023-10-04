@@ -59,3 +59,7 @@ To run the tests for the Git Client, go to the root directory of this repository
 ```bash
 npm test src/26/
 ```
+
+## TODO
+
+- Complete [Step 6](https://codingchallenges.fyi/challenges/challenge-git/#step-6) of the challenge.

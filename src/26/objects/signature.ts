@@ -21,7 +21,7 @@ export class Signature {
 }
 
 /**
- * Parses a line from commit object into a Signature instance .
+ * Parses a line from commit object into a Signature instance.
  *
  * @export
  * @param {string} line
@@ -30,6 +30,7 @@ export class Signature {
 export function decodeSignature(line: string): Signature {
   let i = 0;
 
+  // Name is present till an opening bracket is found.
   while (line[i] !== '<') {
     i++;
   }
@@ -58,7 +59,7 @@ export function decodeSignature(line: string): Signature {
 
 /**
  * Converts a given Date object's timezone to `(+/-)hhmm` format.
- * View this to for the sign calculation: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset#negative_values_and_positive_values
+ * View this for the sign calculation: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset#negative_values_and_positive_values
  * @export
  * @param {Date} date
  * @returns {string}

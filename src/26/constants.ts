@@ -16,6 +16,7 @@ export const PATH_TO_GIT_CONFIG = path.join(
 );
 export const DEFAULT_IGNORE_PATTERNS = ['.git/**'];
 
+// Constants used when parsing .git/index file
 export const PREFIX_SIZE = 62;
 export const CTIME_OFFSET = 0;
 export const CTIME_NANO_OFFSET = 4;
@@ -31,6 +32,7 @@ export const HASH_OFFSET = 40;
 export const FLAGS_OFFSET = 60;
 export const NAME_OFFSET = 62;
 
+// Constants for beautify text output to console
 export const FgGreen = '\x1b[32m';
 export const ColorReset = '\x1b[0m';
 export const FgRed = '\x1b[31m';

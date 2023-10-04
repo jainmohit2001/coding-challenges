@@ -41,7 +41,14 @@ function ensureGitRepo(): string {
   process.exit(1);
 }
 
-function wrapper(cb: () => string, newLine: boolean = true) {
+/**
+ * Prints the output received from the cb to stdout.
+ * Logs error to console if thrown by cb.
+ *
+ * @param {() => string} cb
+ * @param {boolean} [newLine=true]
+ */
+function wrapper(cb: () => string, newLine: boolean = true): void {
   try {
     const output = cb();
     process.stdout.write(output + (newLine ? '\r\n' : ''));

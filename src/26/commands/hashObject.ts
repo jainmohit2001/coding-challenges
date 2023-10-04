@@ -9,10 +9,39 @@ import stream from 'stream';
 import { RELATIVE_PATH_TO_OBJECT_DIR } from '../constants';
 
 interface HashObjectArgs {
+  /**
+   * The absolute path to the root of the Git repo.
+   *
+   * @type {string}
+   */
   gitRoot: string;
+
+  /**
+   * The type of git Object.
+   *
+   * @type {?GitObjectType}
+   */
   type?: GitObjectType;
+
+  /**
+   * Whether to save the object to the storage.
+   *
+   * @type {?boolean}
+   */
   write?: boolean;
+
+  /**
+   * Read content of the file from the stdin.
+   *
+   * @type {?boolean}
+   */
   readFromStdin?: boolean;
+
+  /**
+   * Path to file
+   *
+   * @type {?string}
+   */
   file?: string;
   stdin?: stream.Readable;
 }
@@ -27,6 +56,7 @@ function hashObject({
 }: HashObjectArgs): string {
   let content: Buffer;
 
+  // Prepare content
   if (readFromStdin) {
     content = stdin.read() as Buffer;
   } else if (file) {

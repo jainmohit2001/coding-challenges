@@ -41,6 +41,15 @@ export interface IndexEntry {
   intentToAdd: boolean;
 }
 
+/**
+ * Given a file, this function creates an IndexEntry.
+ * It stores the object to .git/objects using the hashObject function.
+ *
+ * @export
+ * @param {string} gitRoot
+ * @param {string} file
+ * @returns {IndexEntry}
+ */
 export function createIndexEntry(gitRoot: string, file: string): IndexEntry {
   const stat = fs.lstatSync(file);
 
@@ -115,8 +124,25 @@ export interface IndexHeader {
 }
 
 export class Index {
+  /**
+   * Header information
+   *
+   * @type {IndexHeader}
+   */
   header: IndexHeader;
+
+  /**
+   * Entries corresponding to the index.
+   *
+   * @type {IndexEntry[]}
+   */
   entries: IndexEntry[];
+
+  /**
+   * The CachedTree Extension
+   *
+   * @type {?CachedTree}
+   */
   cache?: CachedTree;
 
   constructor(header: IndexHeader, entries: IndexEntry[], cache?: CachedTree) {
@@ -125,10 +151,22 @@ export class Index {
     this.cache = cache;
   }
 
+  /**
+   * Adds a given IndexEntry to the list of entries.
+   *
+   * @param {IndexEntry} e
+   */
   add(e: IndexEntry) {
     this.entries.push(e);
   }
 
+  /**
+   * Finds the IndexEntry corresponding to the given path.
+   * Returns undefined if not present.
+   *
+   * @param {string} path
+   * @returns {(IndexEntry | undefined)}
+   */
   getEntry(path: string): IndexEntry | undefined {
     for (let i = 0; i < this.entries.length; i++) {
       if (this.entries[i].name === path) {
@@ -138,6 +176,14 @@ export class Index {
     return undefined;
   }
 
+  /**
+   * Removes and returns the IndexEntry corresponding to the given path.
+   * Returns undefined if entry is not found.
+   *
+   *
+   * @param {string} path
+   * @returns {(IndexEntry | undefined)}
+   */
   remove(path: string): IndexEntry | undefined {
     for (let i = 0; i < this.entries.length; i++) {
       if (this.entries[i].name === path) {
@@ -148,6 +194,9 @@ export class Index {
     return undefined;
   }
 
+  /**
+   * Saves the index to the disk.
+   */
   saveToDisk(): void {
     // Create header.
     const header = Buffer.alloc(12);
@@ -167,6 +216,7 @@ export class Index {
       cache = this.cache.encode();
     }
 
+    // Final index content
     const indexContent = Buffer.concat([header, ...entryBuffers, cache]);
 
     // Create checksum.

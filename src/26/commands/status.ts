@@ -2,7 +2,8 @@ import { ColorReset, FgGreen, FgRed } from '../constants';
 import path from 'path';
 import { getCurrentBranchName } from '../utils';
 import { FileStatusCode } from '../enums';
-import { FileStatus, getFileStatus } from '../fileStatus';
+import { getFileStatus } from '../fileStatus';
+import { FileStatus } from '../types';
 
 /**
  * Prepares a human readable output from a list of FileStatus objects.

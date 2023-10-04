@@ -8,10 +8,39 @@ import { RELATIVE_PATH_TO_OBJECT_DIR } from '../constants';
 import stream from 'stream';
 
 export interface CommitTreeArgs {
+  /**
+   * The absolute path to the Git repo.
+   *
+   * @type {string}
+   */
   gitRoot: string;
+
+  /**
+   * The hash of the tree that will be saved with the Commit object.
+   *
+   * @type {string}
+   */
   treeHash: string;
+
+  /**
+   * List of parent objects.
+   *
+   * @type {?string[]}
+   */
   parents?: string[];
+
+  /**
+   * Message that will be used as Commit message.
+   *
+   * @type {?string}
+   */
   message?: string;
+
+  /**
+   * Optionally read from stdin if no message is provided
+   *
+   * @type {?stream.Readable}
+   */
   stdin?: stream.Readable;
 }
 
@@ -37,7 +66,7 @@ function commitTree({
     message = buffer.toString();
   }
 
-  // Get author and committer details from '~/.gitconfig's
+  // Get author and committer details from '~/.gitconfig' file
   const signature = getSignature();
 
   const commitObject = new Commit({
@@ -48,6 +77,7 @@ function commitTree({
     parentHashes: parents
   });
 
+  // Create hash and store the commit object
   const store = commitObject.encode();
   const hash = createHash('sha1').update(store).digest('hex');
 

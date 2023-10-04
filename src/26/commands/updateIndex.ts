@@ -8,11 +8,29 @@ import path from 'path';
 import { getFiles } from '../utils';
 
 interface UpdateIndexArgs {
+  /**
+   * The absolute path to the root of the Git repo.
+   *
+   * @type {string}
+   */
   gitRoot: string;
+
+  /**
+   * List of files or directories.
+   *
+   * @type {?string[]}
+   */
   files?: string[];
 }
 
+/**
+ * Main function that performs the 'update-index' command
+ *
+ * @param {UpdateIndexArgs} { gitRoot, files }
+ * @returns {string}
+ */
 function updateIndex({ gitRoot, files }: UpdateIndexArgs): string {
+  // Ensure files or directories are provided
   if (files === undefined || files.length === 0) {
     throw new Error('Invalid args');
   }
@@ -21,6 +39,7 @@ function updateIndex({ gitRoot, files }: UpdateIndexArgs): string {
 
   files.forEach((value) => {
     const isDir = fs.statSync(value).isDirectory();
+    // If the given path is a directory, then get all the files present inside.
     if (isDir) {
       filesToAdd.push(...getFiles(gitRoot, value));
       return;
@@ -31,6 +50,7 @@ function updateIndex({ gitRoot, files }: UpdateIndexArgs): string {
   // Ensuring unique files
   filesToAdd = [...new Set(filesToAdd)];
 
+  // If index file is already is present
   if (fs.existsSync(path.join(gitRoot, RELATIVE_PATH_TO_INDEX_FILE))) {
     const index = new IndexParser(gitRoot).parse();
 
@@ -38,7 +58,6 @@ function updateIndex({ gitRoot, files }: UpdateIndexArgs): string {
     const paths = index.entries.map((e) => {
       return e.name;
     });
-
     paths.forEach((value) => {
       if (!fs.existsSync(path.join(gitRoot, value))) {
         index.remove(value);
@@ -49,14 +68,18 @@ function updateIndex({ gitRoot, files }: UpdateIndexArgs): string {
     filesToAdd.forEach((file) => {
       const pathRelativeToGitRoot = path.relative(gitRoot, file);
       const entry = createIndexEntry(gitRoot, pathRelativeToGitRoot);
+
+      // Remove the previous information, then Add the new information
       index.remove(entry.name);
       index.add(entry);
     });
 
+    // Finally save to disk and return nothing
     index.saveToDisk();
     return '';
   }
 
+  // We are creating a new index file
   const entries: IndexEntry[] = [];
   filesToAdd.forEach((file) => {
     const pathRelativeToGitRoot = path.relative(gitRoot, file);

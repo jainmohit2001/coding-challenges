@@ -1,4 +1,5 @@
-// https://github.com/git/git/blob/867b1c1bf68363bcfd17667d6d4b9031fa6a1300/Documentation/technical/index-format.txt#L38
+// The format of the index file is documented at https://github.com/git/git/blob/867b1c1bf68363bcfd17667d6d4b9031fa6a1300/Documentation/technical/index-format.txt
+
 import fs from 'fs';
 import {
   CTIME_NANO_OFFSET,
@@ -24,7 +25,20 @@ import { CachedTree, CachedTreeEntry } from './objects/cachedTree';
 import path from 'path';
 
 export default class IndexParser {
+  /**
+   * The current index in the buffer.
+   *
+   * @private
+   * @type {number}
+   */
   private pos: number;
+
+  /**
+   * Stores the data from the .git/index file.
+   *
+   * @private
+   * @type {Buffer}
+   */
   private buf: Buffer;
 
   constructor(gitRoot: string) {
@@ -141,6 +155,7 @@ export default class IndexParser {
     const size = this.buf.readInt32BE(this.pos);
     this.pos += 4;
 
+    // Only TREE extensions are currently supported
     if (signature !== 'TREE') {
       this.pos += size;
       return undefined;
@@ -149,6 +164,11 @@ export default class IndexParser {
     return this.parseTreeExtension(size);
   }
 
+  /**
+   * Parses the .git/index file and returns an instance of the Index class.
+   *
+   * @returns {Index}
+   */
   parse(): Index {
     const header = this.parseHeader();
 

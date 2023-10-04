@@ -5,7 +5,15 @@ import writeTree from './writeTree';
 import { RELATIVE_PATH_TO_REF_HEADS_DIR } from '../constants';
 import fs from 'fs';
 
+/**
+ * The main function that performs the 'commit' command.
+ *
+ * @param {string} gitRoot
+ * @param {string} message
+ * @returns {string}
+ */
 function commit(gitRoot: string, message: string): string {
+  // Make sure a valid message is provided
   if (message.length === 0) {
     throw new Error('Please provide a valid message');
   }

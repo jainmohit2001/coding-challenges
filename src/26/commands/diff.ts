@@ -15,17 +15,44 @@ import {
 } from '../constants';
 
 interface FileInfo {
+  /**
+   * The relative path of the file from the root of the Git repo.
+   *
+   * @type {string}
+   */
   name: string;
+
+  /**
+   * The content of the file.
+   *
+   * @type {string}
+   */
   content: string;
+
+  /**
+   * The hash of the file as per the hashObject function.
+   *
+   * @type {string}
+   */
   hash: string;
 }
 
+/**
+ * Calculates the diff between the given FileInfo objects.
+ *
+ * @param {FileInfo} a
+ * @param {FileInfo} b
+ * @param {FileStatusCode} status
+ * @param {FileMode} mode
+ * @returns {string}
+ */
 function diffFile(
   a: FileInfo,
   b: FileInfo,
   status: FileStatusCode,
   mode: FileMode
 ): string {
+  // Create header
   let str = `${BoldStart}diff --git a/${a.name} b/${b.name}\n`;
 
   if (status === FileStatusCode.DELETED) {
@@ -38,13 +65,15 @@ function diffFile(
     )} ${fileModeString.get(mode)}\n`;
   }
 
+  // Call the diff package and create the patch using the name and content.
   const changes = createTwoFilesPatch(
     `a/${a.name}`,
     `b/${b.name}`,
     a.content,
     b.content
   );
-  // Skip the first two lines from changes
+
+  // Skip the first line from changes
   const split = changes.split(/\r\n|\n/).slice(1);
 
   // End bold lines in header
@@ -68,6 +97,13 @@ function diffFile(
   return str + split.join('\n');
 }
 
+/**
+ * Main function that performs the 'diff' command
+ *
+ * @export
+ * @param {string} gitRoot
+ * @returns {string}
+ */
 export function gitDiff(gitRoot: string): string {
   // Get status of files
   const branch = getCurrentBranchName(gitRoot);
@@ -85,6 +121,7 @@ export function gitDiff(gitRoot: string): string {
       case FileStatusCode.DELETED: {
         const e = index.getEntry(status.name)!;
         const gitObject = parseObject(gitRoot, e.hash);
+
         const a: FileInfo = {
           name: status.name,
           content: gitObject.data.toString(),
@@ -102,6 +139,7 @@ export function gitDiff(gitRoot: string): string {
       case FileStatusCode.MODIFIED: {
         const e = index.getEntry(status.name)!;
         const gitObject = parseObject(gitRoot, e.hash);
+
         const a: FileInfo = {
           name: status.name,
           content: gitObject.data.toString(),

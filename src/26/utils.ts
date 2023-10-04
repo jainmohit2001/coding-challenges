@@ -33,7 +33,7 @@ export const fileType = new Map<FileMode, GitObjectType>([
 ]);
 
 /**
- * Returns a list of files present in the param - cwd.
+ * Returns a list of files present in `cwd`.
  * It automatically includes the .gitignore file.
  *
  * @export
@@ -136,7 +136,7 @@ export function getBranchHeadReference(
 }
 
 /**
- * Extracts user information from .gitconfig file
+ * Extracts user information from .gitconfig file.
  *
  * @export
  * @returns {Signature}
@@ -201,7 +201,7 @@ export function isValidSHA1(s: string): boolean {
 }
 
 /**
- * This function parses header buffer from an object file returns:
+ * This function parses header buffer from an object file and returns:
  * - the type of object
  * - byte length of the data
  * 

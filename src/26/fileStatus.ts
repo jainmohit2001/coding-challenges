@@ -7,29 +7,7 @@ import { decodeCommit } from './objects/commit';
 import { Tree, decodeTree } from './objects/tree';
 import { getBranchHeadReference, getFileStats } from './utils';
 import fs from 'fs';
-
-export interface FileStatus {
-  name: string;
-
-  /**
-   * Status of the file in the staging area.
-   *
-   * @type {FileStatusCode}
-   */
-  staging: FileStatusCode;
-
-  /**
-   * Status of the file in the Work Tree.
-   *
-   * @type {FileStatusCode}
-   */
-  worktree: FileStatusCode;
-}
-
-export interface DiffEntry {
-  name: string;
-  status: FileStatusCode;
-}
+import { DiffEntry, FileStatus } from './types';
 
 export function diffCommitWithStaging(
   gitRoot: string,
@@ -37,6 +15,8 @@ export function diffCommitWithStaging(
 ): DiffEntry[] {
   const index = new IndexParser(gitRoot).parse();
   const files: DiffEntry[] = [];
+
+  // Retrieve the hash of the latest commit for this branch.
   const commitHash = getBranchHeadReference(gitRoot, branch);
   let tree: Tree | undefined = undefined;
 
@@ -45,7 +25,8 @@ export function diffCommitWithStaging(
     tree = decodeTree(gitRoot, commitObject.treeHash);
   }
 
-  // No previous commit present => 'ADDED'
+  // No previous commit present.
+  // Status of all files => 'ADDED'
   if (tree === undefined) {
     index.entries.forEach((e) => {
       files.push({ name: e.name, status: FileStatusCode.ADDED });
@@ -53,6 +34,7 @@ export function diffCommitWithStaging(
     return files;
   }
 
+  // Sort files w.r.t name
   const treeFiles = [...tree.map.entries()].sort((a, b) =>
     a[0].localeCompare(b[0])
   );
@@ -76,6 +58,7 @@ export function diffCommitWithStaging(
       });
     }
     // Remove the file form index entries.
+    // Make sure not to save the index to disk.
     // This is required to process the 'ADDED' files.
     index.remove(name);
   });
@@ -154,6 +137,8 @@ export function getFileStatus(
 
   const diff1 = diffCommitWithStaging(gitRoot, branch);
 
+  // Assuming files present in Staging area have UNMODIFIED worktree status.
+  // The worktree status might be updated later on.
   diff1.forEach((value) => {
     const file: FileStatus = {
       name: value.name,

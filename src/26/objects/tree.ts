@@ -10,6 +10,11 @@ import { Index } from './index';
 import { Stack } from '../../utils/stack';
 
 export class Tree {
+  /**
+   * The root of this tree.
+   *
+   * @type {TreeNode}
+   */
   root: TreeNode;
 
   /**
@@ -25,6 +30,12 @@ export class Tree {
     this.map = new Map<string, TreeNode>();
   }
 
+  /**
+   * Given an Index class instance,
+   * this function iterates over the IndexEntries and inserts it into the tree.
+   *
+   * @param {Index} index
+   */
   build(index: Index) {
     index.entries.forEach((e) => {
       const newNode = new TreeNode(
@@ -37,6 +48,11 @@ export class Tree {
     });
   }
 
+  /**
+   * Insert the given TreeNode into the tree.
+   *
+   * @param {TreeNode} node
+   */
   insert(node: TreeNode) {
     const names = node.path.split('/');
     let tempRoot = this.root;
@@ -81,6 +97,8 @@ export class Tree {
 
     if (node.mode === FileMode.REGULAR) {
       tempRoot.entryCount++;
+
+      // Store the node in the map for fast retrieval.
       this.map.set(node.path, node);
     } else {
       tempRoot.entryCount += node.entryCount;
@@ -127,7 +145,7 @@ export class TreeNode {
   children: Map<string, TreeNode>;
 
   /**
-   * Hash of the tree.
+   * Hash of the TreeNode.
    * For file it is passed while creating a node.
    * For directories it is undefined at first,
    * and then calculated later using the calculateHash function
@@ -162,11 +180,22 @@ export class TreeNode {
     this.entryCount = 0;
     this.subTreeCount = 0;
 
+    // Make sure a hash is provided when creating a TreeNode for file
     if (mode === FileMode.REGULAR && hash === undefined) {
       throw new Error(`No hash provided with file ${path}`);
     }
   }
 
+  /**
+   * Calculates the hash of the root and optionally save the tree to the disk.
+   * All the Trees are also pushed to the provided CachedTee class.
+   * The entries of CachedTree are NOT sorted by the path of the files.
+   *
+   * @param {string} gitRoot
+   * @param {boolean} [writeToDisk=false]
+   * @param {CachedTree} cachedTree
+   * @returns {string}
+   */
   calculateHash(
     gitRoot: string,
     writeToDisk: boolean = false,
@@ -200,6 +229,7 @@ export class TreeNode {
 
     const hash = createHash('sha1').update(store).digest('hex');
 
+    // Create a CachedTreeEntry and add ito the provided CachedTree
     const cachedTreeEntry: CachedTreeEntry = {
       name: this.name,
       hash: hash,
@@ -239,13 +269,18 @@ export function decodeTree(gitRoot: string, treeHash: string): Tree {
   }
 
   const tree = new Tree();
+
+  // The Stack contains the TreeNode corresponding to directories.
   const stack: Stack<TreeNode> = new Stack<TreeNode>();
   const newRoot = new TreeNode('', '', FileMode.DIR, treeHash);
   tree.root = newRoot;
   stack.push(newRoot);
 
   while (stack.size() > 0) {
+    // Pop the TreeNode from the stack. This is actually a directory
     const node = stack.pop()!;
+
+    // Get the corresponding object from the storage
     const gitObject = parseObject(gitRoot, node.hash!);
     const data = gitObject.data;
     let i = 0;
@@ -295,5 +330,6 @@ export function decodeTree(gitRoot: string, treeHash: string): Tree {
       }
     }
   }
+
   return tree;
 }
