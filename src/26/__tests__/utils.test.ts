@@ -1,5 +1,5 @@
 import path from 'path';
-import { createTempGitRepo } from '../jestHelpers';
+import { createTempGitRepo, mockGetSignature } from '../jestHelpers';
 import fs from 'fs';
 import { randomBytes, randomInt } from 'crypto';
 import {
@@ -11,11 +11,12 @@ import {
   isValidSHA1,
   parseObjectHeader
 } from '../utils';
-import { getTimeAndTimeZone } from '../objects/signature';
 import { GitObjectType } from '../types';
 
 describe('Testing utils', () => {
   const gitRoot = createTempGitRepo();
+  mockGetSignature();
+
   const gitignoreContent = ['.idea/**', '**/node_modules/**', '**/build/**'];
   const files: { name: string; content: Buffer }[] = [
     { name: 'text1.txt', content: randomBytes(32) },
@@ -68,20 +69,6 @@ describe('Testing utils', () => {
   it('should get the current branch name successfully', () => {
     const data = getCurrentBranchName(gitRoot);
     expect(data.trim()).toBe('master');
-  });
-
-  it('should convert date object to time and timezone offset', () => {
-    const date = new Date();
-    const seconds = Math.floor(date.getTime() / 1000);
-    const output = getTimeAndTimeZone(date).trim();
-    const [sec, timezone] = output.split(' ');
-
-    expect(parseInt(sec)).toBe(seconds);
-    const timezoneInMin =
-      (timezone[0] === '+' ? -1 : 1) *
-      (parseInt(timezone.substring(1, 3)) * 60 +
-        parseInt(timezone.substring(3, 5)));
-    expect(timezoneInMin).toBe(date.getTimezoneOffset());
   });
 
   it('should get signature successfully', () => {

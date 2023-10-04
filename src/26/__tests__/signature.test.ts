@@ -35,4 +35,18 @@ describe('Testing Signature related classes and functions', () => {
     expect(signature.email).toBe(email);
     expect(signature.timestamp.getTime()).toBe(date.getTime());
   });
+
+  it('should convert date object to time and timezone offset', () => {
+    const date = new Date();
+    const seconds = Math.floor(date.getTime() / 1000);
+    const output = getTimeAndTimeZone(date).trim();
+    const [sec, timezone] = output.split(' ');
+
+    expect(parseInt(sec)).toBe(seconds);
+    const timezoneInMin =
+      (timezone[0] === '+' ? -1 : 1) *
+      (parseInt(timezone.substring(1, 3)) * 60 +
+        parseInt(timezone.substring(3, 5)));
+    expect(timezoneInMin).toBe(date.getTimezoneOffset());
+  });
 });

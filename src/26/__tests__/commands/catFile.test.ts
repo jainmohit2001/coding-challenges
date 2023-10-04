@@ -1,4 +1,8 @@
-import { createDummyFile, createTempGitRepo } from '../../jestHelpers';
+import {
+  createDummyFile,
+  createTempGitRepo,
+  mockGetSignature
+} from '../../jestHelpers';
 import catFile from '../../commands/catFile';
 import hashObject from '../../commands/hashObject';
 import writeTree from '../../commands/writeTree';
@@ -20,6 +24,8 @@ function hashDummyFile(gitRoot: string): {
 
 describe('Testing catFile command', () => {
   const gitRoot = createTempGitRepo();
+  mockGetSignature();
+
   let treeHash = '';
   let commitHash = '';
 

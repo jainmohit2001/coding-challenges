@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import init from './commands/init';
+import * as utils from './utils';
+import { Signature } from './objects/signature';
 
 const root = process.cwd();
 
@@ -42,4 +44,10 @@ export function createDummyFile(): {
   fs.writeFileSync(filePath, text);
   const expectedHash = 'bd9dbf5aae1a3862dd1526723246b20206e5fc37';
   return { text, filePath, expectedHash };
+}
+
+export function mockGetSignature() {
+  jest.spyOn(utils, 'getSignature').mockImplementation(() => {
+    return new Signature('John Doe', 'example@gmail.com');
+  });
 }

@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto';
-import { createTempGitRepo } from '../../jestHelpers';
+import { createTempGitRepo, mockGetSignature } from '../../jestHelpers';
 import fs from 'fs';
 import updateIndex from '../../commands/updateIndex';
 import path from 'path';
@@ -9,6 +9,8 @@ import { decodeCommit } from '../../objects/commit';
 
 describe('Testing commit tree command', () => {
   const gitRoot = createTempGitRepo();
+  mockGetSignature();
+
   const files: { name: string; content: Buffer }[] = [
     { name: 'text1.txt', content: randomBytes(32) },
     { name: 'dir1/text2.txt', content: randomBytes(32) },
