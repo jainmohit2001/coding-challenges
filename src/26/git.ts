@@ -132,7 +132,7 @@ program
 
 program
   .command('write-tree')
-  .description(' Create a tree object from the current index')
+  .description('Create a tree object from the current index')
   .action(() => {
     const gitRoot = ensureGitRepo();
     wrapper(() => writeTree(gitRoot));
@@ -168,7 +168,7 @@ program
 
 program
   .command('diff')
-  .description('Show changed between index and working tree')
+  .description('Show changes between index and working tree')
   .action(() => {
     const gitRoot = ensureGitRepo();
     wrapper(() => gitDiff(gitRoot), false);

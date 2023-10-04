@@ -16,10 +16,10 @@ The client currently supports the following commands. More information provided 
 - [update-index](docs/update-index.md)
 - [add](docs/update-index.md)
 - [status](docs/status.md)
-- write-tree
-- commit-tree
-- commit
-- diff
+- [write-tree](docs/write-tree.md)
+- [commit-tree](docs/commit-tree.md)
+- [commit](docs/commit.md)
+- [diff](docs/diff.md)
 
 Here is a brief description about some of the files/folders in this project:
 
@@ -49,8 +49,8 @@ You can use the `ts-node` tool to run the Git client as follows:
 npx ts-node <path-to-git.ts> [options] [command]
 ```
 
-Use the `--help` option to get more information about how to use the the Git client.
-Or refer to the [docs](docs/) folder for usage.
+Use the `--help` option to get more information on how to use the the Git client.
+Or refer to the [docs](docs/) folder.
 
 ## Run tests
 
