@@ -13,9 +13,9 @@ The client currently supports the following commands. More information provided 
 - [init](docs/init.md)
 - [hash-object](docs/hash-object.md)
 - [cat-file](docs/cat-file.md)
-- update-index
-- add
-- status
+- [update-index](docs/update-index.md)
+- [add](docs/update-index.md)
+- [status](docs/status.md)
 - write-tree
 - commit-tree
 - commit

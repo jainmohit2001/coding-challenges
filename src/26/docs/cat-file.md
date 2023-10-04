@@ -30,7 +30,7 @@ Provide content or type information for repository objects.
 
 ## Approach
 
-1. First check if the given hash corresponds to a valid object or not. This is done via the helper function [parseObject()](../utils.ts#L252) present in [utils.ts](../utils.ts).
+1. First check if the given hash corresponds to a valid object or not. This is done via the helper function `parseObject()` present in [utils.ts](../utils.ts).
 
    **Note**: Objects stored in the packfile are not supported. Refer to the JSDOC of the `parseObject` function for more details.
 

@@ -116,7 +116,7 @@ program
 program
   .command('add')
   .description('Add file contents to the index')
-  .argument('<files...>', 'File to add content from')
+  .argument('<files...>', 'Files to add content from')
   .action((files) => {
     const gitRoot = ensureGitRepo();
     wrapper(() => updateIndex({ gitRoot, files: files }), false);
