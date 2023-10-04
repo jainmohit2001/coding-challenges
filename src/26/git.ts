@@ -12,7 +12,7 @@ import commit from './commands/commit';
 import { gitDiff } from './commands/diff';
 
 /**
- * Finds the path to root of current git repo if exists.
+ * Finds the path to the root of current git repo if exists.
  *
  * @returns {string}
  */
@@ -20,6 +20,7 @@ function ensureGitRepo(): string {
   let root = process.cwd();
   let pathToGit: string;
 
+  // Keep going to the parent dir until we find a .git dir
   while (root !== '/') {
     pathToGit = path.join(root, '.git');
     if (fs.existsSync(pathToGit)) {
@@ -33,6 +34,7 @@ function ensureGitRepo(): string {
     return root;
   }
 
+  // No .git dir found
   process.stderr.write(
     'fatal: not a git repository (or any of the parent directories): .git\r\n'
   );
@@ -52,9 +54,13 @@ function wrapper(cb: () => string, newLine: boolean = true) {
 }
 
 program
-  .command('init [directory]')
+  .command('init')
+  .argument(
+    '[directory]',
+    'The init command will be run inside this directory. If this directory does not exist, it will be created.'
+  )
   .description('Create an empty Git repository or reinitialize an existing one')
-  .action((directory: string) => {
+  .action((directory) => {
     wrapper(() => init(directory));
   });
 
