@@ -9,6 +9,7 @@ import writeTree from './commands/writeTree';
 import path from 'path';
 import commitTree from './commands/commitTree';
 import commit from './commands/commit';
+import { gitDiff } from './commands/diff';
 
 /**
  * Finds the path to root of current git repo if exists.
@@ -157,6 +158,14 @@ program
   .action((message) => {
     const gitRoot = ensureGitRepo();
     wrapper(() => commit(gitRoot, message));
+  });
+
+program
+  .command('diff')
+  .description('Show changed between index and working tree')
+  .action(() => {
+    const gitRoot = ensureGitRepo();
+    wrapper(() => gitDiff(gitRoot), false);
   });
 
 program.parse(process.argv);

@@ -34,3 +34,6 @@ export const NAME_OFFSET = 62;
 export const FgGreen = '\x1b[32m';
 export const ColorReset = '\x1b[0m';
 export const FgRed = '\x1b[31m';
+export const FgCyan = '\x1b[36m';
+export const BoldStart = '\x1b[1m';
+export const BoldEnd = `\x1b[22m`;
