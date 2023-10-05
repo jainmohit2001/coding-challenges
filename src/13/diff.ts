@@ -83,7 +83,6 @@ export function lcs(s1: string, s2: string): string[] {
 
 /**
  * The function finds the LCS between two array of strings and returns the LCS along with the differences.
- * @date 8/13/2023 - 2:03:31 PM
  *
  * @export
  * @param {string[]} arr1

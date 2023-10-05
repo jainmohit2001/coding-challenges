@@ -53,7 +53,6 @@ function computeHash(str: string): number {
 /**
  * Given an array of number, this function randomly shuffles it's content and
  * returns the new shuffled array.
- * @date 7/28/2023 - 6:12:23 PM
  *
  * @param {number[]} arr
  * @returns {number[]}

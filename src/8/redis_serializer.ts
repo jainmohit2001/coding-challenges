@@ -24,7 +24,6 @@ export interface IRedisSerializer {
 /**
  * This function checks whether the input has a valid RESP Type.
  * If the input provided is a nested data structure, it recursively checks all the elements.
- * @date 7/29/2023 - 7:00:14 PM
  *
  * @param {unknown} input
  * @returns {boolean}

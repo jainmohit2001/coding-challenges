@@ -34,7 +34,6 @@ export interface IMemCommand {
   /**
    * Number of bytes for the data.
    * This is used in set, add and replace command.
-   * @date 8/18/2023 - 9:14:01 PM
    *
    * @type {?number}
    */
