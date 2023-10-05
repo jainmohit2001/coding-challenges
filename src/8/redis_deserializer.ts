@@ -254,7 +254,6 @@ export class RedisDeserializer implements IRedisDeserializer {
   /**
    * Consumes the given token if provided.
    * Increments the index.
-   * @date 7/29/2023 - 6:59:12 PM
    *
    * @private
    * @param {?string} [token]

@@ -46,7 +46,6 @@ export class Postfix {
 
   /**
    * Number of operands encountered till `this.pos`
-   * @date 9/1/2023 - 1:44:00 PM
    *
    * @private
    * @type {number}

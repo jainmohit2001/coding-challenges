@@ -15,7 +15,6 @@ interface IRedisServer {
 
   /**
    * The port on which the Redis Server will start listening to messages.
-   * @date 8/3/2023 - 1:00:36 PM
    *
    * @type {number}
    */

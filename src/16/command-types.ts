@@ -162,7 +162,6 @@ export enum IRCReplies {
 
   /**
    * ":No recipient given (`<command>`)"
-   * @date 8/17/2023 - 4:15:03 PM
    */
   ERR_NORECIPIENT = '411',
 

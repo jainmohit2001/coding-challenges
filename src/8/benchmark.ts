@@ -20,7 +20,6 @@ const randomString = () => randomBytes(size).toString('ascii');
  *    benchmark: This function returns a Promise that resolves various commands from the client library.
  *
  *    teardown: The function returns a Promise that disconnects the client.
- * @date 8/3/2023 - 11:55:07 AM
  *
  * @async
  * @returns {unknown}

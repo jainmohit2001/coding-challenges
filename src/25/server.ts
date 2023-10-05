@@ -28,7 +28,6 @@ export default class NATSServer {
   /**
    * The net.Server instance on which the NATS server will start listening to
    * connections.
-   * @date 9/21/2023 - 11:48:59 AM
    *
    * @type {net.Server}
    */
@@ -37,7 +36,6 @@ export default class NATSServer {
   /**
    * A map of clients where the key is created using the remoteAddress and
    * remotePort of the net.Socket instance.
-   * @date 9/21/2023 - 11:48:02 AM
    *
    * @private
    * @type {Map<string, Client>}

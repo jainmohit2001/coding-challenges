@@ -76,7 +76,6 @@ class SedInput {
 
   /**
    * Carrying out a regular expression change to it
-   * @date 9/10/2023 - 11:30:02 PM
    *
    * @type {?{
       pattern: string;
