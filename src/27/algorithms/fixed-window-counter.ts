@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { RateLimiter } from './types';
+import { RateLimiter } from '../types';
 
 export class FixedWindowCounterRateLimiter implements RateLimiter {
   /**

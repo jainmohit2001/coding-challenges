@@ -1,8 +1,8 @@
 import express from 'express';
-import { TokenBucketRateLimiter } from './token-bucket';
+import { TokenBucketRateLimiter } from './algorithms/token-bucket';
 import { RateLimiter } from './types';
 import { RateLimiterType } from './enums';
-import { FixedWindowCounterRateLimiter } from './fixed-window-counter';
+import { FixedWindowCounterRateLimiter } from './algorithms/fixed-window-counter';
 import { Argument, program } from 'commander';
 
 program.addArgument(

@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { RateLimiter } from './types';
+import { RateLimiter } from '../types';
 
 const MAX_TIME_PERIOD_MS = 60 * 1000; // 60 seconds
 const MIN_TIME_PERIOD_MS = 1000; // 1 second
