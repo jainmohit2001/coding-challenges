@@ -2,7 +2,18 @@ import express from 'express';
 import { TokenBucketRateLimiter } from './token-bucket';
 import { RateLimiter } from './types';
 import { RateLimiterType } from './enums';
+import { FixedWindowCounterRateLimiter } from './fixed-window-counter';
+import { Argument, program } from 'commander';
 
+program.addArgument(
+  new Argument(
+    '<algorithm>',
+    'The algorithm to use for the rate limiter'
+  ).choices(Object.values(RateLimiterType))
+);
+program.parse();
+
+const rateLimiterType = program.args[0] as RateLimiterType;
 const PORT = 8080;
 
 const app = express();
@@ -10,19 +21,24 @@ const app = express();
 app.use(express.json());
 app.use(express.text());
 
-// Change this line to use a different rateLimiter
-const rateLimitedType: RateLimiterType = RateLimiterType.TOKEN_BUCKET;
-
 let rateLimiter: RateLimiter;
 
 // Assign rate limiter
-switch (rateLimitedType) {
+switch (rateLimiterType) {
   case RateLimiterType.TOKEN_BUCKET: {
-    // Config for the Token Bucket Rate limiter
-    const CAPACITY = 10;
-    const TIME_PERIOD_IN_MS = 1000;
+    // Config for the Token Bucket Rate Limiter
+    const capacity = 10;
+    const timePeriodInMs = 1000;
 
-    rateLimiter = new TokenBucketRateLimiter(CAPACITY, TIME_PERIOD_IN_MS);
+    rateLimiter = new TokenBucketRateLimiter(capacity, timePeriodInMs);
+    break;
+  }
+  case RateLimiterType.FIXED_WINDOW_COUNTER: {
+    // Config for the Fixed Window Counter Rate Limiter
+    const windowSize = 60;
+    const threshold = 10;
+
+    rateLimiter = new FixedWindowCounterRateLimiter(windowSize, threshold);
     break;
   }
 }
