@@ -1,5 +1,5 @@
 import express from 'express';
-import { TokenBucketRateLimiter } from './tokenBucket';
+import { TokenBucketRateLimiter } from './token-bucket';
 import { RateLimiter } from './types';
 import { RateLimiterType } from './enums';
 
