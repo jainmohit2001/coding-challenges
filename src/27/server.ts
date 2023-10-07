@@ -5,6 +5,7 @@ import { RateLimiterType } from './enums';
 import { FixedWindowCounterRateLimiter } from './algorithms/fixed-window-counter';
 import { Argument, program } from 'commander';
 import { SlidingWindowLogRateLimiter } from './algorithms/sliding-window-log';
+import { SlidingWindowCounterRateLimiter } from './algorithms/sliding-window-counter';
 
 program.addArgument(
   new Argument(
@@ -37,7 +38,7 @@ switch (rateLimiterType) {
   case RateLimiterType.FIXED_WINDOW_COUNTER: {
     // Config for the Fixed Window Counter Rate Limiter
     const windowSize = 60;
-    const threshold = 10;
+    const threshold = 200;
 
     rateLimiter = new FixedWindowCounterRateLimiter(windowSize, threshold);
     break;
@@ -47,6 +48,14 @@ switch (rateLimiterType) {
     const logThreshold = 10;
 
     rateLimiter = new SlidingWindowLogRateLimiter(logThreshold);
+    break;
+  }
+  case RateLimiterType.SLIDING_WINDOW_COUNTER: {
+    // COnfig for the Sliding Window Counter Rate Limiter
+    const windowSize = 60;
+    const threshold = 200;
+
+    rateLimiter = new SlidingWindowCounterRateLimiter(windowSize, threshold);
     break;
   }
 }

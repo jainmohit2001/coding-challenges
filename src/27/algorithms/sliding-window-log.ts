@@ -13,7 +13,7 @@ export class SlidingWindowLogRateLimiter implements RateLimiter {
   logs: Map<string, Date[]>;
 
   /**
-   * Maximum length of logs allowed for a single IP.
+   * Maximum length of logs (requests) allowed for a single IP per second.
    *
    * @type {number}
    */

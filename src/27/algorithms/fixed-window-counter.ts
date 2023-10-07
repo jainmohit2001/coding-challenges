@@ -43,6 +43,8 @@ export class FixedWindowCounterRateLimiter implements RateLimiter {
     const date = new Date();
     const diff = 60 - date.getSeconds();
 
+    // TODO: Check for simultaneous access and updates - Race Conditions.
+    // Or should we do this when we get the request?
     this.timer = setTimeout(() => {
       // Reset the counter after every windowSize seconds.
       this.timer = setInterval(() => this.resetCounters(), windowSize * 1000);

@@ -50,6 +50,7 @@ export class TokenBucketRateLimiter implements RateLimiter {
     }
 
     // Start add tokens with the provided timer period
+    // TODO: Check race conditions
     this.timer = setInterval(() => this.addTokens(), timePeriodInMs);
   }
 
