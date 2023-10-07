@@ -1,17 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
-import { RateLimiter } from '../types';
+import { RateLimiter, TokenBucketArgs } from '../types';
 
 const MAX_TIME_PERIOD_MS = 60 * 1000; // 60 seconds
 const MIN_TIME_PERIOD_MS = 1000; // 1 second
 
 export class TokenBucketRateLimiter implements RateLimiter {
-  /**
-   * Represents the maximum number of tokens allowed in a single bucket.
-   *
-   * @type {number}
-   */
-  capacity: number;
-
   /**
    * A map that stores the number of available tokens for each IP address.
    * Each IP has its own bucket.
@@ -20,20 +13,17 @@ export class TokenBucketRateLimiter implements RateLimiter {
   tokens: Map<string, number>;
 
   /**
-   * The interval period after which 1 token will be added to all the buckets.
-   *
-   * @type {number}
-   */
-  timePeriodInMs: number;
-
-  /**
    * Stores the Timer object reference.
    *
    * @type {NodeJS.Timer}
    */
   timer: NodeJS.Timer;
 
-  constructor(capacity: number, timePeriodInMs: number) {
+  capacity: number;
+
+  timePeriodInMs: number;
+
+  constructor({ capacity, timePeriodInMs }: TokenBucketArgs) {
     this.capacity = capacity;
     this.tokens = new Map<string, number>();
 

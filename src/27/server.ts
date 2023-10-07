@@ -1,77 +1,67 @@
 import express from 'express';
 import { TokenBucketRateLimiter } from './algorithms/token-bucket';
-import { RateLimiter } from './types';
+import {
+  FixedWindowCounterArgs,
+  RateLimiter,
+  RateLimiterArgs,
+  SlidingWindowCounterArgs,
+  SlidingWindowLogArgs,
+  TokenBucketArgs
+} from './types';
 import { RateLimiterType } from './enums';
 import { FixedWindowCounterRateLimiter } from './algorithms/fixed-window-counter';
-import { Argument, program } from 'commander';
 import { SlidingWindowLogRateLimiter } from './algorithms/sliding-window-log';
 import { SlidingWindowCounterRateLimiter } from './algorithms/sliding-window-counter';
 
-program.addArgument(
-  new Argument(
-    '<algorithm>',
-    'The algorithm to use for the rate limiter'
-  ).choices(Object.values(RateLimiterType))
-);
-program.parse();
+export const createRateLimiterServer = (
+  rateLimiterType: RateLimiterType,
+  args: RateLimiterArgs,
+  port: number = 8080
+) => {
+  const app = express();
 
-const rateLimiterType = program.args[0] as RateLimiterType;
-const PORT = 8080;
+  app.use(express.json());
+  app.use(express.text());
 
-const app = express();
+  const rateLimiter = getRateLimiter(rateLimiterType, args);
 
-app.use(express.json());
-app.use(express.text());
+  app.use('/limited', (req, res, next) =>
+    rateLimiter.handleRequest(req, res, next)
+  );
 
-let rateLimiter: RateLimiter;
+  app.get('/limited', (req, res) => {
+    res.send('Limited API endpoint\n');
+  });
 
-// Assign rate limiter
-switch (rateLimiterType) {
-  case RateLimiterType.TOKEN_BUCKET: {
-    // Config for the Token Bucket Rate Limiter
-    const capacity = 10;
-    const timePeriodInMs = 1000;
+  app.get('/unlimited', (req, res) => {
+    res.send('Unlimited API endpoint\n');
+  });
 
-    rateLimiter = new TokenBucketRateLimiter(capacity, timePeriodInMs);
-    break;
-  }
-  case RateLimiterType.FIXED_WINDOW_COUNTER: {
-    // Config for the Fixed Window Counter Rate Limiter
-    const windowSize = 60;
-    const threshold = 200;
+  const server = app.listen(port, () => {
+    console.log('Started server on port ' + port);
+  });
 
-    rateLimiter = new FixedWindowCounterRateLimiter(windowSize, threshold);
-    break;
-  }
-  case RateLimiterType.SLIDING_WINDOW_LOG: {
-    // Config for the Sliding Window Log Rate Limiter
-    const logThreshold = 10;
+  return server;
+};
 
-    rateLimiter = new SlidingWindowLogRateLimiter(logThreshold);
-    break;
-  }
-  case RateLimiterType.SLIDING_WINDOW_COUNTER: {
-    // COnfig for the Sliding Window Counter Rate Limiter
-    const windowSize = 60;
-    const threshold = 200;
-
-    rateLimiter = new SlidingWindowCounterRateLimiter(windowSize, threshold);
-    break;
+function getRateLimiter(
+  rateLimiterType: RateLimiterType,
+  args: RateLimiterArgs
+): RateLimiter {
+  switch (rateLimiterType) {
+    case RateLimiterType.TOKEN_BUCKET: {
+      return new TokenBucketRateLimiter(args as TokenBucketArgs);
+    }
+    case RateLimiterType.FIXED_WINDOW_COUNTER: {
+      return new FixedWindowCounterRateLimiter(args as FixedWindowCounterArgs);
+    }
+    case RateLimiterType.SLIDING_WINDOW_LOG: {
+      return new SlidingWindowLogRateLimiter(args as SlidingWindowLogArgs);
+    }
+    case RateLimiterType.SLIDING_WINDOW_COUNTER: {
+      return new SlidingWindowCounterRateLimiter(
+        args as SlidingWindowCounterArgs
+      );
+    }
   }
 }
-
-app.use('/limited', (req, res, next) =>
-  rateLimiter.handleRequest(req, res, next)
-);
-
-app.get('/limited', (req, res) => {
-  res.send('Limited API endpoint\n');
-});
-
-app.get('/unlimited', (req, res) => {
-  res.send('Unlimited API endpoint\n');
-});
-
-app.listen(PORT, () => {
-  console.log('Started server on port ' + PORT);
-});

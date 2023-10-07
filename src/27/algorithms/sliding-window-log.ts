@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { RateLimiter } from '../types';
+import { RateLimiter, SlidingWindowLogArgs } from '../types';
 
 const MAX_LOG_THRESHOLD = 100; // Maximum number of requests per second
 const MIN_LOG_THRESHOLD = 1; // Minimum number of requests per second
@@ -12,14 +12,9 @@ export class SlidingWindowLogRateLimiter implements RateLimiter {
    */
   logs: Map<string, Date[]>;
 
-  /**
-   * Maximum length of logs (requests) allowed for a single IP per second.
-   *
-   * @type {number}
-   */
   logThreshold: number;
 
-  constructor(logThreshold: number) {
+  constructor({ logThreshold }: SlidingWindowLogArgs) {
     this.logs = new Map<string, Date[]>();
 
     // Validate logThreshold value

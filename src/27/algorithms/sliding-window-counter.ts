@@ -1,4 +1,4 @@
-import { RateLimiter } from '../types';
+import { RateLimiter, SlidingWindowCounterArgs } from '../types';
 import { Request, Response, NextFunction } from 'express';
 
 interface Counter {
@@ -39,23 +39,13 @@ export class SlidingWindowCounterRateLimiter implements RateLimiter {
    */
   counters: Map<string, Counter>;
 
-  /**
-   * The size of window in seconds used to track the request rate.
-   *
-   * @type {number}
-   */
   windowSize: number;
 
-  /**
-   * The maximum number of requests allowed in the window.
-   *
-   * @type {number}
-   */
   threshold: number;
 
   private twiceWindowSize: number;
 
-  constructor(windowSize: number, threshold: number) {
+  constructor({ windowSize, threshold }: SlidingWindowCounterArgs) {
     // Ensure window size is a multiple of 60
     if (windowSize % 60 !== 0) {
       throw new Error('Window size should be multiple of 60');

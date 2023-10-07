@@ -1,21 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import { RateLimiter } from '../types';
+import { FixedWindowCounterArgs, RateLimiter } from '../types';
 
 export class FixedWindowCounterRateLimiter implements RateLimiter {
-  /**
-   * The size of window in seconds used to track the request rate.
-   *
-   * @type {number}
-   */
-  windowSize: number;
-
-  /**
-   * The maximum number of requests allowed in the window.
-   *
-   * @type {number}
-   */
-  threshold: number;
-
   /**
    * The number of requests received so far in the window for each IP.
    *
@@ -26,7 +12,11 @@ export class FixedWindowCounterRateLimiter implements RateLimiter {
 
   private timer: NodeJS.Timer;
 
-  constructor(windowSize: number, threshold: number) {
+  windowSize: number;
+
+  threshold: number;
+
+  constructor({ windowSize, threshold }: FixedWindowCounterArgs) {
     // Ensure window size is a multiple of 60
     if (windowSize % 60 !== 0) {
       throw new Error('Window size should be multiple of 60');
