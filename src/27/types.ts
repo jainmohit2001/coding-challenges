@@ -8,6 +8,8 @@ import { NextFunction, Request, Response } from 'express';
  */
 export interface RateLimiter {
   handleRequest(req: Request, res: Response, next: NextFunction): void;
+
+  cleanup(): void;
 }
 
 export type TokenBucketArgs = {

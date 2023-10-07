@@ -136,4 +136,8 @@ export class SlidingWindowCounterRateLimiter implements RateLimiter {
     this.counters.set(ip, counter);
     next();
   }
+
+  cleanup(): void {
+    return;
+  }
 }

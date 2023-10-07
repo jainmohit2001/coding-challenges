@@ -51,7 +51,10 @@ export class TokenBucketRateLimiter implements RateLimiter {
    */
   private addTokens(): void {
     this.tokens.forEach((value, key) => {
-      this.tokens.set(key, Math.min(this.tokens.get(key)! + 1, this.capacity));
+      if (value >= this.capacity) {
+        return;
+      }
+      this.tokens.set(key, value + 1);
     });
   }
 
@@ -69,9 +72,9 @@ export class TokenBucketRateLimiter implements RateLimiter {
     const tokensInBucket = this.tokens.get(ip);
 
     // First time encountering this ip
-    // Initialize a new fully filled Bucket for this.
+    // Initialize a new Bucket for this.
     if (tokensInBucket === undefined) {
-      this.tokens.set(ip, this.capacity);
+      this.tokens.set(ip, this.capacity - 1);
       next();
       return;
     }
@@ -85,5 +88,9 @@ export class TokenBucketRateLimiter implements RateLimiter {
     // Decrement the number of tokens for this IP
     this.tokens.set(ip, tokensInBucket - 1);
     next();
+  }
+
+  cleanup(): void {
+    clearInterval(this.timer);
   }
 }

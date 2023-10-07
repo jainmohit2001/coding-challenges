@@ -5,12 +5,13 @@ export class FixedWindowCounterRateLimiter implements RateLimiter {
   /**
    * The number of requests received so far in the window for each IP.
    *
-   * @private
    * @type {Map<string, number>}
    */
-  private counters: Map<string, number>;
+  counters: Map<string, number>;
 
-  private timer: NodeJS.Timer;
+  timer?: NodeJS.Timer;
+
+  timeout?: NodeJS.Timeout;
 
   windowSize: number;
 
@@ -35,7 +36,7 @@ export class FixedWindowCounterRateLimiter implements RateLimiter {
 
     // TODO: Check for simultaneous access and updates - Race Conditions.
     // Or should we do this when we get the request?
-    this.timer = setTimeout(() => {
+    this.timeout = setTimeout(() => {
       // Reset the counter after every windowSize seconds.
       this.timer = setInterval(() => this.resetCounters(), windowSize * 1000);
     }, diff * 1000);
@@ -81,5 +82,10 @@ export class FixedWindowCounterRateLimiter implements RateLimiter {
     // Otherwise increase the counter.
     this.counters.set(ip, counter + 1);
     next();
+  }
+
+  cleanup(): void {
+    clearTimeout(this.timeout);
+    clearInterval(this.timer);
   }
 }

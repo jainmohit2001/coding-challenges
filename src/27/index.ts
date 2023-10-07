@@ -19,6 +19,7 @@ program.parse();
 
 const rateLimiterType = program.args[0] as RateLimiterType;
 const PORT = 8080;
+const DEBUG = true;
 
 let args: RateLimiterArgs;
 
@@ -38,4 +39,4 @@ switch (rateLimiterType) {
     break;
 }
 
-createRateLimiterServer(rateLimiterType, args, PORT);
+createRateLimiterServer(rateLimiterType, args, PORT, DEBUG);

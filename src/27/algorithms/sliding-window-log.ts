@@ -69,4 +69,8 @@ export class SlidingWindowLogRateLimiter implements RateLimiter {
     this.logs.set(ip, newLog);
     next();
   }
+
+  cleanup(): void {
+    return;
+  }
 }

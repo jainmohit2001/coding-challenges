@@ -16,7 +16,8 @@ import { SlidingWindowCounterRateLimiter } from './algorithms/sliding-window-cou
 export const createRateLimiterServer = (
   rateLimiterType: RateLimiterType,
   args: RateLimiterArgs,
-  port: number = 8080
+  port: number = 8080,
+  debug: boolean = false
 ) => {
   const app = express();
 
@@ -38,7 +39,14 @@ export const createRateLimiterServer = (
   });
 
   const server = app.listen(port, () => {
-    console.log('Started server on port ' + port);
+    if (debug) {
+      console.log('Started server on port ' + port);
+    }
+  });
+
+  // Perform cleanup
+  server.on('close', () => {
+    rateLimiter.cleanup();
   });
 
   return server;
