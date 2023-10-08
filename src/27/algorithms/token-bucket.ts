@@ -1,9 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { RateLimiter, TokenBucketArgs } from '../types';
 
-const MAX_TIME_PERIOD_MS = 60 * 1000; // 60 seconds
-const MIN_TIME_PERIOD_MS = 1000; // 1 second
-
 export class TokenBucketRateLimiter implements RateLimiter {
   /**
    * A map that stores the number of available tokens for each IP address.
@@ -28,15 +25,10 @@ export class TokenBucketRateLimiter implements RateLimiter {
     this.tokens = new Map<string, number>();
 
     // Verify timePeriodInMs
-    if (
-      timePeriodInMs >= MIN_TIME_PERIOD_MS &&
-      timePeriodInMs <= MAX_TIME_PERIOD_MS
-    ) {
+    if (timePeriodInMs > 0) {
       this.timePeriodInMs = timePeriodInMs;
     } else {
-      throw new Error(
-        `Invalid timePeriod ${timePeriodInMs}. It should be >=${MIN_TIME_PERIOD_MS} and <= ${MAX_TIME_PERIOD_MS}`
-      );
+      throw new Error(`Invalid timePeriod ${timePeriodInMs}. It should be >=0`);
     }
 
     // Start add tokens with the provided timer period
