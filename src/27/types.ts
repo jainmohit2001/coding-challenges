@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { createClient } from 'redis';
 
 /**
  * This is a generic interface that a Rate limiter has to implement.
@@ -55,8 +56,20 @@ export type SlidingWindowCounterArgs = {
   threshold: number;
 };
 
+export type RedisSlidingWindowCounterArgs = {
+  /**
+   * The maximum number of requests allowed in a second.
+   *
+   * @type {number}
+   */
+  threshold: number;
+
+  client: ReturnType<typeof createClient>;
+};
+
 export type RateLimiterArgs =
   | TokenBucketArgs
   | FixedWindowCounterArgs
   | SlidingWindowLogArgs
-  | SlidingWindowCounterArgs;
+  | SlidingWindowCounterArgs
+  | RedisSlidingWindowCounterArgs;

@@ -29,7 +29,7 @@
     "jsdom": "^22.1.0",
     "memcached": "^2.2.2",
     "raw-socket": "github:algj/node-raw-socket",
-    "redis": "^4.6.7",
+    "redis": "^4.6.10",
     "ts-node": "^10.9.1",
     "uuid": "^9.0.1",
     "winston": "^3.10.0"

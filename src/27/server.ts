@@ -4,6 +4,7 @@ import {
   FixedWindowCounterArgs,
   RateLimiter,
   RateLimiterArgs,
+  RedisSlidingWindowCounterArgs,
   SlidingWindowCounterArgs,
   SlidingWindowLogArgs,
   TokenBucketArgs
@@ -12,6 +13,7 @@ import { RateLimiterType } from './enums';
 import { FixedWindowCounterRateLimiter } from './algorithms/fixed-window-counter';
 import { SlidingWindowLogRateLimiter } from './algorithms/sliding-window-log';
 import { SlidingWindowCounterRateLimiter } from './algorithms/sliding-window-counter';
+import { RedisSlidingWindowCounterRateLimiter } from './algorithms/redis-sliding-window-counter';
 
 export const createRateLimiterServer = (
   rateLimiterType: RateLimiterType,
@@ -57,19 +59,19 @@ function getRateLimiter(
   args: RateLimiterArgs
 ): RateLimiter {
   switch (rateLimiterType) {
-    case RateLimiterType.TOKEN_BUCKET: {
+    case RateLimiterType.TOKEN_BUCKET:
       return new TokenBucketRateLimiter(args as TokenBucketArgs);
-    }
-    case RateLimiterType.FIXED_WINDOW_COUNTER: {
+    case RateLimiterType.FIXED_WINDOW_COUNTER:
       return new FixedWindowCounterRateLimiter(args as FixedWindowCounterArgs);
-    }
-    case RateLimiterType.SLIDING_WINDOW_LOG: {
+    case RateLimiterType.SLIDING_WINDOW_LOG:
       return new SlidingWindowLogRateLimiter(args as SlidingWindowLogArgs);
-    }
-    case RateLimiterType.SLIDING_WINDOW_COUNTER: {
+    case RateLimiterType.SLIDING_WINDOW_COUNTER:
       return new SlidingWindowCounterRateLimiter(
         args as SlidingWindowCounterArgs
       );
-    }
+    case RateLimiterType.REDIS_SLIDING_WINDOW_COUNTER:
+      return new RedisSlidingWindowCounterRateLimiter(
+        args as RedisSlidingWindowCounterArgs
+      );
   }
 }
