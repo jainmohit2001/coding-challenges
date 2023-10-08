@@ -10,11 +10,11 @@ interface Counter {
   prevCounter: number;
 
   /**
-   * Stores the timestamp of the previous Window.
+   * Stores the timestamp of the previous Window in ms.
    *
-   * @type {Date}
+   * @type {number}
    */
-  prevWindow: Date;
+  prevWindow: number;
 
   /**
    * Stores the counter corresponding to current Window.
@@ -24,11 +24,11 @@ interface Counter {
   currentCounter: number;
 
   /**
-   * Stores the timestamp of the current Window.
+   * Stores the timestamp of the current Window in ms.
    *
-   * @type {Date}
+   * @type {number}
    */
-  currentWindow: Date;
+  currentWindow: number;
 }
 
 export class SlidingWindowCounterRateLimiter implements RateLimiter {
@@ -39,20 +39,9 @@ export class SlidingWindowCounterRateLimiter implements RateLimiter {
    */
   counters: Map<string, Counter>;
 
-  windowSize: number;
-
   threshold: number;
 
-  private twiceWindowSize: number;
-
-  constructor({ windowSize, threshold }: SlidingWindowCounterArgs) {
-    // Ensure window size is a multiple of 60
-    if (windowSize % 60 !== 0) {
-      throw new Error('Window size should be multiple of 60');
-    }
-
-    this.twiceWindowSize = 2 * windowSize;
-    this.windowSize = windowSize;
+  constructor({ threshold }: SlidingWindowCounterArgs) {
     this.threshold = threshold;
     this.counters = new Map<string, Counter>();
   }
@@ -69,52 +58,37 @@ export class SlidingWindowCounterRateLimiter implements RateLimiter {
     }
 
     const counter = this.counters.get(ip);
-    const requestTimestamp = new Date();
+    const requestTimestamp = new Date().getTime();
 
-    const currentDateFloor = new Date();
-    currentDateFloor.setSeconds(0);
-
-    const prevDateFloor = new Date();
-    prevDateFloor.setSeconds(-prevDateFloor.getSeconds() - this.windowSize);
+    const currentWindow = Math.floor(new Date().getTime() / 1000) * 1000;
+    const prevWindow = currentWindow - 1000;
 
     // If this is the first request from the given IP
     if (counter === undefined) {
       this.counters.set(ip, {
         currentCounter: 1,
-        currentWindow: currentDateFloor,
+        currentWindow: currentWindow,
         prevCounter: 0,
-        prevWindow: prevDateFloor
+        prevWindow: prevWindow
       });
       next();
       return;
     }
 
-    // Check if we need to update the prev window
-    if (
-      (requestTimestamp.getTime() - counter.prevWindow.getTime()) / 1000 >
-      this.twiceWindowSize
-    ) {
-      // The previous window is now expired
-      counter.prevCounter = 0;
-      counter.prevWindow = prevDateFloor;
-    } else {
-      counter.prevCounter = counter.currentCounter;
-      counter.prevWindow = counter.currentWindow;
-    }
-
-    // Check if we need to update the current window
-    if (
-      (requestTimestamp.getTime() - counter.currentWindow.getTime()) / 1000 >
-      this.windowSize
-    ) {
-      counter.currentWindow = currentDateFloor;
+    // Update counters and windows
+    if (currentWindow != counter.currentWindow) {
+      if (counter.currentWindow === prevWindow) {
+        counter.prevCounter = counter.currentCounter;
+        counter.prevWindow = counter.currentWindow;
+      } else {
+        counter.prevCounter = 0;
+        counter.prevWindow = prevWindow;
+      }
+      counter.currentWindow = currentWindow;
       counter.currentCounter = 0;
     }
 
-    const currentWindowWeight =
-      (this.windowSize -
-        (requestTimestamp.getTime() - counter.currentWindow.getTime()) / 1000) /
-      this.windowSize;
+    const currentWindowWeight = (requestTimestamp - currentWindow) / 1000;
 
     const prevWindowWeight = 1 - currentWindowWeight;
 
@@ -123,7 +97,7 @@ export class SlidingWindowCounterRateLimiter implements RateLimiter {
       counter.prevCounter * prevWindowWeight;
 
     // If the count is higher than the threshold, then reject the request
-    if (count > this.threshold) {
+    if (count >= this.threshold) {
       res.status(429).send('Too many requests. Please try again later\n');
 
       // Update the counters for this IP

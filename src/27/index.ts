@@ -33,14 +33,11 @@ function getRateLimiterArgs(rateLimiterType: RateLimiterType): RateLimiterArgs {
       return arg;
     }
     case RateLimiterType.SLIDING_WINDOW_LOG: {
-      const arg: SlidingWindowLogArgs = { logThreshold: 10 };
+      const arg: SlidingWindowLogArgs = { logThreshold: 1 };
       return arg;
     }
     case RateLimiterType.SLIDING_WINDOW_COUNTER: {
-      const arg: SlidingWindowCounterArgs = {
-        threshold: 200,
-        windowSize: 60
-      };
+      const arg: SlidingWindowCounterArgs = { threshold: 1 };
       return arg;
     }
   }

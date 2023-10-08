@@ -57,7 +57,7 @@ export class SlidingWindowLogRateLimiter implements RateLimiter {
     const newLog = log.filter((value) => value.getTime() > timeWindowFront);
 
     // Check if size of newLog is greater than the specified threshold
-    if (newLog.length > this.logThreshold) {
+    if (newLog.length >= this.logThreshold) {
       res.status(429).send('Too many requests. Please try again later!\n');
       return;
     }

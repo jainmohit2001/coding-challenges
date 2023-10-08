@@ -48,14 +48,7 @@ export type SlidingWindowLogArgs = {
 
 export type SlidingWindowCounterArgs = {
   /**
-   * The size of window in seconds used to track the request rate.
-   *
-   * @type {number}
-   */
-  windowSize: number;
-
-  /**
-   * The maximum number of requests allowed in the window.
+   * The maximum number of requests allowed in a second.
    *
    * @type {number}
    */

@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { RateLimiterType } from '../enums';
 import { createRateLimiterServer } from '../server';
-import { FixedWindowCounterArgs } from '../types';
+import { SlidingWindowLogArgs } from '../types';
 import sleep from '../../utils/sleep';
 
-describe('Testing fixed window counter rate limiter', () => {
-  const args: FixedWindowCounterArgs = { threshold: 2 };
-  const rateLimiterType = RateLimiterType.FIXED_WINDOW_COUNTER;
+describe('Testing sliding window log rate limiter', () => {
+  const args: SlidingWindowLogArgs = { logThreshold: 5 };
+  const rateLimiterType = RateLimiterType.SLIDING_WINDOW_LOG;
   const port = 8080;
   const serverUrl = 'http://127.0.0.1:8080/limited';
 
@@ -19,12 +19,9 @@ describe('Testing fixed window counter rate limiter', () => {
     });
   });
 
-  it('should reject requests after threshold is reached', async () => {
-    const date = new Date();
-    await sleep(date.getMilliseconds());
-
+  it('should reject requests after log threshold is reached', async () => {
     const promises = [];
-    for (let i = 0; i <= args.threshold; i++) {
+    for (let i = 0; i <= args.logThreshold; i++) {
       promises.push(client.get(serverUrl));
     }
     const results = await Promise.all(promises);
@@ -40,7 +37,7 @@ describe('Testing fixed window counter rate limiter', () => {
       }
     });
 
-    expect(accepted).toBe(args.threshold);
+    expect(accepted).toBe(args.logThreshold);
     expect(rejected).toBe(1);
   });
 
