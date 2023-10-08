@@ -45,6 +45,7 @@ Checkout my [Notion](https://mohitjain.notion.site/Coding-Challenges-af9b8197a43
 24. [Write Your Own Realtime Chat Client and Server - Duplicate of Write Your Own IRC Client](src/16/)
 25. [Write Your Own NATS Message Broker](src/25/)
 26. [Write Your Own Git](src/26/)
+27. [Write Your Own Rate Limiter](src/27/)
 
 ## Installation
 
