@@ -34,7 +34,7 @@ describe('Testing token bucket rate limiter', () => {
       expect(response.status).toBe(200);
     });
 
-    // Next request should get reject
+    // Next request should get rejected
     const response = await client.get(serverUrl);
     expect(response.status).toBe(429);
   });

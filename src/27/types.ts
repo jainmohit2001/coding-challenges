@@ -30,14 +30,7 @@ export type TokenBucketArgs = {
 
 export type FixedWindowCounterArgs = {
   /**
-   * The size of window in seconds used to track the request rate.
-   *
-   * @type {number}
-   */
-  windowSize: number;
-
-  /**
-   * The maximum number of requests allowed in a window.
+   * The maximum number of requests allowed in a second.
    *
    * @type {number}
    */

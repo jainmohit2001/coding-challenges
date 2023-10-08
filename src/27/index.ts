@@ -21,22 +21,31 @@ const rateLimiterType = program.args[0] as RateLimiterType;
 const PORT = 8080;
 const DEBUG = true;
 
-let args: RateLimiterArgs;
-
 // Change the following default data to use different configuration.
-switch (rateLimiterType) {
-  case RateLimiterType.TOKEN_BUCKET:
-    args = { capacity: 10, timePeriodInMs: 1000 } as TokenBucketArgs;
-    break;
-  case RateLimiterType.FIXED_WINDOW_COUNTER:
-    args = { windowSize: 60, threshold: 200 } as FixedWindowCounterArgs;
-    break;
-  case RateLimiterType.SLIDING_WINDOW_LOG:
-    args = { logThreshold: 10 } as SlidingWindowLogArgs;
-    break;
-  case RateLimiterType.SLIDING_WINDOW_COUNTER:
-    args = { windowSize: 60, threshold: 200 } as SlidingWindowCounterArgs;
-    break;
+function getRateLimiterArgs(rateLimiterType: RateLimiterType): RateLimiterArgs {
+  switch (rateLimiterType) {
+    case RateLimiterType.TOKEN_BUCKET: {
+      const arg: TokenBucketArgs = { capacity: 10, timePeriodInMs: 1000 };
+      return arg;
+    }
+    case RateLimiterType.FIXED_WINDOW_COUNTER: {
+      const arg: FixedWindowCounterArgs = { threshold: 1 };
+      return arg;
+    }
+    case RateLimiterType.SLIDING_WINDOW_LOG: {
+      const arg: SlidingWindowLogArgs = { logThreshold: 10 };
+      return arg;
+    }
+    case RateLimiterType.SLIDING_WINDOW_COUNTER: {
+      const arg: SlidingWindowCounterArgs = {
+        threshold: 200,
+        windowSize: 60
+      };
+      return arg;
+    }
+  }
 }
+
+const args: RateLimiterArgs = getRateLimiterArgs(rateLimiterType);
 
 createRateLimiterServer(rateLimiterType, args, PORT, DEBUG);

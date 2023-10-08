@@ -1,56 +1,30 @@
 import { NextFunction, Request, Response } from 'express';
 import { FixedWindowCounterArgs, RateLimiter } from '../types';
 
-export class FixedWindowCounterRateLimiter implements RateLimiter {
+interface Counter {
   /**
-   * The number of requests received so far in the window for each IP.
+   * The start of the window.
    *
-   * @type {Map<string, number>}
+   * @type {number}
    */
-  counters: Map<string, number>;
+  window: number;
 
-  timer?: NodeJS.Timer;
+  /**
+   * Number of requests received so far in the current window.
+   *
+   * @type {number}
+   */
+  count: number;
+}
 
-  timeout?: NodeJS.Timeout;
-
-  windowSize: number;
+export class FixedWindowCounterRateLimiter implements RateLimiter {
+  counters: Map<string, Counter>;
 
   threshold: number;
 
-  constructor({ windowSize, threshold }: FixedWindowCounterArgs) {
-    // Ensure window size is a multiple of 60
-    if (windowSize % 60 !== 0) {
-      throw new Error('Window size should be multiple of 60');
-    }
-
-    this.windowSize = windowSize;
+  constructor({ threshold }: FixedWindowCounterArgs) {
     this.threshold = threshold;
-    this.counters = new Map<string, number>();
-
-    // On the next minute, call the setInterval method.
-    // The windows are typically defined when second = 0.
-    // Example:
-    //    Request coming at 10:54:24 will be counted in the 10:54:00 window.
-    const date = new Date();
-    const diff = 60 - date.getSeconds();
-
-    // TODO: Check for simultaneous access and updates - Race Conditions.
-    // Or should we do this when we get the request?
-    this.timeout = setTimeout(() => {
-      // Reset the counter after every windowSize seconds.
-      this.timer = setInterval(() => this.resetCounters(), windowSize * 1000);
-    }, diff * 1000);
-  }
-
-  /**
-   * This function resets the counter for all the IP addresses.
-   *
-   * @private
-   */
-  private resetCounters() {
-    this.counters.forEach((value, key) => {
-      this.counters.set(key, 0);
-    });
+    this.counters = new Map<string, Counter>();
   }
 
   handleRequest(req: Request, res: Response, next: NextFunction) {
@@ -65,27 +39,29 @@ export class FixedWindowCounterRateLimiter implements RateLimiter {
     }
 
     const counter = this.counters.get(ip);
+    const currentWindow = Math.floor(new Date().getTime() / 1000);
 
-    // If this is the first request from the given IP
-    if (counter === undefined) {
-      this.counters.set(ip, 0);
+    // If this is the first request from the given IP, or the window is changed
+    if (counter === undefined || counter.window != currentWindow) {
+      this.counters.set(ip, {
+        count: 1,
+        window: currentWindow
+      });
       next();
       return;
     }
 
     // Discard the request if the counter exceeds the threshold
-    if (counter > this.threshold) {
+    if (counter.count >= this.threshold) {
       res.status(429).send('Too many requests. Please try later!\n');
       return;
     }
 
     // Otherwise increase the counter.
-    this.counters.set(ip, counter + 1);
+    counter.count++;
+    this.counters.set(ip, counter);
     next();
   }
 
-  cleanup(): void {
-    clearTimeout(this.timeout);
-    clearInterval(this.timer);
-  }
+  cleanup(): void {}
 }

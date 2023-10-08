@@ -137,7 +137,5 @@ export class SlidingWindowCounterRateLimiter implements RateLimiter {
     next();
   }
 
-  cleanup(): void {
-    return;
-  }
+  cleanup(): void {}
 }

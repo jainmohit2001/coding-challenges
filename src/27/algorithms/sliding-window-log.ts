@@ -70,7 +70,5 @@ export class SlidingWindowLogRateLimiter implements RateLimiter {
     next();
   }
 
-  cleanup(): void {
-    return;
-  }
+  cleanup(): void {}
 }
