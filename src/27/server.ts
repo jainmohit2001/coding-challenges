@@ -49,7 +49,7 @@ export const createRateLimiterServer = (
     rateLimiter.cleanup();
   });
 
-  return server;
+  return { server, rateLimiter };
 };
 
 function getRateLimiter(

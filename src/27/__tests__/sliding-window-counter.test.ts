@@ -3,11 +3,10 @@ import { RateLimiterType } from '../enums';
 import { createRateLimiterServer } from '../server';
 import { SlidingWindowCounterArgs } from '../types';
 import sleep from '../../utils/sleep';
-
-interface ITestCounter {
-  window: number;
-  counter: number;
-}
+import {
+  Counter,
+  SlidingWindowCounterRateLimiter
+} from '../algorithms/sliding-window-counter';
 
 describe('Testing sliding window counter rate limiter', () => {
   const args: SlidingWindowCounterArgs = { threshold: 2 };
@@ -15,9 +14,10 @@ describe('Testing sliding window counter rate limiter', () => {
   const port = 8080;
   const serverUrl = 'http://127.0.0.1:8080/limited';
 
-  const server = createRateLimiterServer(rateLimiterType, args, port);
+  const obj = createRateLimiterServer(rateLimiterType, args, port);
+  const server = obj.server;
+  const rateLimiter = obj.rateLimiter as SlidingWindowCounterRateLimiter;
   const client = axios.create({ validateStatus: () => true });
-  const storage = new Map<number, ITestCounter>();
 
   afterAll((done) => {
     server.close(() => {
@@ -33,27 +33,33 @@ describe('Testing sliding window counter rate limiter', () => {
       const currentWindow = Math.floor(timestamp / 1000) * 1000;
       const prevWindow = currentWindow - 1000;
 
-      const currentCounter = storage.get(currentWindow) ?? {
-        counter: 0,
-        window: currentWindow
-      };
-      const prevCounter = storage.get(prevWindow) ?? {
-        counter: 0,
-        window: prevWindow
-      };
-
-      const result = await client.get(serverUrl);
+      const storage: Counter[] = [...rateLimiter.counters.values()];
 
       const currentWindowWeight = (timestamp - currentWindow) / 1000;
       const prevWindowWeight = 1 - currentWindowWeight;
-      const count =
-        currentWindowWeight * currentCounter.counter +
-        prevWindowWeight * prevCounter.counter;
 
-      currentCounter.counter++;
+      let count = 0;
+      if (storage.length > 0) {
+        const counter = storage[0];
 
-      storage.set(currentWindow, currentCounter);
-      storage.set(prevWindow, prevCounter);
+        if (currentWindow != counter.currentWindow) {
+          if (counter.currentWindow === prevWindow) {
+            counter.prevCounter = counter.currentCounter;
+            counter.prevWindow = counter.currentWindow;
+          } else {
+            counter.prevCounter = 0;
+            counter.prevWindow = prevWindow;
+          }
+          counter.currentWindow = currentWindow;
+          counter.currentCounter = 0;
+        }
+
+        count =
+          currentWindowWeight * counter.currentCounter +
+          prevWindowWeight * counter.prevCounter;
+      }
+
+      const result = await client.get(serverUrl);
 
       if (count >= args.threshold) {
         expect(result.status).toBe(429);

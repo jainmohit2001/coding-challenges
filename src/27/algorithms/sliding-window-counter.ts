@@ -1,7 +1,7 @@
 import { RateLimiter, SlidingWindowCounterArgs } from '../types';
 import { Request, Response, NextFunction } from 'express';
 
-interface Counter {
+export interface Counter {
   /**
    * Stores the counter corresponding to previous Window.
    *
@@ -98,10 +98,9 @@ export class SlidingWindowCounterRateLimiter implements RateLimiter {
 
     // If the count is higher than the threshold, then reject the request
     if (count >= this.threshold) {
-      res.status(429).send('Too many requests. Please try again later\n');
-
       // Update the counters for this IP
       this.counters.set(ip, counter);
+      res.status(429).send('Too many requests. Please try again later\n');
       return;
     }
 

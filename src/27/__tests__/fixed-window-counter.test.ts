@@ -10,7 +10,7 @@ describe('Testing fixed window counter rate limiter', () => {
   const port = 8080;
   const serverUrl = 'http://127.0.0.1:8080/limited';
 
-  const server = createRateLimiterServer(rateLimiterType, args, port);
+  const { server } = createRateLimiterServer(rateLimiterType, args, port);
   const client = axios.create({ validateStatus: () => true });
 
   afterAll((done) => {
