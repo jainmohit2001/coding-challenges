@@ -9,7 +9,8 @@ import {
   SlidingWindowLogArgs,
   TokenBucketArgs
 } from './types';
-import { createClient } from 'redis';
+import Redlock from 'redlock';
+import Client from 'ioredis';
 
 program.addArgument(
   new Argument(
@@ -18,12 +19,14 @@ program.addArgument(
   ).choices(Object.values(RateLimiterType))
 );
 program.option('-p, --port <port>', 'Port on which server will start', '8080');
+program.option('--debug', 'Enable debugging');
+
 program.parse();
 
 const options = program.opts();
 const rateLimiterType = program.args[0] as RateLimiterType;
 const PORT = parseInt(options.port);
-const DEBUG = true;
+const DEBUG = options.debug;
 
 // Change the following default data to use different configuration.
 async function getRateLimiterArgs(
@@ -47,14 +50,25 @@ async function getRateLimiterArgs(
       return arg;
     }
     case RateLimiterType.REDIS_SLIDING_WINDOW_COUNTER: {
-      const client = createClient();
-      await client.connect();
+      const client = new Client();
       client.on('error', (err) => {
         if (DEBUG) {
           console.error(err);
         }
       });
-      const args: RedisSlidingWindowCounterArgs = { threshold: 1, client };
+
+      const redlock = new Redlock([client], {
+        driftFactor: 0.01,
+        retryCount: 10,
+        retryDelay: 200,
+        retryJitter: 200
+      });
+
+      const args: RedisSlidingWindowCounterArgs = {
+        threshold: 1,
+        client,
+        redlock
+      };
       return args;
     }
   }
