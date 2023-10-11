@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { createClient } from 'redis';
+import Client from 'ioredis';
+import Redlock from 'redlock';
 
 /**
  * This is a generic interface that a Rate limiter has to implement.
@@ -64,7 +65,14 @@ export type RedisSlidingWindowCounterArgs = {
    */
   threshold: number;
 
-  client: ReturnType<typeof createClient>;
+  client: Client.Redis;
+
+  /**
+   * Used for locking data in Redis server.
+   *
+   * @type {Redlock}
+   */
+  redlock: Redlock;
 };
 
 export type RateLimiterArgs =

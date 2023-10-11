@@ -1,6 +1,7 @@
-import { createClient } from 'redis';
+import Client from 'ioredis';
 import { RateLimiter, RedisSlidingWindowCounterArgs } from '../types';
 import { Request, Response, NextFunction } from 'express';
+import Redlock from 'redlock';
 
 export type Counter = {
   /**
@@ -34,11 +35,15 @@ export type Counter = {
 
 export class RedisSlidingWindowCounterRateLimiter implements RateLimiter {
   threshold: number;
-  client: ReturnType<typeof createClient>;
 
-  constructor({ threshold, client }: RedisSlidingWindowCounterArgs) {
+  client: Client.Redis;
+
+  redlock: Redlock;
+
+  constructor({ threshold, client, redlock }: RedisSlidingWindowCounterArgs) {
     this.threshold = threshold;
     this.client = client;
+    this.redlock = redlock;
   }
 
   async handleRequest(req: Request, res: Response, next: NextFunction) {
@@ -52,10 +57,12 @@ export class RedisSlidingWindowCounterRateLimiter implements RateLimiter {
       return;
     }
 
-    ip = ip.replaceAll(':', '');
+    ip = ip.replaceAll(/:|\./g, '');
 
-    const value = (await this.client.json.get(ip)) as unknown;
-    const counter = value !== null ? (value as Counter) : null;
+    const lock = await this.redlock.acquire(ip + 'redlock', 5000);
+
+    const value = await this.client.get(ip);
+    const counter = value !== null ? (JSON.parse(value) as Counter) : null;
     const requestTimestamp = new Date().getTime();
 
     const currentWindow = Math.floor(new Date().getTime() / 1000) * 1000;
@@ -63,12 +70,18 @@ export class RedisSlidingWindowCounterRateLimiter implements RateLimiter {
 
     // If this is the first request from the given IP
     if (counter === null) {
-      await this.client.json.set(ip, '.', {
-        currentCounter: 1,
-        currentWindow: currentWindow,
-        prevCounter: 0,
-        prevWindow: prevWindow
-      });
+      await this.client.set(
+        ip,
+        JSON.stringify({
+          currentCounter: 1,
+          currentWindow: currentWindow,
+          prevCounter: 0,
+          prevWindow: prevWindow
+        })
+      );
+
+      await lock.unlock();
+
       next();
       return;
     }
@@ -97,14 +110,20 @@ export class RedisSlidingWindowCounterRateLimiter implements RateLimiter {
     // If the count is higher than the threshold, then reject the request
     if (count >= this.threshold) {
       // Update the counters for this IP
-      await this.client.json.set(ip, '.', counter);
+      await this.client.set(ip, JSON.stringify(counter));
+
+      await lock.unlock();
+
       res.status(429).send('Too many requests. Please try again later\n');
       return;
     }
 
     // update the current counter for this IP
     counter.currentCounter++;
-    await this.client.json.set(ip, '.', counter);
+    await this.client.set(ip, JSON.stringify(counter));
+
+    await lock.unlock();
+
     next();
   }
 
