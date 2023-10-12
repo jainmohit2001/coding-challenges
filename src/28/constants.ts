@@ -10,3 +10,5 @@ export const MINDISP = 0.005;
 export const MAXDIST = 1;
 export const MAXSTRAT = 16;
 export const PRECISION = -18;
+
+export const POW_2_32 = Math.pow(2, 32);
