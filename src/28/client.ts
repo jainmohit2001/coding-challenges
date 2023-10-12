@@ -29,6 +29,8 @@ export class NtpClient {
         rej(err);
       });
 
+      const source = new Date();
+
       this.client.send(packet, PORT, this.server, (err) => {
         if (err !== null) {
           clearTimeout(timeout);
@@ -38,9 +40,10 @@ export class NtpClient {
         }
 
         this.client.once('message', (msg) => {
+          const dst = new Date();
           clearTimeout(timeout);
           this.client.close();
-          res(parseNtpPacket(msg));
+          res(parseNtpPacket(msg, dst, source));
         });
       });
     });
