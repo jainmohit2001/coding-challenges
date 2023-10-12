@@ -1,4 +1,4 @@
-import { NtpClient } from './client';
+import { NtpClient } from './ntp-client';
 
 const client = new NtpClient();
 
