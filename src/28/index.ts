@@ -1,4 +1,5 @@
 import { NtpClient } from './client';
+
 import { calculateOffset, calculateRoundTripDelay } from './ntp-packet';
 
 const client = new NtpClient();

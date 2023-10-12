@@ -14,7 +14,6 @@ export type NtpPacket = {
   version: number;
   mode: number;
 
-  source: Date;
   reftime: Date;
   org: Date;
   rec: Date;
@@ -47,17 +46,14 @@ export function parseTimestamp(buffer: Buffer): Date {
   return date;
 }
 
-export function parseNtpPacket(
-  buffer: Buffer,
-  dst: Date,
-  source: Date
-): NtpPacket {
+export function parseNtpPacket(buffer: Buffer): NtpPacket {
+  const dst = new Date();
   const leap = (buffer[0] & 0b11000000) >> 6;
   const version = (buffer[0] & 0b00111000) >> 3;
   const mode = buffer[0] & 0b111;
 
   const reftime = parseTimestamp(
-    buffer.subarray(REFERENCE_TIMESTAMP_OFFSET, RECEIVE_TIMESTAMP_OFFSET + 8)
+    buffer.subarray(REFERENCE_TIMESTAMP_OFFSET, REFERENCE_TIMESTAMP_OFFSET + 8)
   );
 
   const org = parseTimestamp(
@@ -72,13 +68,13 @@ export function parseNtpPacket(
     buffer.subarray(TRANSMIT_TIMESTAMP_OFFSET, TRANSMIT_TIMESTAMP_OFFSET + 8)
   );
 
-  return { leap, version, mode, source, reftime, org, rec, xmt, dst };
+  return { leap, version, mode, reftime, org, rec, xmt, dst };
 }
 
 export function calculateOffset(msg: NtpPacket): number {
   return (
     (msg.rec.getTime() -
-      msg.source.getTime() +
+      msg.org.getTime() +
       msg.xmt.getTime() -
       msg.dst.getTime()) /
     2
@@ -88,7 +84,7 @@ export function calculateOffset(msg: NtpPacket): number {
 export function calculateRoundTripDelay(msg: NtpPacket): number {
   return (
     msg.dst.getTime() -
-    msg.source.getTime() -
+    msg.org.getTime() -
     msg.xmt.getTime() +
     msg.rec.getTime()
   );
