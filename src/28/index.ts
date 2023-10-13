@@ -20,7 +20,7 @@ client
     const rtt = client.rtt();
     console.log(`RTT (delta) ${rtt}ms`);
 
-    // The time will be calculated based on the offset
+    // The correct time will be calculated based on the offset
     const now = new Date();
     now.setTime(now.getTime() + offset);
 
