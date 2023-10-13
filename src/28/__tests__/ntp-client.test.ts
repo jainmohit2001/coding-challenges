@@ -12,8 +12,9 @@ describe('Testing NTP client', () => {
       expect(packet.version).toBe(NTP_VERSION);
       expect(packet.mode).toBe(4);
 
-      expect(() => client.offset()).not.toThrow();
-      expect(() => client.rtt()).not.toThrow();
+      expect(() => client.getOffset()).not.toThrow();
+      expect(() => client.getRtt()).not.toThrow();
+      expect(() => client.now()).not.toThrow();
 
       done();
     });

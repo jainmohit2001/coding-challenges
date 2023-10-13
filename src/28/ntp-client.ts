@@ -76,18 +76,32 @@ export class NtpClient {
     });
   }
 
-  offset(): number {
+  getOffset(): number {
     if (!this.replyPacket) {
       throw new Error('Invalid replyPacket');
     }
     return calculateOffset(this.replyPacket);
   }
 
-  rtt(): number {
+  getRtt(): number {
     if (!this.replyPacket) {
       throw new Error('Invalid replyPacket');
     }
     return calculateRoundTripDelay(this.replyPacket);
+  }
+
+  /**
+   * Returns the correct time as per the server response and offset.
+   *
+   * @returns {Date}
+   */
+  now(): Date {
+    if (!this.replyPacket) {
+      throw new Error('Invalid replyPacket');
+    }
+    const date = new Date();
+    date.setTime(date.getTime() + this.getOffset());
+    return date;
   }
 
   setSystemTime(date: Date): Promise<void> {

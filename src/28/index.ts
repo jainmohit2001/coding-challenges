@@ -14,15 +14,14 @@ client
   .then((msg) => {
     console.log('NTP Packet', msg);
 
-    const offset = client.offset();
+    const offset = client.getOffset();
     console.log(`Offset (theta) ${offset}ms`);
 
-    const rtt = client.rtt();
+    const rtt = client.getRtt();
     console.log(`RTT (delta) ${rtt}ms`);
 
     // The correct time will be calculated based on the offset
-    const now = new Date();
-    now.setTime(now.getTime() + offset);
+    const now = client.now();
 
     if (options.setTime) {
       client
