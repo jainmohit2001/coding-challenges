@@ -11,16 +11,35 @@ import { exec } from 'child_process';
 import os from 'os';
 
 export class NtpClient {
+  /**
+   * The NTP server.
+   *
+   * @type {string}
+   */
   server: string;
-  timeout = 10000;
+
+  /**
+   * Timeout for the request.
+   *
+   * @type {number}
+   */
+  timeout: number;
   client: UDP.Socket;
   replyPacket?: NtpPacket;
 
-  constructor(server?: string) {
+  constructor(server?: string, timeout?: number) {
     this.server = server ?? '0.pool.ntp.org';
+    this.timeout = timeout ?? 10000;
     this.client = UDP.createSocket('udp4');
   }
 
+  /**
+   * This function sends a NTP request packet and waits for the reply.
+   * If no reply is sent by the server within the timeout period specified,
+   * the promise is rejected.
+   *
+   * @returns {Promise<NtpPacket>}
+   */
   getTime(): Promise<NtpPacket> {
     return new Promise<NtpPacket>((res, rej) => {
       // If no message received in the given timeout period,

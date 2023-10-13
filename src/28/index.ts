@@ -1,6 +1,13 @@
+import { program } from 'commander';
 import { NtpClient } from './ntp-client';
 
 const client = new NtpClient();
+
+program.option('--setTime', 'Set the system timestamp');
+
+program.parse();
+
+const options = program.opts();
 
 client
   .getTime()
@@ -13,17 +20,20 @@ client
     const rtt = client.rtt();
     console.log(`RTT (delta) ${rtt}ms`);
 
+    // The time will be calculated based on the offset
     const now = new Date();
     now.setTime(now.getTime() + offset);
 
-    client
-      .setSystemTime(now)
-      .then(() => {
-        console.log('Successfully set system time');
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    if (options.setTime) {
+      client
+        .setSystemTime(now)
+        .then(() => {
+          console.log('Successfully set system time');
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    }
   })
   .catch((err) => {
     console.error(err);
