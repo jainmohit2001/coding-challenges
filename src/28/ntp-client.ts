@@ -65,6 +65,7 @@ export class NtpClient {
           return;
         }
 
+        // After sending the request packet, check for a message
         this.client.once('message', (msg) => {
           const packet = parseNtpPacket(msg);
           this.replyPacket = packet;
