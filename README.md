@@ -46,6 +46,7 @@ Checkout my [Notion](https://mohitjain.notion.site/Coding-Challenges-af9b8197a43
 25. [Write Your Own NATS Message Broker](src/25/)
 26. [Write Your Own Git](src/26/)
 27. [Write Your Own Rate Limiter](src/27/)
+28. [Write Your Own NTP Client](src/28/)
 
 ## Installation
 
