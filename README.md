@@ -48,6 +48,10 @@ Checkout my [Notion](https://mohitjain.notion.site/Coding-Challenges-af9b8197a43
 27. [Write Your Own Rate Limiter](src/27/)
 28. [Write Your Own NTP Client](src/28/)
 
+Don't ask me about this GAP. This ain't an interview!
+
+41. [Write Your Own HTTP(S) Load Tester](src/41/)
+
 ## Installation
 
 The following command will build all the .ts files present in `src` folder into a new `build` folder.
